@@ -14,3 +14,7 @@ This procedure is based on the baremetal instructions for OCP 4.1 : [enter link 
 
 [Enroll worker](https://github.com/redhat-nfvpe/upi-rt/tree/master/terraform/workers)
 
+## Credits
+This is heavily based on:
+[https://github.com/e-minguez/ocp4-upi-bm-pxeless-staticips](https://github.com/e-minguez/ocp4-upi-bm-pxeless-staticips)
+[https://github.com/openshift/installer/tree/master/upi/metal](https://github.com/openshift/installer/tree/master/upi/metal)
