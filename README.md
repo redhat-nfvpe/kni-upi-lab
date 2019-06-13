@@ -7,7 +7,10 @@ This procedure is based on the baremetal instructions for OCP 4.1 : [enter link 
 
 ## How does it work
 [Pre-requisites](https://github.com/redhat-nfvpe/upi-rt/tree/master/prerequisites)
+
 [Initial cluster deployment](https://github.com/redhat-nfvpe/upi-rt/tree/master/terraform/cluster)
+
 [Kickstart generation](https://github.com/redhat-nfvpe/upi-rt/tree/master/kickstart)
+
 [Enroll worker](https://github.com/redhat-nfvpe/upi-rt/tree/master/terraform/workers)
 
