@@ -16,13 +16,9 @@ To assist with baremetal deployment, several utilities need to be deployed on th
 
 **Load balancer**
 A load balancer is needed to alternate traffic between bootstrap and master nodes (and between masters when using HA). In order to achieve it, we are going to install haproxy on the installer laptop, and configure it with those settings: [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/haproxy.cfg](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/haproxy.cfg)
-This will configure a load balancer according to this diagram:
-| Port | Machines | Internal | External | Description |
-| ----- | ----------- | --------- | --------- | --------- |
-| 6643 | Bootstrap and control plane. You remove the bootstrap machine from the load balancer after the bootstrap machine initializes the cluster control plane. | x | x | Kubernetes APIServer |
-| 22623 | Bootstrap and control plane. You remove the bootstrap machine from the load balancer after the bootstrap machine initializes the cluster control plane. | | x | Machine Config server |
-| 443 | The machines that run the Ingress router pods, compute, or worker, by default. | x | x | HTTPS traffic |
-| 80 | The machines that run the Ingress router pods, compute, or worker by default. | x | x | HTTP traffic |
+This will configure a load balancer according to the table shown at:
+[https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal)
+- Load balancers section.
 
 For this sample we are going to use the installer laptop as the load balancer, but in production there will be external load balancers managing it.
 
@@ -73,13 +69,6 @@ A sample configuration on a router can be seen like:
         use-dnsmasq enable
     }
 The CoreDNS directory needs to contain those files, configured properly:
-[https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/Corefile](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/Corefile), [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/db.CLUSTER_DOMAIN](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/db.CLUSTER_DOMAIN) . It will create an specific DNS configuration according to this table:
-| Component | Record | Description |
-|--|--|--|
-| Kubernetes API |`api.<cluster_name>.<base_domain>`| This DNS record must point to the load balancer for the control plane machines. This record must be resolvable by both clients external to the cluster and from all the nodes within the cluster. |
-| Kubernetes API | `api-int.<cluster_name>.<base_domain>`| This DNS record must point to the load balancer for the control plane machines. This record must be resolvable from all the nodes within the cluster. |
-| Routes | `*.apps.<cluster_name>.<base_domain>` | A wildcard DNS record that points to the load balancer that targets the machines that run the Ingress router pods, which are the worker nodes by default. This record must be resolvable by both clients external to the cluster and from all the nodes within the cluster. |
-| etcd | `etcd-<index>.<cluster_name>.<base_domain>` | OpenShift Container Platform requires DNS records for each etcd instance to point to the control plane machines that host the instances. The etcd instances are differentiated by `<index>` values, which start with `0` and end with `n-1`, where `n` is the number of control plane machines in the cluster. The DNS record must resolve to an unicast IPV4 address for the control plane machine, and the records must be resolvable from all the nodes in the cluster. |
-| etcd | `_etcd-server-ssl._tcp.<cluster_name>.<base_domain>` | For each control plane machine, OpenShift Container Platform also requires a SRV DNS record for etcd server on that machine with priority `0`, weight `10` and port `2380`. A cluster that uses three control plane machines requires the following records: |
+[https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/Corefile](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/Corefile), [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/db.CLUSTER_DOMAIN](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/db.CLUSTER_DOMAIN) . It will create an specific DNS configuration according to the table shown at [https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal) - User-provisioned DNS requirements section.
 
 With those prerequisities we are able to start the installation of the cluster.
