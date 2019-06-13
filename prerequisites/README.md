@@ -32,7 +32,11 @@ You will also need to create the /var/lib/tftpboot directory, and download the i
     wget http://boot.ipxe.org/ipxe.efi
     wget http://boot.ipxe.org/undionly.kpxe
     popd
+
 As part of the provision, a matchbox instance needs to be up and running . This can be setup in a container: [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/podman_utils.sh#L3](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/podman_utils.sh#L3)
+Matchbox certificates need to be configured as well. In order to do it, please
+follow this link:
+[https://github.com/poseidon/matchbox/tree/master/scripts/tls](https://github.com/poseidon/matchbox/tree/master/scripts/tls)
 
 BIOS on all machines need to be configured to be capable of booting by PXE on this network.
 
