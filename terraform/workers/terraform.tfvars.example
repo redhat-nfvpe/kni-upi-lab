@@ -27,14 +27,12 @@ matchbox_rpc_endpoint = "${PROVISION_IP}:8081"
 // Certificate Authority certificate to trust the matchbox endpoint.
 matchbox_trusted_ca_cert = "/path/to/local/matchbox/scripts/tls/ca.crt"
 
-
-// The file that contains the Ignition config used to configure the RHCOS based worker machines.
-worker_ign_file = "/tmp/test-bare-metal/worker.ign"
-
 worker_public_ipv4 = "${WORKER_IP}"
 worker_mac_address = "${WORKER_MAC}"
 
 worker_kernel = "assets/centos_vmlinuz"
 worker_initrd = "assets/centos.img"
 worker_kickstart = "http://${PROVISION_IP}:8080/assets/centos-rt-worker-kickstart.cfg"
-
+worker_ipmi_host = "${WORKER_IPMI_HOST}"
+worker_ipmi_user = "${WORKER_IPMI_USER}"
+worker_ipmi_pass = "${WORKER_IPMI_PASS}"
