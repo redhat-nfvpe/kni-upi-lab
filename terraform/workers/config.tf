@@ -8,9 +8,6 @@ variable "cluster_domain" {
   type = "string"
 }
 
-variable "worker_ign_file" {
-  type = "string"
-}
 
 # ================MATCHBOX=====================
 

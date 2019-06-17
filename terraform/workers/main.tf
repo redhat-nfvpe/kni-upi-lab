@@ -42,7 +42,6 @@ resource "matchbox_profile" "worker" {
     "inst.ks=${var.worker_kickstart}",
   ])
 
-  raw_ignition = "${file(var.worker_ign_file)}"
 }
 
 resource "matchbox_group" "worker" {
