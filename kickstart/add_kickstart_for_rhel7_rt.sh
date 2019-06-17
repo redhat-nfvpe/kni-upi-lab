@@ -5,7 +5,7 @@ source $HOME/settings_upi.env
 IGNITION_ENDPOINT="https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:22623/config/worker"
 CORE_SSH_KEY=$(cat $HOME/.ssh/id_rsa.pub)
 ENROLL_CENTOS_NODE=$(cat ./scripts/enroll_rhel7_node.sh)
-ADD_RT_SCRIPT=$(cat ../scripts/add_rhel7_rt_kernel.sh)
+ADD_RT_SCRIPT=$(cat ./scripts/add_rhel7_rt_kernel.sh)
 PODMAN_SERVICE=$(cat ./scripts/podman_service.sh)
 KUBECONFIG_FILE=$(cat $KUBECONFIG_PATH)
 
