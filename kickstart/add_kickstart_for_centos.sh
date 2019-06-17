@@ -1,6 +1,6 @@
 #! /bin/bash
 
-source $HOME/settings.env
+source $HOME/settings_upi.env
 
 IGNITION_ENDPOINT="https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:22623/config/worker"
 CORE_SSH_KEY=$(cat $HOME/.ssh/id_rsa.pub)
