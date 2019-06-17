@@ -8,7 +8,7 @@ ENROLL_CENTOS_NODE=$(cat ./scripts/enroll_centos_node.sh)
 PODMAN_SERVICE=$(cat ./scripts/podman_service.sh)
 KUBECONFIG_FILE=$(cat $KUBECONFIG_PATH)
 
-cat > centos-worker-kickstart.cfg <<EOT
+cat > rhel7-worker-kickstart.cfg <<EOT
 lang en_US
 keyboard us
 timezone Etc/UTC --isUtc

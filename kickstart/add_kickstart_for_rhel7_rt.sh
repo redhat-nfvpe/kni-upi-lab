@@ -9,7 +9,7 @@ ADD_RT_SCRIPT=$(cat ./scripts/add_rhel7_rt_kernel.sh)
 PODMAN_SERVICE=$(cat ./scripts/podman_service.sh)
 KUBECONFIG_FILE=$(cat $KUBECONFIG_PATH)
 
-cat > centos-rt-worker-kickstart.cfg <<EOT
+cat > rhel7-rt-worker-kickstart.cfg <<EOT
 lang en_US
 keyboard us
 timezone Etc/UTC --isUtc
