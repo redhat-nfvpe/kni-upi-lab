@@ -7,3 +7,11 @@ EOT
     }
 }
 
+resource "null_resource" "ipmi_bootstrap_cleanup" {
+    provisioner "local-exec" {
+        when = "destroy"
+        command = <<EOT
+          ipmitool -I lanplus -H ${var.bootstrap_ipmi_host} -U ${var.bootstrap_ipmi_user} -P ${var.bootstrap_ipmi_pass} power off;
+EOT
+    }
+}
