@@ -17,7 +17,7 @@ rootpw --plaintext ${ROOT_PASSWORD}
 reboot
 cmdline
 install
-url --url=http://mirror.centos.org/centos/7.6.1810/os/x86_64/
+url --url=${RHEL_INSTALL_ENDPOINT}
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
@@ -31,7 +31,7 @@ user --name=core --groups=wheel
 %post --erroronfail --log=/root/ks-post.log
 
 # write env vars for subscription
-cat <<EOF /etc/profile.env
+cat <<EOF > /etc/profile.env
 export RH_USERNAME="${RH_USERNAME}"
 export RH_PASSWORD="${RH_PASSWORD}"
 export RH_POOL="${RH_POOL}"
