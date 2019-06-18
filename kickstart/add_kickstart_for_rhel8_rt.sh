@@ -17,8 +17,8 @@ rootpw --plaintext ${ROOT_PASSWORD}
 reboot
 cmdline
 install
-url --url=${RHEL_INSTALL_ENDPOINT}
-repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
+url --url=${RHEL_INSTALL_ENDPOINT}/BaseOS/
+repo --name="AppStream" --baseurl=${RHEL_INSTALL_ENDPOINT}/AppStream/
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
