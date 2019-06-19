@@ -8,25 +8,9 @@ subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms
 subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms
 
 # install packages
-cat > /etc/yum.repos.d/cbs.centos.org_repos_paas7-crio-114-candidate_x86_64_os.repo <<EOL
-[cbs.centos.org_repos_paas7-crio-114-candidate_x86_64_os]
-name=added from: https://cbs.centos.org/repos/paas7-crio-114-candidate/x86_64/os
-baseurl=https://cbs.centos.org/repos/paas7-crio-114-candidate/x86_64/os
-enabled=1
-gpgcheck=0
-EOL
-
-cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.1_.repo <<EOL
-[rpms.svc.ci.openshift.org_openshift-origin-v4.1_]
-name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
-baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
-enabled=1
-gpgcheck=0
-EOL
-
 subscription-manager repos --enable=rhocp-4.1-for-rhel-8-x86_64-rpms
 
-yum update -y
+dnf update -y
 
 dnf -y install git wget kernel irqbalance microcode_ctl systemd selinux-policy-targeted setools-console dracut-network passwd openssh-server openssh-clients podman skopeo runc containernetworking-plugins nfs-utils NetworkManager dnsmasq lvm2 iscsi-initiator-utils sg3_utils device-mapper-multipath xfsprogs e2fsprogs mdadm cryptsetup chrony logrotate sssd shadow-utils sudo coreutils less tar xz gzip bzip2 rsync tmux nmap-ncat net-tools bind-utils strace bash-completion vim-minimal nano authconfig iptables-services biosdevname cloud-utils-growpart glusterfs-fuse cri-o openshift-clients openshift-hyperkube
 
