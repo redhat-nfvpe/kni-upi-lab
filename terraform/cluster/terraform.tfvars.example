@@ -65,4 +65,4 @@ bootstrap_ipmi_pass = "${BOOTSTRAP_IPMI_PASS}"
 
 bootstrap_mac_address = "${BOOTSTRAP_MAC}"
 master_mac_address = "${MASTER_MAC}"
-
+nameserver= "$COREDNS_IP"

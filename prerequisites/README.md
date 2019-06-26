@@ -20,13 +20,14 @@ This will configure a load balancer according to the table shown at:
 [https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#network-connectivity_installing-bare-metal)
 - Load balancers section.
 
-For this sample we are going to use the installer laptop as the load balancer, but in production there will be external load balancers managing it.
+For this sample we are going to use the installer laptop as the load balancer, but in production there will be external load balancers managing it. Take into account that SElinux will prevent haproxy to listen on the ports mentioned above, so you should configure it to use the haproyx_selinux policy (or disable it if you are in a development environment).
 
 **Provisioning system**
 The provisioning of the machines is relying on PXE (using matchbox). In order to achieve that, a dnsmasq instance needs to be running on the installer laptop, serving on the provisioning network. Again this is for testing purposes and more reliable methods need to be used in production.
 In order to setup the dnsmasq please use the following configuration file: [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/dnsmasq-provisioning.conf](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/dnsmasq-provisioning.conf)
 You will also need to create the /var/lib/tftpboot directory, and download the ipxe files there:
 
+    mkdir -p /var/lib/matchbox
     mkdir -p /var/lib/tftpboot
     pushd /var/lib/tftpboot
     wget http://boot.ipxe.org/ipxe.efi
@@ -39,6 +40,9 @@ follow this link:
 [https://github.com/poseidon/matchbox/tree/master/scripts/tls](https://github.com/poseidon/matchbox/tree/master/scripts/tls)
 
 BIOS on all machines need to be configured to be capable of booting by PXE on this network.
+If you are using a RHEL/CentOS fresh image, you would probably need to install ipmitool, in order to let matchbox power-manage the systems:
+
+    yum install OpenIPMI ipmitool
 
 **DNS setup**
 Next step is to setup some specific DNS configuration. This depends on cluster name and domain, so it is more flexible to run it on a configurable CoreDNS instance. So the first step is to run CoreDNS, this can be run on a container: [https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/podman_utils.sh#L5](https://github.com/redhat-nfvpe/upi-rt/blob/master/prerequisites/podman_utils.sh#L5)

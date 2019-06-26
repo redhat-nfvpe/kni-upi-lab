@@ -1,6 +1,6 @@
 # Enroll worker
 
-In order to enroll a worker node based on CentOS, we need to execute some previous steps:
+In order to enroll a worker node based on CentOS/RHEL, we need to execute some previous steps:
  - generate the kickstart file and place it on the assets directory as we described in previous section
  - download CentOS PXE images and place them on matchbox assets as well: [http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img](http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/initrd.img), [http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz](http://mirror.centos.org/centos/7/os/x86_64/images/pxeboot/vmlinuz)
 
