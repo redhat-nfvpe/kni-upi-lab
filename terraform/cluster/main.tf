@@ -6,6 +6,7 @@ locals {
     "console=ttyS0,115200n8",
     "console=ttyS1,115200n8",
     "rd.neednet=1",
+    "nameserver=${var.nameserver}"
 
     # "rd.break=initqueue"
     "coreos.inst=yes",

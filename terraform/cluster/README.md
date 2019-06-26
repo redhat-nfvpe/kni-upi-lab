@@ -28,10 +28,12 @@ Place that file on /tmp/baremetal, and execute openshift-installer pointing ther
 
     ./openshift-install create ignition-configs --dir=<installation_directory>
 
-This will generate [bootstrap|master|worker].ign , that are the ignition files used for cluster generation. There is also an auth/kubeconfig file that will be used later for enrolling the worker nodes.
+This will generate [bootstrap|master|worker].ign , that are the ignition files used for cluster generation. There is also an auth/kubeconfig file that will be used later for enrolling the worker nodes. The ignition file generation must be performed everytime you redeploy the cluster, otherwise, certificates might expire and the user shall not be able to interact with the running cluster. 
 
-- Download the RHCOS images and place them in /var/lib/matchbox/assets directory. The images can be downloaded from [https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/) . You will need to download the *-installer-initramfs.img , *-installer-kernel  and the *-[metal-bios|metal-uefi]\* ones (this one depending on your BIOS/UEFI config)
--
+- Download the RHCOS images and place them in /var/lib/matchbox/assets directory. The images can be downloaded from [https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/) . You will need to download the *-installer-initramfs.img , *-installer-kernel  and the *-[metal-bios|metal-uefi]\* ones (this one depending on your BIOS/UEFI config). These three images need to be stored in the following path:
+
+    /var/lib/matchbox/assets/
+
 ## Terraform configuration
 In order to automate the deployment of the cluster, a terraform.tfvars.example file is provided on [https://github.com/redhat-nfvpe/upi-rt/blob/master/terraform/cluster/terraform.tfvars.example](https://github.com/redhat-nfvpe/upi-rt/blob/master/terraform/cluster/terraform.tfvars.example) . This needs to be configured according to your needs. The main vars are:
 - cluster_domain
@@ -47,10 +49,15 @@ In order to automate the deployment of the cluster, a terraform.tfvars.example f
 - master_ipmi_host, user, pass (IPMI credentials for the master boot)
 - bootstrap_ipmi_host, user, pass (IPMI credentials for the bootstrap boot)
 
-Once this file is generated, you can run terraform with:
+As a side note, we strongly recommend to read carefully the terraform.tfvars comments to set the parameters correctly. For instance, the PXE image URLs can be http endpoints, or a relative path to the matchbox directory (/var/lib/matchbox).
+
+Once this file is generated, you can run terraform with the following commands:
 
     terraform init
     terraform apply -auto-approve
+
+These commands have to be executed inside the path where all the Terraform configs are. In the case of this repo, it is under [https://github.com/redhat-nfvpe/upi-rt/blob/master/terraform/cluster/](https://github.com/redhat-nfvpe/upi-rt/blob/master/terraform/cluster/) for the deployment of the bootstrap and the master. The worker will be explained in another section later on.
+
 This will execute the followign workflow:
 
  - set next boot to PXE for bootstrap and master, reset power cycle
@@ -63,5 +70,10 @@ In order to watch for cluster deployment status, following command can be used:
     ./openshift-install --dir=<installation_directory> wait-for bootstrap-complete \
     --log-level debug
 
-After this finishes there will be a functional cluster with 1 master running. Next step will be to enroll the worker.
+If something has gone wrong, we recommend you to destroy the terraform resources by executing:
 
+    terraform destroy
+
+This command will erase the config of the terraform resources and also will power off the nodes.
+
+After this finishes there will be a functional cluster with 1 master running. Next step will be to enroll the worker.
