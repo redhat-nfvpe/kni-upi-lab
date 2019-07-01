@@ -8,6 +8,16 @@ variable "cluster_domain" {
   type = "string"
 }
 
+variable "provisioning_interface" {
+  type = "string"
+  default = ""
+}
+
+variable "baremetal_interface" {
+  type = "string"
+  default = ""
+}
+
 variable "bootstrap_ign_file" {
   type = "string"
 }

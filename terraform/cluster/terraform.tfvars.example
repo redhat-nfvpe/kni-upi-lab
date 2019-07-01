@@ -7,6 +7,14 @@ bootstrap_ign_file = "/path/to/local/bootstrap.ign"
 cluster_domain = "cluster.domain"
 cluster_id="cluster_name"
 
+// Interfaces
+// If you are using two networks (provisioning and baremetal), uncomment and
+// set these variables to corresponding names of the interfaces for those 
+// networks.  Failing to do so can prevent CoreOS ignition from working properly, 
+// especially on target machines with many interfaces.
+//provisioning_interface = "em1"
+//baremetal_interface = "em2"
+
 // The number of control plane machines required.
 //
 // Since etcd is colocated on control plane machines, suggested number is 3 or 5.
