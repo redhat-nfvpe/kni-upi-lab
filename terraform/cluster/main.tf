@@ -6,7 +6,9 @@ locals {
     "console=ttyS0,115200n8",
     "console=ttyS1,115200n8",
     "rd.neednet=1",
-    "nameserver=${var.nameserver}"
+    "nameserver=${var.nameserver}",
+    (var.provisioning_interface != "" ? "ip=${var.provisioning_interface}:dhcp" : " "),
+    (var.baremetal_interface != "" ? "ip=${var.baremetal_interface}:dhcp" : " "),
 
     # "rd.break=initqueue"
     "coreos.inst=yes",
