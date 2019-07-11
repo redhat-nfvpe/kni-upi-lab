@@ -8,6 +8,11 @@ variable "cluster_domain" {
   type = "string"
 }
 
+variable "nameserver" {
+  type = "string"
+  default = ""
+}
+
 variable "provisioning_interface" {
   type = "string"
   default = ""
