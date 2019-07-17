@@ -62,15 +62,21 @@ pxe_kernel_url = "assets/rhcos-4.1.0-x86_64-installer-kernel"
 // For more info: https://github.com/coreos/coreos-installer#kernel-command-line-options-for-coreos-installer-running-in-the-initramfs
 pxe_os_image_url = "http://${PROVISIONING_IP}:8080/assets/rhcos-4.1.0-x86_64-metal-bios.raw.gz"
 
-master_public_ipv4 = "${MASTER_IP}"
-master_ipmi_host = "${MASTER_IPMI_HOST}"
-master_ipmi_user = "${MASTER_IPMI_USER}"
-master_ipmi_pass = "${MASTER_IPMI_PASS}"
+master_nodes = [
+  {
+    name: "${MASTER0_NAME}",
+    public_ipv4: "${MASTER0_IP}",
+    ipmi_host: "${MASTER0_IPMI_HOST}",
+    ipmi_user: "${MASTER0_IPMI_USER}",
+    ipmi_pass: "${MASTER0_IPMI_PASS}",
+    mac_address: "${MASTER0_MAC}"
+  }
+]
+
 bootstrap_public_ipv4 = "${BOOTSTRAP_IP}"
 bootstrap_ipmi_host = "${BOOTSTRAP_IPMI_HOST}"
 bootstrap_ipmi_user = "${BOOTSTRAP_IPMI_USER}"
 bootstrap_ipmi_pass = "${BOOTSTRAP_IPMI_PASS}"
 
 bootstrap_mac_address = "${BOOTSTRAP_MAC}"
-master_mac_address = "${MASTER_MAC}"
 nameserver= "$COREDNS_IP"

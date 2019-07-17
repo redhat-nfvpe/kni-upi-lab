@@ -34,12 +34,13 @@ variable "matchbox_client_key" {
   default = "matchbox/tls/client.key"
 }
 
-variable "worker_public_ipv4" {
-  type = "string"
+variable "worker_count" {
+  type    = "string"
+  default = "1"
 }
 
-variable "worker_mac_address" {
-  type = "string"
+variable "worker_nodes" {
+  type = list(map(string))
 }
 
 variable "worker_kernel" {
@@ -49,17 +50,5 @@ variable "worker_initrd" {
   type = "string"
 }
 variable "worker_kickstart" {
-  type = "string"
-}
-
-variable "worker_ipmi_host" {
-  type = "string"
-}
-
-variable "worker_ipmi_user" {
-  type = "string"
-}
-
-variable "worker_ipmi_pass" {
   type = "string"
 }
