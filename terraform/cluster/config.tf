@@ -36,9 +36,8 @@ variable "master_count" {
   default = "1"
 }
 
-variable "master_public_ipv4" {
-  type = "string"
-
+variable "master_nodes" {
+  type = list(map(string))
 }
 
 variable "bootstrap_public_ipv4" {
@@ -46,22 +45,6 @@ variable "bootstrap_public_ipv4" {
 }
 
 variable "bootstrap_mac_address" {
-  type = "string"
-}
-
-variable "master_mac_address" {
-  type = "string"
-}
-
-variable "master_ipmi_host" {
-  type = "string"
-}
-
-variable "master_ipmi_user" {
-  type = "string"
-}
-
-variable "master_ipmi_pass" {
   type = "string"
 }
 
