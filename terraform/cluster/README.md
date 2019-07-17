@@ -28,7 +28,7 @@ Place that file on /tmp/baremetal, and execute openshift-installer pointing ther
 
     ./openshift-install create ignition-configs --dir=<installation_directory>
 
-This will generate [bootstrap|master|worker].ign , that are the ignition files used for cluster generation. There is also an auth/kubeconfig file that will be used later for enrolling the worker nodes. The ignition file generation must be performed everytime you redeploy the cluster, otherwise, certificates might expire and the user shall not be able to interact with the running cluster. 
+This will generate [bootstrap|master|worker].ign , that are the ignition files used for cluster generation. There is also an auth/kubeconfig file that will be used later for enrolling the worker nodes. The ignition file generation must be performed everytime you redeploy the cluster, otherwise, certificates might expire and the user shall not be able to interact with the running cluster.
 
 - Download the RHCOS images and place them in /var/lib/matchbox/assets directory. The images can be downloaded from [https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/) . You will need to download the *-installer-initramfs.img , *-installer-kernel  and the *-[metal-bios|metal-uefi]\* ones (this one depending on your BIOS/UEFI config). These three images need to be stored in the following path:
 
@@ -46,7 +46,7 @@ In order to automate the deployment of the cluster, a terraform.tfvars.example f
 - pxe_os_image_url (http://${PROVISIONING_IP}:8080/name_[uefi|bios]_image
 - bootstrap_public_ipv4, master_public_ipv4 (public ips for bootstrap and master nodes)
 - bootstrap_mac_address, master_mac_address (MAC addresses of the NICs used for pxe booting)
-- master_ipmi_host, user, pass (IPMI credentials for the master boot)
+- master_nodes: list of a map with: name, public_ipv4, ipmi_host, ipmi_user, ipmi_pass, mac_address
 - bootstrap_ipmi_host, user, pass (IPMI credentials for the bootstrap boot)
 
 As a side note, we strongly recommend to read carefully the terraform.tfvars comments to set the parameters correctly. For instance, the PXE image URLs can be http endpoints, or a relative path to the matchbox directory (/var/lib/matchbox).

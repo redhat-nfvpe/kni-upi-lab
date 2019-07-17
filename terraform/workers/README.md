@@ -10,12 +10,11 @@ In order to enroll a worker node based on CentOS/RHEL, we need to execute some p
 
 After that, you need to use the automation on [https://github.com/redhat-nfvpe/upi-rt/tree/master/terraform/workers](https://github.com/redhat-nfvpe/upi-rt/tree/master/terraform/workers) and configure it properly to PXE boot the worker node, using CentOS images and kickstart config file, and enroll into the cluster.
 The terraform configuration and procedure is similar to the master one, but with some specific configuration for worker. There is a **terraform.tfvars.example** file that needs to be renamed to terraform.tfvars and configured properly. The vars specific for the worker are:
- - worker_public_ipv4
- - worker_mac_address
  - worker_kernel (assets/centos.vmlinuz)
  - worker_initrd (assets/initrd.img)
  - worker_kickstart (http://PROVISIONING_IP:8080/assets/kickstart_file.cfg)
- - worker_ipmi_[host, user, pass] (IPMI credentials)
+ - worker_count: number of worker nodes
+ - worker_nodes: list of a map with: name, public_ipv4, ipmi_host, ipmi_user, ipmi_pass
 
 After configuration, terraform can be applied with the same commands:
 
