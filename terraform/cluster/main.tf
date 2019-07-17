@@ -20,7 +20,6 @@ locals {
   pxe_kernel = "${var.pxe_kernel_url}"
   pxe_initrd = "${var.pxe_initrd_url}"
 
-  master_public_ipv4 = "${var.master_public_ipv4}"
   bootstrap_public_ipv4 = "${var.bootstrap_public_ipv4}"
 }
 
@@ -41,7 +40,8 @@ resource "matchbox_group" "default" {
 }
 
 resource "matchbox_profile" "master" {
-  name   = "${var.cluster_id}-master"
+  count  = var.master_count
+  name   = var.master_nodes[count.index]["name"]
   kernel = "${local.pxe_kernel}"
 
   initrd = [
@@ -50,18 +50,19 @@ resource "matchbox_profile" "master" {
 
   args = flatten([
     "${local.kernel_args}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_mac_address}",
+    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_nodes[count.index]["mac_address"]}",
   ])
 
   raw_ignition = "${file(var.master_ign_file)}"
 }
 
 resource "matchbox_group" "master" {
-  name    = "${var.cluster_id}-master"
-  profile = "${matchbox_profile.master.name}"
+  count   = var.master_count
+  name    = var.master_nodes[count.index]["name"]
+  profile = "${matchbox_profile.master[count.index]["name"]}"
 
   selector = {
-    mac = "${var.master_mac_address}"
+    mac = "${var.master_nodes[count.index]["mac_address"]}"
   }
 }
 
