@@ -10,6 +10,7 @@ variable "cluster_domain" {
 
 variable "nameserver" {
   type = "string"
+  default = ""
 }
 
 variable "provisioning_interface" {
