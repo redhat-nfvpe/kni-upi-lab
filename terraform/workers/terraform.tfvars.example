@@ -4,6 +4,9 @@
 cluster_domain = "kni.home"
 cluster_id="test"
 
+// The number of workers required
+worker_count = "1"
+
 // Client certificate used to authenticate with the matchbox RPC API.
 //
 // For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
@@ -27,12 +30,16 @@ matchbox_rpc_endpoint = "${PROVISION_IP}:8081"
 // Certificate Authority certificate to trust the matchbox endpoint.
 matchbox_trusted_ca_cert = "/path/to/local/matchbox/scripts/tls/ca.crt"
 
-worker_public_ipv4 = "${WORKER_IP}"
-worker_mac_address = "${WORKER_MAC}"
+worker_nodes = [
+  {
+    name: "${WORKER0_NAME}",
+    public_ipv4: "${WORKER0_IP}",
+    ipmi_host: "${WORKER0_IPMI_HOST}",
+    ipmi_user: "${WORKER0_IPMI_PASS}",
+    mac_address: "${WORKER0_MAC}"
+  }
+]
 
 worker_kernel = "assets/rhel_vmlinuz"
 worker_initrd = "assets/rhel_initrd.img"
 worker_kickstart = "http://${PROVISION_IP}:8080/assets/centos-rt-worker-kickstart.cfg"
-worker_ipmi_host = "${WORKER_IPMI_HOST}"
-worker_ipmi_user = "${WORKER_IPMI_USER}"
-worker_ipmi_pass = "${WORKER_IPMI_PASS}"

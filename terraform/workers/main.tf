@@ -9,8 +9,6 @@ locals {
 
     # "rd.break=initqueue"
   ]
-
-  worker_public_ipv4 = "${var.worker_public_ipv4}"
 }
 
 provider "matchbox" {
@@ -30,7 +28,8 @@ resource "matchbox_group" "default" {
 }
 
 resource "matchbox_profile" "worker" {
-  name   = "${var.cluster_id}-worker"
+  count = var.worker_count
+  name   = var.worker_nodes[count.index]["name"]
   kernel = "${var.worker_kernel}"
 
   initrd = [
@@ -45,12 +44,11 @@ resource "matchbox_profile" "worker" {
 }
 
 resource "matchbox_group" "worker" {
-  name    = "${var.cluster_id}-worker"
-  profile = "${matchbox_profile.worker.name}"
+  count = var.worker_count
+  name    = var.worker_nodes[count.index]["name"]
+  profile = "${matchbox_profile.worker[count.index]["name"]}"
 
   selector = {
-    mac = "${var.worker_mac_address}"
+    mac = "${var.worker_nodes[count.index]["mac_address"]}"
   }
 }
-
-
