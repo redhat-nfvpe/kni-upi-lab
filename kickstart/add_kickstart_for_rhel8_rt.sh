@@ -25,6 +25,8 @@ clearpart --all --initlabel
 part / --fstype ext4 --grow
 auth --passalgo=sha512 --useshadow
 selinux --disabled
+services --disabled firewalld,nftables
+
 skipx
 firstboot --disable
 user --name=core --groups=wheel
