@@ -20,6 +20,9 @@ systemctl enable cri-o
 # disable swap
 swapoff -a
 
+# maskin firewalld, iptables and nftables (required by OCP in RHEL8)
+systemctl mask firewalld iptables nftables
+
 # enable ip forwarding
 sysctl -w net.ipv4.ip_forward=1
 sysctl --system
@@ -47,5 +50,8 @@ EOL
 
 chmod 664 /etc/systemd/system/runignition.service
 systemctl enable runignition
+
+# Inject NM Workaround (required for OCP with multiple physical NICs)
+sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/nm-online -s -q --timeout=300|" /usr/lib/systemd/system/NetworkManager-wait-online.service
 
 sed -i '/^.*linux16.*/ s/$/ ip=eno1:dhcp ip=eno2:dhcp rd.neednet=1/' /boot/grub2/grub.cfg
