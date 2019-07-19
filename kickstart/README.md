@@ -15,6 +15,13 @@ Those scripts rely on a file *settings_upi.env* that needs to be placed at $HOME
 
 Once the .cfg file has been generated, move it to the right matchbox assets directory and proceed to the next step.
 
+For RT nodes, those vars are needed as well:
+
+ - RT_TUNED_ISOLATE_CORES
+ - RT_TUNED_HUGEPAGE_SIZE_DEFAULT
+ - RT_TUNED_HUGEPAGE_SIZE
+ - RT_TUNED_HUGEPAGE_NUM
+
 ## How to generate for RHEL
 
 Extra settings are needed in settings_upi.env for RHEL: *RH_USERNAME*, *RH_PASSWORD*, *RH_POOL*. This needs to match
