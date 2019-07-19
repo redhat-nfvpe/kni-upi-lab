@@ -37,6 +37,10 @@ cat <<EOF > /etc/profile.env
 export RH_USERNAME="${RH_USERNAME}"
 export RH_PASSWORD="${RH_PASSWORD}"
 export RH_POOL="${RH_POOL}"
+export RT_TUNED_ISOLATE_CORES="${RT_TUNED_ISOLATE_CORES}"
+export RT_TUNED_HUGEPAGE_SIZE_DEFAULT="${RT_TUNED_HUGEPAGE_SIZE_DEFAULT}"
+export RT_TUNED_HUGEPAGE_SIZE="${RT_TUNED_HUGEPAGE_SIZE}"
+export RT_TUNED_HUGEPAGE_NUM="${RT_TUNED_HUGEPAGE_NUM}"
 EOF
 
 # Add core ssh key
@@ -73,10 +77,11 @@ cat <<'EOF' > /tmp/enroll_rhel8_node.sh
 ${ENROLL_CENTOS_NODE}
 EOF
 
-# write rt script
+# write rt script and replace vars
 cat <<'EOD' > /tmp/rt_script.sh
 ${ADD_RT_SCRIPT}
 EOD
+envsubst < /tmp/rt_script.sh > /tmp/rt_script.sh
 
 # write runignition script
 cat <<'EOF' > /tmp/runignition.sh
