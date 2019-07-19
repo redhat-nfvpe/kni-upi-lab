@@ -81,7 +81,6 @@ EOF
 cat <<'EOD' > /tmp/rt_script.sh
 ${ADD_RT_SCRIPT}
 EOD
-envsubst < /tmp/rt_script.sh > /tmp/rt_script.sh
 
 # write runignition script
 cat <<'EOF' > /tmp/runignition.sh
