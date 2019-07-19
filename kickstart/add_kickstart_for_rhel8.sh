@@ -22,7 +22,7 @@ bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
 part / --fstype ext4 --grow
-auth --passalgo=sha512 --useshadow
+autopart --noswap --nohome
 selinux --disabled
 services --disabled firewalld,nftables
 skipx

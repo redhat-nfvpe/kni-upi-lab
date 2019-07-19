@@ -22,7 +22,7 @@ repo --name="AppStream" --baseurl=${RHEL_INSTALL_ENDPOINT}/AppStream/
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
-part / --fstype ext4 --grow
+autopart --noswap --nohome
 auth --passalgo=sha512 --useshadow
 selinux --disabled
 services --disabled firewalld,nftables

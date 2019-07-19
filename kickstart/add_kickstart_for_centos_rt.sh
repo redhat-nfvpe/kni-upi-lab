@@ -21,7 +21,7 @@ url --url=http://mirror.centos.org/centos/7.6.1810/os/x86_64/
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
-part / --fstype ext4 --grow
+autopart --noswap --nohome
 auth --passalgo=sha512 --useshadow
 selinux --disabled
 services --enabled=iptables
