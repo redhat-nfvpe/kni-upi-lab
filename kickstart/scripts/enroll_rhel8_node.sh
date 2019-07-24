@@ -3,7 +3,7 @@ set -eux
 # enable subscription
 source /etc/profile.env
 subscription-manager register --username $RH_USERNAME --password $RH_PASSWORD --force
-subscription-manager attach --pool=$RH_POOL
+subscription-manager attach --pool=$RH_POOL || true
 subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms
 subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms
 
