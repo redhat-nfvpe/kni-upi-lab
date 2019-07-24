@@ -4,7 +4,7 @@ source $HOME/settings_upi.env
 
 IGNITION_ENDPOINT="https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:22623/config/worker"
 CORE_SSH_KEY=$(cat $HOME/.ssh/id_rsa.pub)
-ENROLL_CENTOS_NODE=$(cat ./scripts/enroll_centos_node.sh)
+ENROLL_CENTOS_NODE=$(cat ./scripts/enroll_rhel8_node.sh)
 PODMAN_SERVICE=$(cat ./scripts/podman_service.sh)
 KUBECONFIG_FILE=$(cat $KUBECONFIG_PATH)
 
@@ -22,8 +22,10 @@ bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
 autopart --noswap --nohome
+auth --passalgo=sha512 --useshadow
 selinux --disabled
 services --disabled firewalld,nftables
+
 skipx
 firstboot --disable
 user --name=core --groups=wheel
@@ -78,7 +80,7 @@ EOF
 chmod a+x /tmp/runignition.sh
 touch /tmp/runonce
 
-# execute enroll script
+# execute enroll and rt script
 bash /tmp/enroll_rhel8_node.sh
 %end
 %packages
