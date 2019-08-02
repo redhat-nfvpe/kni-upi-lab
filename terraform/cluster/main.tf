@@ -39,33 +39,21 @@ resource "matchbox_group" "default" {
   profile = "${matchbox_profile.default.name}"
 }
 
-resource "matchbox_profile" "master" {
-  count  = var.master_count
-  name   = var.master_nodes[count.index]["name"]
-  kernel = "${local.pxe_kernel}"
+# ==============MASTERS===================
+module "masters" {
+  source = "./masters"
 
-  initrd = [
-    "${local.pxe_initrd}",
-  ]
+  master_count            = "${var.master_count}"
+  master_nodes            = "${var.master_nodes}"
+  pxe_kernel              = "${local.pxe_kernel}"
+  pxe_initrd              = "${local.pxe_initrd}"
+  pxe_kernel_args         = "${local.kernel_args}"
+  matchbox_http_endpoint  = "${var.matchbox_http_endpoint}"
+  ignition_config_content = "${file(var.master_ign_file)}"
 
-  args = flatten([
-    "${local.kernel_args}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_nodes[count.index]["mac_address"]}",
-  ])
+  cluster_id = "${var.cluster_id}"
 
-  raw_ignition = "${file(var.master_ign_file)}"
 }
-
-resource "matchbox_group" "master" {
-  count   = var.master_count
-  name    = var.master_nodes[count.index]["name"]
-  profile = "${matchbox_profile.master[count.index]["name"]}"
-
-  selector = {
-    mac = "${var.master_nodes[count.index]["mac_address"]}"
-  }
-}
-
 
 # ==============BOOTSTRAP=================
 
