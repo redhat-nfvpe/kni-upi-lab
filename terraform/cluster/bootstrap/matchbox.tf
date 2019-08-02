@@ -8,6 +8,7 @@ resource "matchbox_profile" "bootstrap" {
 
   args = flatten([
     "${var.pxe_kernel_args}",
+    "coreos.inst.install_dev=${var.install_dev}",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.bootstrap_mac_address}",
   ])
 

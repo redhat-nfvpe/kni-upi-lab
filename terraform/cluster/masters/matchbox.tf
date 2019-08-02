@@ -9,6 +9,7 @@ resource "matchbox_profile" "master" {
 
   args = flatten([
     "${var.pxe_kernel_args}",
+    "coreos.inst.install_dev=${var.master_nodes[count.index]["install_dev"]}",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_nodes[count.index]["mac_address"]}",
   ])
   raw_ignition = "${var.ignition_config_content}"

@@ -59,6 +59,27 @@ variable "bootstrap_ipmi_user" {
 variable "bootstrap_ipmi_pass" {
   type = "string"
 }
+
+variable "bootstrap_memory_gb" {
+  type = "string"
+}
+
+variable "bootstrap_vcpu" {
+  type = "string"
+}
+
+variable "bootstrap_provisioning_bridge" {
+  type = "string"
+}
+
+variable "bootstrap_baremetal_bridge" {
+  type = "string"
+}
+
+variable "bootstrap_install_dev" {
+  type = "string"
+}
+
 # ================MATCHBOX=====================
 
 variable "matchbox_rpc_endpoint" {

@@ -14,7 +14,6 @@ locals {
     "coreos.inst=yes",
 
     "coreos.inst.image_url=${var.pxe_os_image_url}",
-    "coreos.inst.install_dev=sda",
   ]
 
   pxe_kernel = "${var.pxe_kernel_url}"
@@ -71,6 +70,10 @@ module "bootstrap" {
   bootstrap_ipmi_user     = "${var.bootstrap_ipmi_user}"
   bootstrap_ipmi_pass     = "${var.bootstrap_ipmi_pass}"
 
-  cluster_id = "${var.cluster_id}"
-
+  cluster_id          = "${var.cluster_id}"
+  memory_gb           = "${var.bootstrap_memory_gb}"
+  vcpu                = "${var.bootstrap_vcpu}"
+  provisioning_bridge = "${var.bootstrap_provisioning_bridge}"
+  baremetal_bridge    = "${var.bootstrap_baremetal_bridge}"
+  install_dev         = "${var.bootstrap_install_dev}"
 }

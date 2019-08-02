@@ -37,3 +37,23 @@ variable "bootstrap_ipmi_user" {
 variable "bootstrap_ipmi_pass" {
   type = "string"
 }
+
+variable "memory_gb" {
+  type = "string"
+}
+
+variable "vcpu" {
+  type = "string"
+}
+
+variable "provisioning_bridge" {
+  type = "string"
+}
+
+variable "baremetal_bridge" {
+  type = "string"
+}
+
+variable "install_dev" {
+  type = "string"
+}
