@@ -48,18 +48,6 @@ variable "bootstrap_mac_address" {
   type = "string"
 }
 
-variable "bootstrap_ipmi_host" {
-  type = "string"
-}
-
-variable "bootstrap_ipmi_user" {
-  type = "string"
-}
-
-variable "bootstrap_ipmi_pass" {
-  type = "string"
-}
-
 variable "bootstrap_memory_gb" {
   type = "string"
 }

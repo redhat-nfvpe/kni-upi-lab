@@ -62,7 +62,7 @@ In order to automate the deployment of the cluster, a terraform.tfvars.example f
 - bootstrap_public_ipv4, master_public_ipv4 (public ips for bootstrap and master nodes)
 - bootstrap_mac_address, master_mac_address (MAC addresses of the NICs used for pxe booting)
 - master_nodes: list of a map with: name, public_ipv4, ipmi_host, ipmi_user, ipmi_pass, mac_address (pxe mac), install_dev
-- bootstrap_public_ipv4, bootstrap_ipmi_host, user, pass (IPMI credentials for the bootstrap boot)
+- bootstrap_public_ipv4
 - bootstrap_memory_gb, bootstrap_vcpu, bootstrap_install_dev (vda)
 - bootstrap_provisioning_bridge (provisioning), bootstrap_baremetal_bridge (baremetal)
 - bootstrap_mac_address (random mac address that will be set on bootstrap pxe interface)

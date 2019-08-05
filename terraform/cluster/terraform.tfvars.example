@@ -9,8 +9,8 @@ cluster_id="cluster_name"
 
 // Interfaces
 // If you are using two networks (provisioning and baremetal), uncomment and
-// set these variables to corresponding names of the interfaces for those 
-// networks.  Failing to do so can prevent CoreOS ignition from working properly, 
+// set these variables to corresponding names of the interfaces for those
+// networks.  Failing to do so can prevent CoreOS ignition from working properly,
 // especially on target machines with many interfaces.
 //provisioning_interface = "em1"
 //baremetal_interface = "em2"
@@ -75,9 +75,6 @@ master_nodes = [
 ]
 
 bootstrap_public_ipv4 = "${BOOTSTRAP_IP}"
-bootstrap_ipmi_host = "${BOOTSTRAP_IPMI_HOST}"
-bootstrap_ipmi_user = "${BOOTSTRAP_IPMI_USER}"
-bootstrap_ipmi_pass = "${BOOTSTRAP_IPMI_PASS}"
 bootstrap_memory_gb = "12"
 bootstrap_vcpu = "6"
 bootstrap_provisioning_bridge = "provisioning"
