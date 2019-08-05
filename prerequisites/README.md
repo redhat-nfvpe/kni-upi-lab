@@ -1,13 +1,13 @@
 # Prerequisites
 
-This procedure is based in baremetal. So in order to reproduce it , you will need to have at least 3 baremetal machines + an extra one from where to run the deployment and the utilities. You will also need some specific network configuration.
+This procedure is based in a VM for bootstrap and on baremetal for masters and workers. So in order to reproduce it , you will need to have at least 2 baremetal machines + an extra one from where to run the deployment and the utilities and the bootstrap VM. You will also need some specific network configuration.
 
 ## Network requirements
 In order to automate the UPI deployment, this procedure has the following needs:
 
-- Access to IPMI on the bootstrap, master and worker nodes (from the installer machine)
-- A PXE network with isolated traffic
-- General baremetal network
+- Access to IPMI on master and worker nodes (from the installer machine)
+- A PXE network with isolated traffic (`provisioning` bridge needs to be created on the installer machine attached to that network)
+- General baremetal network (`baremetal` bridge needs to be created on the installer machine attached to that network)
 - A router capable of giving DHCP to the baremetal network . It is recommended to have static mapping, for predictable IPs and to set the hostname depending on mac address.
 - The DHCP server needs to forward the DNS to a local CoreDNS instance that we are going to setup later
 

@@ -35,7 +35,8 @@ worker_nodes = [
     name: "${WORKER0_NAME}",
     public_ipv4: "${WORKER0_IP}",
     ipmi_host: "${WORKER0_IPMI_HOST}",
-    ipmi_user: "${WORKER0_IPMI_PASS}",
+    ipmi_user: "${WORKER0_IPMI_USER}",
+    ipmi_pass: "${WORKER0_IPMI_PASS}",
     mac_address: "${WORKER0_MAC}"
   }
 ]

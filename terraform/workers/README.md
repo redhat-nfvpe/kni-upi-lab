@@ -14,7 +14,7 @@ The terraform configuration and procedure is similar to the master one, but with
  - worker_initrd (assets/initrd.img)
  - worker_kickstart (http://PROVISIONING_IP:8080/assets/kickstart_file.cfg)
  - worker_count: number of worker nodes
- - worker_nodes: list of a map with: name, public_ipv4, ipmi_host, ipmi_user, ipmi_pass
+ - worker_nodes: list of a map with: name, public_ipv4, ipmi_host, ipmi_user, ipmi_pass, mac_address
 
 After configuration, terraform can be applied with the same commands:
 
