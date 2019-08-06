@@ -36,6 +36,7 @@ resource "null_resource" "vm_bootstrap_destroy" {
     provisioner "local-exec" {
         when = "destroy"
         command = <<EOT
+virsh destroy ${var.cluster_id}-bootstrap
 virsh undefine ${var.cluster_id}-bootstrap
 EOT
     }
