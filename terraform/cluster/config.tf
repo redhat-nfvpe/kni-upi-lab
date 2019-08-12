@@ -23,6 +23,16 @@ variable "baremetal_interface" {
   default = ""
 }
 
+variable "bootstrap_provisioning_interface" {
+  type = "string"
+  default = ""
+}
+
+variable "bootstrap_baremetal_interface" {
+  type = "string"
+  default = ""
+}
+
 variable "bootstrap_ign_file" {
   type = "string"
 }
