@@ -7,8 +7,6 @@ locals {
     "console=ttyS1,115200n8",
     "rd.neednet=1",
     "nameserver=${var.nameserver}",
-    (var.provisioning_interface != "" ? "ip=${var.provisioning_interface}:dhcp" : " "),
-    (var.baremetal_interface != "" ? "ip=${var.baremetal_interface}:dhcp" : " "),
 
     # "rd.break=initqueue"
     "coreos.inst=yes",
@@ -42,11 +40,16 @@ resource "matchbox_group" "default" {
 module "masters" {
   source = "./masters"
 
+  pxe_kernel_args = "${concat([
+    (var.provisioning_interface != "" ? "ip=${var.provisioning_interface}:dhcp" : " "),
+    (var.baremetal_interface != "" ? "ip=${var.baremetal_interface}:dhcp" : " "),
+  ], local.kernel_args)}"
+
+
   master_count            = "${var.master_count}"
   master_nodes            = "${var.master_nodes}"
   pxe_kernel              = "${local.pxe_kernel}"
   pxe_initrd              = "${local.pxe_initrd}"
-  pxe_kernel_args         = "${local.kernel_args}"
   matchbox_http_endpoint  = "${var.matchbox_http_endpoint}"
   ignition_config_content = "${file(var.master_ign_file)}"
 
@@ -59,9 +62,13 @@ module "masters" {
 module "bootstrap" {
   source = "./bootstrap"
 
+  pxe_kernel_args = "${concat([
+    (var.bootstrap_provisioning_interface != "" ? "ip=${var.bootstrap_provisioning_interface}:dhcp" : " "),
+    (var.bootstrap_baremetal_interface != "" ? "ip=${var.bootstrap_baremetal_interface}:dhcp" : " "),
+  ], local.kernel_args)}"
+
   pxe_kernel             = "${local.pxe_kernel}"
   pxe_initrd             = "${local.pxe_initrd}"
-  pxe_kernel_args        = "${local.kernel_args}"
   matchbox_http_endpoint = "${var.matchbox_http_endpoint}"
   bootstrap_mac_address  = "${var.bootstrap_mac_address}"
   ignition_config_content = "${file(var.bootstrap_ign_file)}"
