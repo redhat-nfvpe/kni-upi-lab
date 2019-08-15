@@ -1,0 +1,12 @@
+# This file stores environment variables required by the prep_bm_host.sh script.
+# Set the values here and then run prep_bm_host.sh.
+
+export PROV_INTF=eno2
+export PROV_BRIDGE=provisioning
+
+export BM_INTF=ens1f0
+export BM_BRIDEG=baremetal
+
+export EXT_INTF=eno1
+export PROV_IP_CIDR="172.22.0.0/24"
+export BM_IP_CIDR="192.168.111.0/24"
