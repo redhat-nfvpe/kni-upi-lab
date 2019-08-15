@@ -174,6 +174,8 @@ fi
 
 printf "\nRemoving dependencies via yum...\n\n"
 
-sudo yum remove -y git podman unzip ipmitool dnsmasq bridge-utils epel-release python-pip jq
+if [[ "$1" == "all" ]]; then
+    sudo yum remove -y git podman unzip ipmitool dnsmasq bridge-utils epel-release python-pip jq
+fi
 
 printf "\nDONE\n"
