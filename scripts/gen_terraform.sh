@@ -123,7 +123,6 @@ gen_terraform_cluster() {
         done
 
         printf "master_nodes = [\n"
-        printf "  {\n"
 
     } >"$ofile"
     {
@@ -134,6 +133,7 @@ gen_terraform_cluster() {
                 printf "\n Missing manifest data for %s, %d masters(replicas) were specified in install-config.yaml\n" "$m" "$num_masters"
                 exit 1
             fi
+            printf "  {\n"
             printf "    name: \"%s\",\n" "${FINAL_VALS[$m.metadata.name]}"
             printf "    public_ipv4: \"%s\",\n" "$(get_master_bm_ip $i)"
             printf "    ipmi_host: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.address]}"
@@ -206,6 +206,33 @@ gen_workers() {
     gen_terraform_workers "$terraform_dir"
 
 }
+
+gen_install() {
+    ###-------------------###
+    ### Prepare terraform ###
+    ###-------------------###
+
+    printf "\nInstalling Terraform\n\n"
+
+    (
+        cd /tmp
+
+        if [[ ! -f "/usr/bin/terraform" ]]; then
+            curl -O "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip"
+            unzip terraform_0.12.2_linux_amd64.zip
+            sudo mv terraform /usr/bin/.
+        fi
+
+        if [[ ! -f "$HOME/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
+            git clone https://github.com/poseidon/terraform-provider-matchbox.git
+            cd terraform-provider-matchbox
+            go build
+            mkdir -p "$HOME/.terraform.d/plugins"
+            cp terraform-provider-matchbox "$HOME/.terraform.d/plugins/"
+        fi
+    ) || exit 1
+}
+
 if [ "$#" -lt 1 ]; then
     usage
 fi
@@ -283,6 +310,9 @@ cluster)
     ;;
 workers)
     gen_workers "$terraform_dir"
+    ;;
+install)
+    gen_install
     ;;
 apply-cluster)
     cp "$out_dir/$CLUSTER_TFVARS" upi-rt/terraform/cluster

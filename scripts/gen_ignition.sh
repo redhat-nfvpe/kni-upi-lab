@@ -17,6 +17,66 @@ EOM
     exit 0
 }
 
+gen_ignition() {
+
+    if [ ! -f "$manifest_dir/install-config.yaml" ]; then
+        printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
+        exit 1
+    fi
+
+    rm -rf "$out_dir"
+    mkdir -p "$out_dir"
+    cp "$manifest_dir/install-config.yaml" "$out_dir"
+
+    if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
+        printf "openshift-install create ignition-configs failed!\n"
+        exit 1
+    fi
+
+    if [ ! -f "${FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${FINAL_VALS[master_ign_file]}" ]; then
+        printf "terraform cluster vars expects ignition files in the following places...\n"
+        printf "\t%s\n" "bootstrap_ign_file = ${FINAL_VALS[bootstrap_ign_file]}"
+        printf "\t%s\n" "master_ign_file = ${FINAL_VALS[master_ign_file]}"
+        printf "The following Ignition files were generated\n"
+        for f in "$out_dir"/*.ign; do
+            printf "\t%s\n" "$f"
+        done
+        printf "Need to correct paths...\n"
+
+        exit 1
+    fi
+
+}
+
+install_openshift_bin() {
+    (
+        cd /tmp
+
+        if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
+            # FIXME: This is a cheap hack to get the latest version, but will fail if the
+            # target index page's HTML fields change
+            LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-install-linux | cut -d '"' -f 8)
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_INSTALLER"
+            tar xvf "$LATEST_OCP_INSTALLER"
+            sudo mv openshift-install /usr/local/bin/
+        fi
+
+    ) || exit 1
+}
+
+install_openshift_oc() {
+    (
+        cd /tmp
+
+        if [[ ! -f "/usr/local/bin/oc" ]]; then
+            LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-client-linux | cut -d '"' -f 8)
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_CLIENT"
+            tar xvf "$LATEST_OCP_CLIENT"
+            sudo mv oc /usr/local/bin/
+        fi
+    ) || exit 1
+}
+
 VERBOSE="false"
 export VERBOSE
 
@@ -42,6 +102,13 @@ while getopts ":hvm:o:" opt; do
     esac
 done
 shift $((OPTIND - 1))
+
+if [ "$#" -gt 0 ]; then
+    COMMAND=$1
+    shift
+else
+    COMMAND="ignition"
+fi
 
 # shellcheck disable=SC1091
 source "common.sh"
@@ -81,29 +148,19 @@ parse_manifests "$manifest_dir"
 map_cluster_vars
 map_worker_vars
 
-if [ ! -f "$manifest_dir/install-config.yaml" ]; then
-    printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
-    exit 1
-fi
-
-rm -rf "$out_dir"
-mkdir -p "$out_dir"
-cp "$manifest_dir/install-config.yaml" "$out_dir"
-
-if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs > /dev/null; then
-    printf "openshift-install create ignition-configs failed!\n"
-    exit 1
-fi
-
-if [ ! -f "${FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${FINAL_VALS[master_ign_file]}" ]; then
-    printf "terraform cluster vars expects ignition files in the following places...\n"
-    printf "\t%s\n" "bootstrap_ign_file = ${FINAL_VALS[bootstrap_ign_file]}"
-    printf "\t%s\n" "master_ign_file = ${FINAL_VALS[master_ign_file]}"
-    printf "The following Ignition files were generated\n"
-    for f in "$out_dir"/*.ign; do
-        printf "\t%s\n" "$f"
-    done
-    printf "Need to correct paths...\n"
-
-    exit 1
-fi
+case "$COMMAND" in
+# Parse options to the install sub command
+ignition)
+    gen_ignition
+    ;;
+installer)
+    install_openshift_bin
+    ;;
+oc)
+    install_openshift_oc
+    ;;
+*)
+    echo "Unknown command: $COMMAND"
+    usage
+    ;;
+esac
