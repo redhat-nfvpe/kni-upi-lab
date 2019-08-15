@@ -64,8 +64,8 @@ gen_hostfile_bm() {
     fi
 
     if [ -n "${FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${FINAL_VALS[master\-2.spec.public_mac]}" ]; then
-        echo "${FINAL_VALS[master\-1.spec.bootMACAddress]},$BM_IP_MASTER_1,$cid-master-1.$cdomain" >>"$hostsfile"
-        echo "${FINAL_VALS[master\-2.spec.bootMACAddress]},$BM_IP_MASTER_2,$cid-master-2.$cdomain" >>"$hostsfile"
+        echo "${FINAL_VALS[master\-1.spec.bootMACAddress]},$(get_master_bm_ip 1),$cid-master-1.$cdomain" >>"$hostsfile"
+        echo "${FINAL_VALS[master\-2.spec.bootMACAddress]},$(get_master_bm_ip 2),$cid-master-2.$cdomain" >>"$hostsfile"
     fi
 
     # generate hostfile entries for workers
