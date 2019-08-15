@@ -4,7 +4,7 @@ kind: BareMetalHost
 metadata:
   name: master-1
   annotations:
-      kni.io/sdnNetworkMac: "0c:c4:7a:8e:ee:0c"
+      kni.io/sdnNetworkMac: "0c:c4:7a:19:70:cc"
 #     kni.io/sdnIPv4: "192.168.111.12"
 
 spec:
