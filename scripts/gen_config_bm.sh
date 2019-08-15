@@ -215,7 +215,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 
 map_cluster_vars
-
+ 
 case "$COMMAND" in
 bm)
     gen_config "$out_dir"

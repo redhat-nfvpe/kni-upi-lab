@@ -100,7 +100,7 @@ EOF
             [ -n "${FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
             [ -n "${FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
             printf "%s-master-1.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 1)"
-            printf "%s-master-1.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 1)"
+            printf "%s-master-2.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 2)"
         fi
     } >>"$cfg_file"
 
@@ -108,7 +108,15 @@ EOF
 $cluster_id-worker-0.$cluster_domain.                   A $(get_worker_bm_ip 0)
 $cluster_id-bootstrap.$cluster_domain.                  A $(nthhost "$BM_IP_CIDR" 10)
 etcd-0.$cluster_id.$cluster_domain.                     IN  CNAME $cluster_id-master-0.$cluster_domain.
-
+EOF
+    {
+        if [ "${FINAL_VALS[master_count]}" = 3 ]; then
+            printf "etcd-1.%s.%s.                     IN  CNAME %s-master-1.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
+            printf "etcd-2.%s.%s.                     IN  CNAME %s-master-2.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
+            printf "\n"
+        fi
+    } >>"$cfg_file"
+    cat <<EOF >>"$cfg_file"
 \$ORIGIN apps.$cluster_id.$cluster_domain.
 *                                                    A                $(nthhost "$BM_IP_CIDR" 1)
 EOF

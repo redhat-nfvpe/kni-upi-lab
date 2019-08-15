@@ -274,6 +274,7 @@ build)
     if ! podman tag "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"; then
         printf "Failed to tag image_id %s!" "$image_id"
     fi
+    printf "%s\n" "$image_id" > "$HAPROXY_DIR/imageid"
     ;;
 gen-config)
     ofile=$(gen_config_haproxy "$out_dir")
