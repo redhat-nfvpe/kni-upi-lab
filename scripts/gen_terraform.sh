@@ -179,7 +179,7 @@ gen_terraform_workers() {
             m="worker-$i"
 
             printf "    name: \"%s\",\n" "${FINAL_VALS[$m.metadata.name]}"
-            printf "    public_ipv4: \"%s\",\n" "$(get_master_bm_ip $i)"
+            printf "    public_ipv4: \"%s\",\n" "$(get_worker_bm_ip $i)"
             printf "    ipmi_host: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.address]}"
             printf "    ipmi_user: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.user]}"
             printf "    ipmi_pass: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.password]}"
