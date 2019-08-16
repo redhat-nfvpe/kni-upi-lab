@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-COREDNS_CONTAINTER_NAME="coredns"
+CONTAINER_NAME="coredns"
 
 set -o pipefail
 
@@ -213,36 +213,35 @@ db)
     printf "Generated %s...\n" "$ofile"
     ;;
 start)
-    if podman ps --all | grep "$COREDNS_CONTAINTER_NAME" >/dev/null; then
-        printf "Container already exists, removing and starting...\n"
-        podman stop "$COREDNS_CONTAINTER_NAME" >/dev/null 2>&1
-        if ! podman rm "$COREDNS_CONTAINTER_NAME" >/dev/null; then
-            printf "Could not remove \"%s\"" "$COREDNS_CONTAINTER_NAME"
-            exit 1
-        fi
-    fi
-    if ! cid=$(podman run -d --expose=53/udp --name "$COREDNS_CONTAINTER_NAME" \
+    gen_config "$out_dir"
+    
+    podman_exists "$CONTAINER_NAME" &&
+        (podman_rm "$CONTAINER_NAME" ||
+            printf "Could not remove %s!\n" "$CONTAINER_NAME")
+
+    if ! cid=$(sudo podman run -d --expose=53/udp --name "$COREDNS_CONTAINTER_NAME" \
         -p "$(nthhost "$BM_IP_CIDR" 1):53:53" -p "$(nthhost "$BM_IP_CIDR" 1):53:53/udp" \
         -v "$PROJECT_DIR/coredns:/etc/coredns:z" --name coredns coredns/coredns:latest \
         -conf /etc/coredns/Corefile); then
         printf "Could not start coredns container!\n"
         exit 1
     fi
-    run_status=$(podman inspect $COREDNS_CONTAINTER_NAME | jq .[0].State.Running)
-    if [[ "$run_status" =~ false ]]; then
-        printf "Failed to start container...\n"
-        podman logs "$COREDNS_CONTAINTER_NAME"
-    else
-        printf "Started %s as id %s\n" "$DNSMASQ_CONTAINER_NAME" "$cid"
-    fi
+    podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     ;;
 stop)
-    cid=$(podman stop "$COREDNS_CONTAINTER_NAME") && printf "Stopped %s\n" "$cid"
+    podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
     ;;
 remove)
-    podman stop "$COREDNS_CONTAINTER_NAME" 2>/dev/null && podman rm "$COREDNS_CONTAINTER_NAME" >/dev/null
+    podman_rm "$CONTAINER_NAME" && printf "Removed %s\n" "$CONTAINER_NAME" || exit 1
     ;;
-
+isrunning)
+    if ! podman_isrunning "$CONTAINER_NAME"; then
+        printf "%s is NOT running...\n" "$CONTAINER_NAME"
+        exit 1
+    else
+        printf "%s is running...\n" "$CONTAINER_NAME"
+    fi
+    ;;
 *)
     echo "Unknown command: ${COMMAND}"
     usage

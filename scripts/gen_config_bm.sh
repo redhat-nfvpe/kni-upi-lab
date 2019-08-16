@@ -3,8 +3,10 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-DNSMASQ_CONTAINER_NAME="dnsmasq-bm"
-DNSMASQ_CONTAINER_IMAGE="quay.io/poseidon/dnsmasq"
+CONTAINER_NAME="dnsmasq-bm"
+CONTAINER_IMAGE="quay.io/poseidon/dnsmasq"
+
+set -o pipefail
 
 # Script to generate dnsmasq.conf for the baremetal network
 # This script is intended to be called from a master script in the
@@ -40,6 +42,8 @@ EOM
 
 gen_hostfile_bm() {
     out_dir=$1
+
+    local cid
 
     hostsfile="$out_dir/$BM_ETC_DIR/dnsmasq.hostsfile"
 
@@ -215,45 +219,44 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 
 map_cluster_vars
- 
+
 case "$COMMAND" in
-bm)
+bm | config)
     gen_config "$out_dir"
     ;;
 start)
     gen_config "$out_dir"
-    if podman ps --all | grep "$DNSMASQ_CONTAINER_NAME" >/dev/null; then
-        printf "%s already exists, removing and starting...\n" "$DNSMASQ_CONTAINER_NAME"
-        podman stop "$DNSMASQ_CONTAINER_NAME" >/dev/null 2>&1
-        if ! podman rm "$DNSMASQ_CONTAINER_NAME" >/dev/null; then
-            printf "Could not remove \"%s\"" "$DNSMASQ_CONTAINER_NAME"
-            exit 1
-        fi
-    fi
-    if ! cid=$(podman run -d --name "$DNSMASQ_CONTAINER_NAME" --net=host \
+
+    podman_exists "$CONTAINER_NAME" &&
+        (podman_rm "$CONTAINER_NAME" ||
+            printf "Could not remove %s!\n" "$CONTAINER_NAME")
+
+    if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host \
         -v "$PROJECT_DIR/dnsmasq/bm/var/run:/var/run/dnsmasq:Z" \
         -v "$PROJECT_DIR/dnsmasq/bm/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
         --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 \
-        --expose=69/udp --cap-add=NET_ADMIN "$DNSMASQ_CONTAINER_IMAGE" \
+        --expose=69/udp --cap-add=NET_ADMIN "$CONTAINER_IMAGE" \
         --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q); then
-        printf "Could not start %s container!\n" "$DNSMASQ_CONTAINER_NAME"
+        printf "Could not start %s container!\n" "$CONTAINER_NAME"
         exit 1
     fi
-    run_status=$(podman inspect $DNSMASQ_CONTAINER_NAME | jq .[0].State.Running)
-    if [[ "$run_status" =~ false ]]; then
-        printf "Failed to start container...\n"
-        podman logs "$DNSMASQ_CONTAINER_NAME"
-    else
-        printf "Started %s as id %s\n" "$DNSMASQ_CONTAINER_NAME" "$cid"
-    fi
+
+    podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     ;;
 stop)
-    cid=$(podman stop "$DNSMASQ_CONTAINER_NAME") && printf "Stopped %s\n" "$cid"
+    podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
     ;;
 remove)
-    podman stop "$DNSMASQ_CONTAINER_NAME" 2>/dev/null && podman rm "$DNSMASQ_CONTAINER_NAME" >/dev/null
+    podman_rm "$CONTAINER_NAME" && printf "Removed %s\n" "$CONTAINER_NAME" || exit 1
     ;;
-
+isrunning)
+    if ! podman_isrunning "$CONTAINER_NAME"; then
+        printf "%s is NOT running...\n" "$CONTAINER_NAME"
+        exit 1
+    else
+        printf "%s is running...\n" "$CONTAINER_NAME"
+    fi
+    ;;
 *)
     echo "Unknown command: ${COMMAND}"
     usage

@@ -262,7 +262,6 @@ map_cluster_vars() {
     # shellcheck disable=SC1091
     source scripts/cluster_map.sh
 
-    
     # Generate the cluster terraform values for the fixed
     # variables
     #
@@ -437,4 +436,36 @@ parse_prep_bm_host_src() {
 
     # PROV_IP_CIDR has a default value defined in scripts/network_conf.sh
     # BM_IP_CIDR has a default value defined in scripts/network_conf.sh
+}
+
+podman_exists() {
+    local name="$1"
+
+    ( set -o pipefail && sudo podman ps --all | grep "$name" >/dev/null )
+}
+
+podman_stop() {
+    local name="$1"
+
+    sudo podman stop "$name" >/dev/null
+}
+
+podman_rm() {
+    local name="$1"
+
+    sudo podman stop "$name" >/dev/null &&
+        sudo podman rm "$name" >/dev/null
+}
+
+podman_isrunning() {
+    local name="$1"
+
+    run_status=$(set -o pipefail && sudo podman inspect "$name" 2>/dev/null | jq .[0].State.Running) || return 1
+    [[ "$run_status" =~ true ]] || return 1 # be explicit
+}
+
+podman_isrunning_logs() {
+    local name="$1"
+
+    podman_isrunning "$name" || ( sudo podman logs "$name" && return 1 )
 }
