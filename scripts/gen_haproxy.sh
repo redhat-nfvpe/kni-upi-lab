@@ -2,7 +2,8 @@
 
 HAPROXY_IMAGE_NAME="akraino-haproxy"
 HAPROXY_IMAGE_TAG="latest"
-HAPROXY_CONTAINTER_NAME="akraino-haproxy"
+
+CONTAINER_NAME="akraino-haproxy"
 HAPROXY_KUBEAPI_PORT="6443"
 HAPROXY_MCS_MAIN_PORT="22623"
 
@@ -187,6 +188,27 @@ EOF
     echo "$docker_file"
 }
 
+build_haproxy() {
+    local out_dir="$1"
+
+    ofile=$(gen_config_haproxy "$out_dir")
+    printf "Generated %s...\n" "$ofile"
+
+    ofile=$(gen_build "$out_dir")
+    printf "Generated %s...\n" "$ofile"
+    printf "Building haproxy container...\n"
+    if ! image_id=$(cd "$PROJECT_DIR"/haproxy && sudo podman build . 2>/dev/null | rev | cut -d ' ' -f 1 | rev | tail -1); then
+        printf "Error while building haproxy container...\n"
+        return 1
+    fi
+    printf "Tagging image %s with %s ...\n" "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"
+    if ! sudo podman tag "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"; then
+        printf "Failed to tag image_id %s!" "$image_id"
+        return 1
+    fi
+    printf "%s\n" "$image_id" >"$HAPROXY_DIR/imageid"
+}
+
 VERBOSE="false"
 export VERBOSE
 
@@ -256,54 +278,41 @@ map_worker_vars
 
 case "$COMMAND" in
 build)
-    ofile=$(gen_config_haproxy "$out_dir")
-    printf "Generated %s...\n" "$ofile"
-    ofile=$(gen_build "$out_dir")
-    printf "Generated %s...\n" "$ofile"
-    printf "Building haproxy container...\n"
-    if ! image_id=$(cd "$PROJECT_DIR"/haproxy && podman build . 2>/dev/null | rev | cut -d ' ' -f 1 | rev | tail -1); then
-        printf "Error while building haproxy container...\n"
-    fi
-    printf "Tagging image %s with %s ...\n" "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"
-    if ! podman tag "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"; then
-        printf "Failed to tag image_id %s!" "$image_id"
-    fi
-    printf "%s\n" "$image_id" >"$HAPROXY_DIR/imageid"
+    build_haproxy "$out_dir"
     ;;
 gen-config)
     ofile=$(gen_config_haproxy "$out_dir")
     printf "Generated %s...\n" "$ofile"
     ;;
 start)
-    if ! image_id=$(podman images | grep $HAPROXY_IMAGE_NAME | awk '{print $3}'); then
-        printf "Cannot find image \"%s\", build first?\n" "$HAPROXY_IMAGE_NAME"
-        exit 1
+    if ! image_id=$(sudo podman images | grep $HAPROXY_IMAGE_NAME | awk '{print $3}'); then
+        build_haproxy "$out_dir" || printf "Cannot build image \"%s\"" "$HAPROXY_IMAGE_NAME"
     fi
-    if podman ps --all | grep "$HAPROXY_CONTAINTER_NAME" >/dev/null; then
-        printf "Container already exists, removing and starting...\n"
-        if ! podman stop "$HAPROXY_CONTAINTER_NAME" >/dev/null; then
-            printf "Could not stop \"%s\"" "$HAPROXY_CONTAINTER_NAME"
-            exit 1
-        fi
-        if ! podman rm "$HAPROXY_CONTAINTER_NAME" >/dev/null; then
-            printf "Could not remove \"%s\"" "$HAPROXY_CONTAINTER_NAME"
-            exit 1
-        fi
-    fi
-    if ! cid=$(podman run -d --name "$HAPROXY_CONTAINTER_NAME" --net=host -p 80:80 -p 443:443 -p 6443:6443 -p 22623:22623 "$image_id" -f /usr/local/etc/haproxy/haproxy.cfg); then
+
+    podman_exists "$CONTAINER_NAME" &&
+        (podman_rm "$CONTAINER_NAME" ||
+            printf "Could not remove %s!\n" "$CONTAINER_NAME")
+
+    if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host -p 80:80 -p 443:443 -p 6443:6443 -p 22623:22623 "$image_id" -f /usr/local/etc/haproxy/haproxy.cfg); then
         printf "Could not start haproxy container!"
         exit 1
     fi
-    printf "Started container id %s\n" "$cid"
+    podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     ;;
 stop)
-    cid=$(podman stop "$HAPROXY_CONTAINTER_NAME") && printf "Stopped %s\n" "$cid"
+    podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
     ;;
 remove)
-    podman stop "$HAPROXY_CONTAINTER_NAME" 2>/dev/null && podman rm "$HAPROXY_CONTAINTER_NAME" >/dev/null
-    image_id=$(podman images | grep $HAPROXY_IMAGE_NAME | awk '{print $3}') && podman rmi "$image_id" >/dev/null
+    podman_rm "$CONTAINER_NAME" && printf "Removed %s\n" "$CONTAINER_NAME" || exit 1
     ;;
-
+isrunning)
+    if ! podman_isrunning "$CONTAINER_NAME"; then
+        printf "%s is NOT running...\n" "$CONTAINER_NAME"
+        exit 1
+    else
+        printf "%s is running...\n" "$CONTAINER_NAME"
+    fi
+    ;;
 *)
     echo "Unknown command: ${COMMAND}"
     usage

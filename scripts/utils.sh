@@ -129,6 +129,7 @@ parse_manifests() {
 
     ofile="$BUILD_DIR/manifest_vals.sh"
     {
+        printf "#!/bin/bash\n\n"
         printf "declare -A MANIFEST_VALS=(\n"
 
         for v in "${sorted[@]}"; do
@@ -326,6 +327,8 @@ map_cluster_vars() {
     ofile="$BUILD_DIR/cluster_vals.sh"
 
     {
+        printf "#!/bin/bash\n\n"
+
         printf "declare -A CLUSTER_FINAL_VALS=(\n"
 
         for v in "${sorted[@]}"; do
@@ -386,6 +389,8 @@ map_worker_vars() {
 
     ofile="$BUILD_DIR/workers_vals.sh"
     {
+        printf "#!/bin/bash\n\n"
+
         printf "declare -A WORKERS_FINAL_VALS=(\n"
 
         for v in "${sorted[@]}"; do

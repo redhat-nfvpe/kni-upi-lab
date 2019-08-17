@@ -94,10 +94,11 @@ dns-prov-con-%: ./scripts/gen_config_bm.sh
 dns-prov-conf: $(dnsmasq_prov_conf)
 $(dnsmasq_prov_conf): $(manifests) ./scripts/gen_config_prov.sh $(common_scripts)
 	./scripts/gen_config_prov.sh
-## => Misc dnsmasq <===========================================================
-## = dns-conf                - Generate config files for BM and PROV network
+
+## => Misc dns <===========================================================
+## = dns-conf                - Generate all dns config dnsmasq+coredns
 ## =
-dns-conf:  $(dnsmasq_prov_conf) $(dnsmasq_bm_conf)
+dns-conf:  $(dnsmasq_prov_conf) $(dnsmasq_bm_conf) $(coredns_conf)
 
 ## => Coredns <================================================================
 ## = dns-core-con-stop       - Stop the dnsmasq-bm container
@@ -121,15 +122,21 @@ openshift-install: $(openshift-bin)
 openshift-oc: $(openshift-oc)
 ## =
 ## => haproxy <================================================================
-## = haproxy                 - Generate haproxy config and container image
-haproxy: $(haproxy_container)
+## = haproxy-conf            - Generate the haproxy config file
+## =
+## = haproxy-con-build       - Build the haproxy container
+## = haproxy-con-stop        - Stop the dnsmasq-bm container
+## = haproxy-con-start       - Start the dnsmasq-bm container
+## = haproxy-con-remove      - Stop and remove the dnsmasq-bm container
+## = haproxy-con-isrunning   - Check if dnsmasq-bm container is running
+## =
+haproxy-con-%: ./scripts/gen_haproxy.sh
+	./scripts/gen_haproxy.sh $*
 
-$(haproxy_container): $(haproxy_conf)
-	./scripts/gen_haproxy.sh build
+haproxy-conf: $(haproxy_conf)
 
 $(haproxy_conf): $(manifests) ./scripts/gen_haproxy.sh $(common_scripts)
 	./scripts/gen_haproxy.sh gen-config
-
 
 $(openshift-oc):
 	./scripts/gen_ignition.sh oc

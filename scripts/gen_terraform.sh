@@ -170,7 +170,6 @@ gen_terraform_workers() {
             printf "%s = \"%s\"\n" "$key" "${WORKERS_FINAL_VALS[$key]}"
         done
         printf "worker_nodes = [\n"
-        printf "  {\n"
     } >"$ofile"
 
     {
