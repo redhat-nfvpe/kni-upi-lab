@@ -118,7 +118,7 @@ gen_terraform_cluster() {
 
         for key in "${sorted[@]}"; do
             if [[ ! ${NO_TERRAFORM_MAP[$key]} ]]; then
-                printf "%s = \"%s\"\n" "$key" "${FINAL_VALS[$key]}"
+                printf "%s = \"%s\"\n" "$key" "${CLUSTER_FINAL_VALS[$key]}"
             fi
         done
 
@@ -126,21 +126,21 @@ gen_terraform_cluster() {
 
     } >"$ofile"
     {
-        num_masters="${FINAL_VALS[master_count]}"
+        num_masters="${CLUSTER_FINAL_VALS[master_count]}"
         for ((i = 0; i < num_masters; i++)); do
             m="master-$i"
-            if [[ -z ${FINAL_VALS[$m.metadata.name]} ]]; then
+            if [[ -z ${CLUSTER_FINAL_VALS[$m.metadata.name]} ]]; then
                 printf "\n Missing manifest data for %s, %d masters(replicas) were specified in install-config.yaml\n" "$m" "$num_masters"
                 exit 1
             fi
             printf "  {\n"
-            printf "    name: \"%s\",\n" "${FINAL_VALS[$m.metadata.name]}"
+            printf "    name: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.metadata.name]}"
             printf "    public_ipv4: \"%s\",\n" "$(get_master_bm_ip $i)"
-            printf "    ipmi_host: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.address]}"
-            printf "    ipmi_user: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.user]}"
-            printf "    ipmi_pass: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.password]}"
-            printf "    mac_address: \"%s\",\n" "${FINAL_VALS[$m.spec.bootMACAddress]}"
-            printf "    install_dev: \"%s\",\n" "${FINAL_VALS[$m.install_dev]}"
+            printf "    ipmi_host: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.address]}"
+            printf "    ipmi_user: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.user]}"
+            printf "    ipmi_pass: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.password]}"
+            printf "    mac_address: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bootMACAddress]}"
+            printf "    install_dev: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.install_dev]}"
 
             printf "  },\n"
         done
@@ -167,26 +167,28 @@ gen_terraform_workers() {
         printf "// AUTOMATICALLY GENERATED -- Do not edit\n"
 
         for key in "${sorted[@]}"; do
-            printf "%s = \"%s\"\n" "$key" "${FINAL_VALS[$key]}"
+            printf "%s = \"%s\"\n" "$key" "${WORKERS_FINAL_VALS[$key]}"
         done
         printf "worker_nodes = [\n"
         printf "  {\n"
     } >"$ofile"
 
     {
-        num_workers="${FINAL_VALS[worker_count]}"
+        num_workers="${WORKERS_FINAL_VALS[worker_count]}"
         for ((i = 0; i < num_workers; i++)); do
             m="worker-$i"
 
-            printf "    name: \"%s\",\n" "${FINAL_VALS[$m.metadata.name]}"
+            printf "  {\n"
+            printf "    name: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.metadata.name]}"
             printf "    public_ipv4: \"%s\",\n" "$(get_worker_bm_ip $i)"
-            printf "    ipmi_host: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.address]}"
-            printf "    ipmi_user: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.user]}"
-            printf "    ipmi_pass: \"%s\",\n" "${FINAL_VALS[$m.spec.bmc.password]}"
-            printf "    mac_address: \"%s\",\n" "${FINAL_VALS[$m.spec.bootMACAddress]}"
+            printf "    ipmi_host: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.address]}"
+            printf "    ipmi_user: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.user]}"
+            printf "    ipmi_pass: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.password]}"
+            printf "    mac_address: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bootMACAddress]}"
+            printf "  },\n"
+
         done
 
-        printf "  }\n"
         printf "]\n"
     } >>"$ofile"
 

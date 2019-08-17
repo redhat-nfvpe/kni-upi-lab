@@ -33,10 +33,10 @@ gen_ignition() {
         exit 1
     fi
 
-    if [ ! -f "${FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${FINAL_VALS[master_ign_file]}" ]; then
+    if [ ! -f "${CLUSTER_FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${CLUSTER_FINAL_VALS[master_ign_file]}" ]; then
         printf "terraform cluster vars expects ignition files in the following places...\n"
-        printf "\t%s\n" "bootstrap_ign_file = ${FINAL_VALS[bootstrap_ign_file]}"
-        printf "\t%s\n" "master_ign_file = ${FINAL_VALS[master_ign_file]}"
+        printf "\t%s\n" "bootstrap_ign_file = ${CLUSTER_FINAL_VALS[bootstrap_ign_file]}"
+        printf "\t%s\n" "master_ign_file = ${CLUSTER_FINAL_VALS[master_ign_file]}"
         printf "The following Ignition files were generated\n"
         for f in "$out_dir"/*.ign; do
             printf "\t%s\n" "$f"

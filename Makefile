@@ -8,6 +8,7 @@ openshift_dir = ./ocp
 matchbox_dir = ./matchbox
 matchbox_data_dir = ./matchbox-data
 upi-rt_dir = ./upi-rt
+build_dir = ./build
 
 dnsmasq_prov_conf := $(dnsmasq_dir)/prov/etc/dnsmasq.d/dnsmasq.conf
 dnsmasq_bm_conf := $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.conf $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.hostsfile
@@ -20,6 +21,7 @@ ignitions := $(openshift_dir)/worker.ign $(openshift_dir)/master.ign
 matchbox_git := $(matchbox_dir)/.git
 upi-rt_git := $(upi-rt_dir)/.git
 matchbox-data-files := $(matchbox_data_dir)/etc/matchbox/ca.cert
+common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh 
 
 terraform-bin := /usr/bin/terraform
 openshift-bin := /usr/local/bin/openshift-install
@@ -28,12 +30,11 @@ haproxy_container := $(haproxy_dir)/imageid
 
 ## => General <================================================================
 ## = all (default)           - Generate all configuration files
-all: dns_conf haproxy terraform matchbox matchbox-data upi-rt
+all: dns_conf haproxy terraform-install matchbox matchbox-data upi-rt
 
 ## = clean                   - Remove all config files
 clean:
-	rm -f ./cluster/manifest_vals.sh ./cluster/final_worker_vals.sh ./cluster/final_cluster_vals.sh
-	rm -rf $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) $(matchbox_dir) upi-rt
+	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) $(matchbox_dir) upi-rt
 
 ## = dist-clean              - Remove all config fiels and data files
 dist-clean: clean
@@ -54,14 +55,14 @@ $(upi-rt_git):
 ## => Matchbox <===============================================================
 ## = matchbox                - Install the Matchbox repo
 ## =
-matchbox: $(manifests) ./scripts/gen_matchbox.sh
+matchbox: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
 	./scripts/gen_matchbox.sh repo
 
 ## = matchbox-data           - Generate data / config files for Matchbox
 ## =
-matchbox-data: $(matchbox-data-files)
+matchbox-data: $(matchbox-data-files) $(common_scripts)
 
-$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh matchbox
+$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh matchbox $(common_scripts)
 	./scripts/gen_matchbox.sh data
 
 ## => Baremetal dnsmasq <======================================================
@@ -70,13 +71,13 @@ $(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh matchbox
 ## = dns-bm-con-remove       - Stop and remove the dnsmasq-bm container
 ## = dns-bm-con-isrunning    - Check if dnsmasq-bm container is running
 ## =
-dns-bm-con-%: ./scripts/gen_config_bm.sh
+dns-bm-con-%: ./scripts/gen_config_bm.sh $(common_scripts)
 	./scripts/gen_config_bm.sh $*
 
 ## = dns-bm-conf             - Generate dnsmasq-bm configuration
 ## =
 dns-bm-conf: $(dnsmasq_bm_conf)
-$(dnsmasq_bm_conf): $(manifests) ./scripts/gen_config_bm.sh
+$(dnsmasq_bm_conf): $(manifests) ./scripts/gen_config_bm.sh $(common_scripts)
 	./scripts/gen_config_bm.sh bm
 
 ## => Provisioning dnsmasq <===================================================
@@ -91,7 +92,7 @@ dns-prov-con-%: ./scripts/gen_config_bm.sh
 ## = dns-prov-conf           - Generate dnsmasq-prov configuration
 ## =
 dns-prov-conf: $(dnsmasq_prov_conf)
-$(dnsmasq_prov_conf): $(manifests) ./scripts/gen_config_prov.sh
+$(dnsmasq_prov_conf): $(manifests) ./scripts/gen_config_prov.sh $(common_scripts)
 	./scripts/gen_config_prov.sh
 ## => Misc dnsmasq <===========================================================
 ## = dns-conf                - Generate config files for BM and PROV network
@@ -110,7 +111,7 @@ dns-core-con-%: ./scripts/gen_coredns.sh
 ## = dns-core-conf           - Make coredns Corefile and database
 ## =
 dns-core-conf: $(coredns_conf)
-$(coredns_conf): $(manifests) ./scripts/gen_coredns.sh
+$(coredns_conf): $(manifests) ./scripts/gen_coredns.sh $(common_scripts)
 	./scripts/gen_coredns.sh all
 
 ## => Openshift <==============================================================
@@ -126,7 +127,7 @@ haproxy: $(haproxy_container)
 $(haproxy_container): $(haproxy_conf)
 	./scripts/gen_haproxy.sh build
 
-$(haproxy_conf): $(manifests) ./scripts/gen_haproxy.sh
+$(haproxy_conf): $(manifests) ./scripts/gen_haproxy.sh $(common_scripts)
 	./scripts/gen_haproxy.sh gen-config
 
 
@@ -138,7 +139,7 @@ $(openshift-bin):
 
 ## => terraform <==============================================================
 ## = terraform-install       - Install the Terraform binary
-terraform-install: $(terraform-bin)
+terraform-install: $(terraform-bin) 
 
 $(terraform-bin):
 	./scripts/gen_terraform.sh install
@@ -146,9 +147,9 @@ $(terraform-bin):
 ## = terraform-conf       - Generate the Terraform config files
 ## =
 terraform-conf: $(terraform_cluster) $(terraform_worker)
-$(terraform_cluster): $(manifests) ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition)
+$(terraform_cluster): $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh all
-$(terraform_worker): $(manifests) ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition)
+$(terraform_worker): $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh all
 
 cluster/manifest_vals.sh: $(manifests)
@@ -158,6 +159,6 @@ cluster/manifest_vals.sh: $(manifests)
 ## = ignition                - Create the required ignition files
 ignition: $(ignitions) 
 ##
-$(ignitions): $(manifests) ./scripts/gen_ignition.sh openshift-install
+$(ignitions): $(manifests) ./scripts/gen_ignition.sh openshift-install $(common_scripts)
 	./scripts/gen_ignition.sh
 

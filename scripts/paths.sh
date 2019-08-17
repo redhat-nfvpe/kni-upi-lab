@@ -28,3 +28,9 @@ export TERRAFORM_DIR
 
 COREDNS_DIR="$PROJECT_DIR/coredns"
 export COREDNS_DIR
+
+BUILD_DIR="$PROJECT_DIR/build"
+export BUILD_DIR
+
+# Create directory for debug output
+mkdir -p "$BUILD_DIR"

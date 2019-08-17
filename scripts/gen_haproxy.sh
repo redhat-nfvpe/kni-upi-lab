@@ -33,7 +33,7 @@ EOM
 gen_config_haproxy() {
     local out_dir="$1"
     local cfg_file="$out_dir/haproxy.cfg"
-    local cluster_id="${FINAL_VALS[cluster_id]}"
+    local cluster_id="${CLUSTER_FINAL_VALS[cluster_id]}"
 
     mkdir -p "$out_dir"
 
@@ -106,11 +106,11 @@ EOF
     {
         printf "    server %s %s:%s check\n" "$cluster_id-bootstrap" "$BM_IP_BOOTSTRAP" "$HAPROXY_KUBEAPI_PORT"
         printf "    server %s %s:%s check\n" "$cluster_id-master-0" "$(get_master_bm_ip 0)" "$HAPROXY_KUBEAPI_PORT"
-        if [ -n "${FINAL_VALS[master\-1.spec.bootMACAddress]}" ]; then
+        if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-1" "$(get_master_bm_ip 1)" "$HAPROXY_KUBEAPI_PORT"
         fi
 
-        if [ -n "${FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-2" "$(get_master_bm_ip 2)" "$HAPROXY_KUBEAPI_PORT"
         fi
         printf "\n"
@@ -122,44 +122,37 @@ EOF
         printf "    server %s %s:%s check\n" "$cluster_id-bootstrap" "$BM_IP_BOOTSTRAP" "$HAPROXY_MCS_MAIN_PORT"
         printf "    server %s %s:%s check\n" "$cluster_id-master-0" "$(get_master_bm_ip 0)" "$HAPROXY_MCS_MAIN_PORT"
 
-        if [ -n "${FINAL_VALS[master\-1.spec.bootMACAddress]}" ]; then
+        if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-1" "$(get_master_bm_ip 1)" "$HAPROXY_MCS_MAIN_PORT"
         fi
 
-        if [ -n "${FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-2" "$(get_master_bm_ip 2)" "$HAPROXY_MCS_MAIN_PORT"
         fi
         printf "\n"
 
-        printf "backend http-main\n"
-        printf "    balance source\n"
-        printf "    mode tcp\n"
-        printf "    server %s-worker-0 %s:%s check\n" "$cluster_id" "$(get_worker_bm_ip 0)" "80"
+        num_workers="${WORKERS_FINAL_VALS[worker_count]}"
 
-        # HARDCODED VALUE... SHAME
-        for ((i = 1; i < 100; i++)); do
-            m="worker-$i"
-            if [ -z "${FINAL_VALS[$m.spec.bootMACAddress]}" ]; then
-                break
-            fi
-            printf "    server %s-worker-%s %s:%s check\n" "$cluster_id" "$m" "$(get_worker_bm_ip $i)" "80"
-        done
-        printf "\n"
+        if [ "$num_workers" -gt 0 ]; then
+            printf "backend http-main\n"
+            printf "    balance source\n"
+            printf "    mode tcp\n"
 
-        printf "backend https-main\n"
-        printf "    balance source\n"
-        printf "    mode tcp\n"
-        printf "    server %s-worker-0 %s:%s check\n" "$cluster_id" "$(get_worker_bm_ip 0)" "443"
+            for ((i = 0; i < num_workers; i++)); do
+                printf "    server %s-worker-%s %s:%s check\n" "$cluster_id" "$i" "$(get_worker_bm_ip $i)" "80"
+            done
+            printf "\n"
 
-        # HARDCODED VALUE... SHAME
-        for ((i = 1; i < 100; i++)); do
-            m="worker-$i"
-            if [ -z "${FINAL_VALS[$m.spec.bootMACAddress]}" ]; then
-                break
-            fi
-            printf "    server %s %s:%s check\n" "$cluster_id-$m" "$(get_worker_bm_ip $i)" "443"
-        done
-        printf "\n"
+            printf "backend https-main\n"
+            printf "    balance source\n"
+            printf "    mode tcp\n"
+
+            for ((i = 0; i < num_workers; i++)); do
+                printf "    server %s-worker-%s %s:%s check\n" "$cluster_id" "$i" "$(get_worker_bm_ip $i)" "443"
+            done
+            printf "\n"
+        fi
+
     } >>"$cfg_file"
 
     echo "$cfg_file"
@@ -259,6 +252,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 
 map_cluster_vars
+map_worker_vars
 
 case "$COMMAND" in
 build)
@@ -274,7 +268,7 @@ build)
     if ! podman tag "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"; then
         printf "Failed to tag image_id %s!" "$image_id"
     fi
-    printf "%s\n" "$image_id" > "$HAPROXY_DIR/imageid"
+    printf "%s\n" "$image_id" >"$HAPROXY_DIR/imageid"
     ;;
 gen-config)
     ofile=$(gen_config_haproxy "$out_dir")

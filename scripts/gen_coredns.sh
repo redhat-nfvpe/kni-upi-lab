@@ -34,8 +34,8 @@ EOM
 gen_config_corefile() {
     local out_dir="$1"
     local cfg_file="$out_dir/Corefile"
-    local cluster_id="${FINAL_VALS[cluster_id]}"
-    local cluster_domain="${FINAL_VALS[cluster_domain]}"
+    local cluster_id="${CLUSTER_FINAL_VALS[cluster_id]}"
+    local cluster_domain="${CLUSTER_FINAL_VALS[cluster_domain]}"
 
     mkdir -p "$out_dir"
 
@@ -58,8 +58,8 @@ EOF
 
 gen_config_db() {
     local out_dir="$1"
-    local cluster_id="${FINAL_VALS[cluster_id]}"
-    local cluster_domain="${FINAL_VALS[cluster_domain]}"
+    local cluster_id="${CLUSTER_FINAL_VALS[cluster_id]}"
+    local cluster_domain="${CLUSTER_FINAL_VALS[cluster_domain]}"
     local cfg_file="$out_dir/db.$cluster_domain"
 
     mkdir -p "$out_dir"
@@ -80,9 +80,9 @@ EOF
 
     # shellcheck disable=SC2129
     {
-        if [ "${FINAL_VALS[master_count]}" = 3 ] &&
-            [ -n "${FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
-            [ -n "${FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
+            [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
+            [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
             printf "                                                   SRV 0 10 2380 etcd-1.%s.%s.\n" "$cluster_id" "$cluster_domain"
             printf "                                                   SRV 0 10 2380 etcd-2.%s.%s.\n" "$cluster_id" "$cluster_domain"
         fi
@@ -96,29 +96,36 @@ $cluster_id-master-0.$cluster_domain.                   A $(get_master_bm_ip 0)
 EOF
 
     {
-        if [ "${FINAL_VALS[master_count]}" = 3 ] &&
-            [ -n "${FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
-            [ -n "${FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
+            [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
+            [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
             printf "%s-master-1.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 1)"
             printf "%s-master-2.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 2)"
+        fi
+
+        num_workers="${WORKERS_FINAL_VALS[worker_count]}"
+        if [ "$num_workers" -gt 0 ]; then
+            for ((i = 0; i < num_workers; i++)); do
+                printf "%s-worker-%s.%s.                   A %s\n" "$cluster_id" "$i" "$cluster_domain" "$(get_worker_bm_ip $i)"
+            done
         fi
     } >>"$cfg_file"
 
     cat <<EOF >>"$cfg_file"
-$cluster_id-worker-0.$cluster_domain.                   A $(get_worker_bm_ip 0)
 $cluster_id-bootstrap.$cluster_domain.                  A $(nthhost "$BM_IP_CIDR" 10)
-etcd-0.$cluster_id.$cluster_domain.                     IN  CNAME $cluster_id-master-0.$cluster_domain.
+
+etcd-0.$cluster_id.$cluster_domain.                     IN CNAME $cluster_id-master-0.$cluster_domain.
 EOF
     {
-        if [ "${FINAL_VALS[master_count]}" = 3 ]; then
-            printf "etcd-1.%s.%s.                     IN  CNAME %s-master-1.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
-            printf "etcd-2.%s.%s.                     IN  CNAME %s-master-2.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
+        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ]; then
+            printf "etcd-1.%s.%s.                     IN CNAME %s-master-1.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
+            printf "etcd-2.%s.%s.                     IN CNAME %s-master-2.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
             printf "\n"
         fi
     } >>"$cfg_file"
     cat <<EOF >>"$cfg_file"
 \$ORIGIN apps.$cluster_id.$cluster_domain.
-*                                                    A                $(nthhost "$BM_IP_CIDR" 1)
+*                                            A $(nthhost "$BM_IP_CIDR" 1)
 EOF
     echo "$cfg_file"
 }
@@ -199,6 +206,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 
 map_cluster_vars
+map_worker_vars
 
 case "$COMMAND" in
 all)
@@ -214,7 +222,7 @@ db)
     ;;
 start)
     gen_config "$out_dir"
-    
+
     podman_exists "$CONTAINER_NAME" &&
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")

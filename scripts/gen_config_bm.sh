@@ -48,47 +48,41 @@ gen_hostfile_bm() {
     hostsfile="$out_dir/$BM_ETC_DIR/dnsmasq.hostsfile"
 
     #list of master manifest
+
     printf "Generating %s...\n" "$hostsfile"
 
-    cid="${FINAL_VALS[cluster_id]}"
-    cdomain="${FINAL_VALS[cluster_domain]}"
+    cid="${CLUSTER_FINAL_VALS[cluster_id]}"
+    cdomain="${CLUSTER_FINAL_VALS[cluster_domain]}"
+    {
+        printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[bootstrap_sdn_mac_address]}" "$BM_IP_BOOTSTRAP" "$cid-bootstrap-0.$cdomain"
+        printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-0.spec.public_mac]}" "$(get_master_bm_ip 0)" "$cid-master-0.$cdomain"
 
-    echo "${FINAL_VALS[bootstrap_sdn_mac_address]},$BM_IP_BOOTSTRAP,$cid-bootstrap-0.$cdomain" >"$hostsfile"
-    #  master - 0.spec.public_mac
-    echo "${FINAL_VALS[master\-0.spec.public_mac]},$(get_master_bm_ip 0),$cid-master-0.$cdomain" >>"$hostsfile"
+    } >"$hostsfile"
 
-    if [ -n "${FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -z "${FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+    if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -z "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
         echo "Both master-1 and master-2 must be set."
         exit 1
     fi
 
-    if [ -z "${FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+    if [ -z "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
         echo "Both master-1 and master-2 must be set."
         exit 1
     fi
 
-    if [ -n "${FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${FINAL_VALS[master\-2.spec.public_mac]}" ]; then
-        echo "${FINAL_VALS[master\-1.spec.public_mac]},$(get_master_bm_ip 1),$cid-master-1.$cdomain" >>"$hostsfile"
-        echo "${FINAL_VALS[master\-2.spec.public_mac]},$(get_master_bm_ip 2),$cid-master-2.$cdomain" >>"$hostsfile"
+    if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+        {
+            printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" "$(get_master_bm_ip 1)" "$cid-master-1.$cdomain"
+            printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" "$(get_master_bm_ip 2)" "$cid-master-2.$cdomain"
+        } >>"$hostsfile"
     fi
 
-    # generate hostfile entries for workers
-    # how?
-    #num_masters="${FINAL_VALS[master_count]}"
-    # for ((i = 0; i < num_masters; i++)); do
-    #     m="master-$i"
-    #     printf "    name: \"%s\"\n" "${FINAL_VALS[$m.metadata.name]}" | sudo tee -a "$ofile"
-    #     printf "    public_ipv4: \"%s\"\n" "$(get_master_bm_ip $i)" | sudo tee -a "$ofile"
-    #     printf "    ipmi_host: \"%s\"\n" "${FINAL_VALS[$m.spec.bmc.address]}" | sudo tee -a "$ofile"
-    #     printf "    ipmi_user: \"%s\"\n" "${FINAL_VALS[$m.spec.bmc.user]}" | sudo tee -a "$ofile"
-    #     printf "    ipmi_pass: \"%s\"\n" "${FINAL_VALS[$m.spec.bmc.password]}" | sudo tee -a "$ofile"
-    #     printf "    mac_address: \"%s\"\n" "${FINAL_VALS[$m.spec.bootMACAddress]}" | sudo tee -a "$ofile"
-    #
-    # done
-    #    cat <<EOF >>"$hostsfile"
-    # 192.168.111.20,${FINAL_VALS[cluster_id]}-worker-0.${FINAL_VALS[cluster_domain]}
-    # EOF
-
+    num_workers="${WORKERS_FINAL_VALS[worker_count]}"
+    for ((i = 0; i < num_workers; i++)); do
+        m="worker-$i"
+        {
+            printf "%s,%s,%s\n" "${WORKERS_FINAL_VALS[$m.spec.public_mac]}" "$(get_worker_bm_ip "$i")" "$cid-$m.$cdomain"
+        } >>"$hostsfile"
+    done
 }
 
 gen_bm_help() {
@@ -130,7 +124,7 @@ bind-interfaces
 strict-order
 except-interface=lo
 
-#domain=${FINAL_VALS[cluster_domain]},$BM_IP_CIDR
+#domain=${CLUSTER_FINAL_VALS[cluster_domain]},$BM_IP_CIDR
 
 dhcp-range=$BM_IP_RANGE_START,$BM_IP_RANGE_END,30m
 #default gateway
@@ -219,6 +213,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 
 map_cluster_vars
+map_worker_vars
 
 case "$COMMAND" in
 bm | config)

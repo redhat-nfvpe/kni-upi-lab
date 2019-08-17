@@ -5,8 +5,11 @@ declare -A MANIFEST_VALS
 export MANIFEST_VALS
 # FINAL_VALS stores MANIFEST_VALS after mapping and manipulation
 # FINAL_VALS is used to generate terraform files
-declare -A FINAL_VALS
-export FINAL_VALS
+declare -A CLUSTER_FINAL_VALS
+export CLUSTER_FINAL_VALS
+
+declare -A WORKERS_FINAL_VALS
+export WORKERS_FINAL_VALS
 
 if [[ -z "$PROJECT_DIR" ]]; then
     usage
@@ -121,15 +124,36 @@ parse_manifests() {
             [[ "$VERBOSE" =~ true ]] && printf "\tMANIFEST_VALS[%s] == \"%s\"\n" "$val" "${manifest_vars[$v]}"
         done
     done
+
+    mapfile -t sorted < <(printf '%s\n' "${!MANIFEST_VALS[@]}" | sort)
+
+    ofile="$BUILD_DIR/manifest_vals.sh"
+    {
+        printf "declare -A MANIFEST_VALS=(\n"
+
+        for v in "${sorted[@]}"; do
+            printf "  [%s]=\"%s\"\n" "$v" "${MANIFEST_VALS[$v]}"
+        done
+
+        printf ")\n"
+        printf "export MANIFEST_VALS\n"
+    } >"$ofile"
+
 }
 
 process_rule() {
     local rule="$1"
     local index="$2"
+    local func="$3"
+    local index_saved="$index"
+    local rule_saved="$rule"
+
     # index = master-\\1.spec.bmc.user
 
     [[ "$VERBOSE" =~ true ]] && printf "Processing rule \"%s\"\n" "$rule"
 
+    [[ $rule =~ ^\| ]] && optional=true || optional=false
+    rule=${rule#|}
     # rule = %master-([012]+).spec.bmc.[credentialsName].stringdata.username@ (indirect)
     # rule = =master-([012]+).metadata.name=$BM_IP_NS (constant)
     [[ $rule =~ .*@$ ]] && base64=true || base64=false
@@ -173,8 +197,8 @@ process_rule() {
                 # probably a bug
                 value="$PROJECT_DIR${value#.}"
             fi
-
-            FINAL_VALS[$index]="$value"
+            $func "$index" "$value"
+            #FINAL_VALS[$index]="$value"
 
             [[ "$VERBOSE" =~ true ]] && printf "\tFINAL_VALS[%s] = \"%s\"\n" "$index" "$value"
 
@@ -190,6 +214,7 @@ process_rule() {
             printf "\t\"%s\" matches \"%s\"\n" "$regex" "$m"
         done
     fi
+    processed=false
     #start="$(date +%s%N)"
     # loop through all the manifest variables searching
     # for matches with the rule's index
@@ -245,14 +270,29 @@ process_rule() {
                 mapped_val="$value"
             fi
 
-            FINAL_VALS[$r]="$mapped_val"
+            $func "$r" "$mapped_val"
+            #FINAL_VALS[$r]="$mapped_val"
 
+            processed=true
             [[ "$VERBOSE" =~ true ]] && printf "\tFINAL_VALS[%s] = \"%s\"\n" "$r" "$mapped_val"
 
         fi
     done
+
+    if [[ "$processed" =~ false ]] && [[ "$optional" =~ false ]]; then
+        printf "Unable to process rule \"%s\" : \"%s\"\n" "$index_saved" "$rule_saved"
+
+        exit 1
+    fi
     #end="$(date +%s%N)"
     #printf "Execution time was %'d ns\n" "$(( "$end" - "$start" ))"
+}
+
+set_cluster_vars() {
+    local key="$1"
+    local value="$2"
+
+    CLUSTER_FINAL_VALS[$key]="$value"
 }
 
 map_cluster_vars() {
@@ -270,7 +310,7 @@ map_cluster_vars() {
     for v in "${!CLUSTER_MAP[@]}"; do
         rule=${CLUSTER_MAP[$v]}
 
-        process_rule "$rule" "$v"
+        process_rule "$rule" "$v" set_cluster_vars
     done
 
     # Generate the cluster terraform values for the master nodes
@@ -278,21 +318,30 @@ map_cluster_vars() {
     for v in "${!CLUSTER_MASTER_MAP[@]}"; do
         rule=${CLUSTER_MASTER_MAP[$v]}
 
-        process_rule "$rule" "$v"
+        process_rule "$rule" "$v" set_cluster_vars
     done
 
-    mapfile -t sorted < <(printf '%s\n' "${!FINAL_VALS[@]}" | sort)
+    mapfile -t sorted < <(printf '%s\n' "${!CLUSTER_FINAL_VALS[@]}" | sort)
 
-    ofile="$manifest_dir/final_cluster_vals.sh"
+    ofile="$BUILD_DIR/cluster_vals.sh"
 
-    printf "declare -A FINAL_VALS=(\n" >"$ofile"
+    {
+        printf "declare -A CLUSTER_FINAL_VALS=(\n"
 
-    for v in "${sorted[@]}"; do
-        printf "  [%s]=\"%s\"\n" "$v" "${FINAL_VALS[$v]}" >>"$ofile"
-    done
+        for v in "${sorted[@]}"; do
+            printf "  [%s]=\"%s\"\n" "$v" "${CLUSTER_FINAL_VALS[$v]}"
+        done
 
-    printf ")\n" >>"$ofile"
-    printf "export FINAL_VALS\n" >>"$ofile"
+        printf ")\n"
+        printf "export CLUSTER_FINAL_VALS\n"
+    } >"$ofile"
+}
+
+set_workers_vars() {
+    local key="$1"
+    local value="$2"
+
+    WORKERS_FINAL_VALS[$key]="$value"
 }
 
 map_worker_vars() {
@@ -322,7 +371,7 @@ map_worker_vars() {
     for v in "${!WORKER_MAP[@]}"; do
         rule=${WORKER_MAP[$v]}
 
-        process_rule "$rule" "$v"
+        process_rule "$rule" "$v" set_workers_vars
     done
 
     # Generate the cluster terraform values for the master nodes
@@ -330,22 +379,22 @@ map_worker_vars() {
     for v in "${!CLUSTER_WORKER_MAP[@]}"; do
         rule=${CLUSTER_WORKER_MAP[$v]}
 
-        process_rule "$rule" "$v"
+        process_rule "$rule" "$v" set_workers_vars
     done
 
-    mapfile -t sorted < <(printf '%s\n' "${!FINAL_VALS[@]}" | sort)
+    mapfile -t sorted < <(printf '%s\n' "${!WORKERS_FINAL_VALS[@]}" | sort)
 
-    ofile="$manifest_dir/final_worker_vals.sh"
+    ofile="$BUILD_DIR/workers_vals.sh"
+    {
+        printf "declare -A WORKERS_FINAL_VALS=(\n"
 
-    printf "declare -A FINAL_VALS=(\n" >"$ofile"
+        for v in "${sorted[@]}"; do
+            printf "  [%s]=\"%s\"\n" "$v" "${WORKERS_FINAL_VALS[$v]}"
+        done
 
-    for v in "${sorted[@]}"; do
-        printf "  [%s]=\"%s\"\n" "$v" "${FINAL_VALS[$v]}" >>"$ofile"
-    done
-
-    printf ")\n" >>"$ofile"
-    printf "export FINAL_VALS\n" >>"$ofile"
-
+        printf ")\n"
+        printf "export WORKERS_FINAL_VALS\n"
+    } >"$ofile"
 }
 
 check_var() {
@@ -441,7 +490,7 @@ parse_prep_bm_host_src() {
 podman_exists() {
     local name="$1"
 
-    ( set -o pipefail && sudo podman ps --all | grep "$name" >/dev/null )
+    (set -o pipefail && sudo podman ps --all | grep "$name" >/dev/null)
 }
 
 podman_stop() {
@@ -467,5 +516,5 @@ podman_isrunning() {
 podman_isrunning_logs() {
     local name="$1"
 
-    podman_isrunning "$name" || ( sudo podman logs "$name" && return 1 )
+    podman_isrunning "$name" || (sudo podman logs "$name" && return 1)
 }

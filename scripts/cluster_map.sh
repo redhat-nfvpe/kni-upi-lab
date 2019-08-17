@@ -12,7 +12,7 @@ declare -A NO_TERRAFORM_MAP=(
 )
 export NO_TERRAFORM_MAP
 
-# The following arrays map values to key / value paris in the FINAL_VALS array.
+# The following arrays map values to key / value paris in the CLUSTER_FINAL_VALS array.
 # The CLUSTER_MAP/ WORKER_MAP are used to generate terraform configuration files.
 # Each entry in CLUSTER_MAP directly corresponds to a config line generated in 
 # a terraform tfvarfs file.  If an entry in CLUSTER_MAP should not be included
@@ -42,6 +42,8 @@ export NO_TERRAFORM_MAP
 #      manifest that contains IPMI crendtials
 #
 #  3. If a rule ends with an '@', the field will be decoded as base64
+# 
+#  4. Rules that start with | are optional
 
 
 declare -A CLUSTER_MAP=(
@@ -79,7 +81,8 @@ export CLUSTER_MAP
 
 declare -A CLUSTER_MASTER_MAP=(
     [master-\\1.install_dev]="=master-([012]+).metadata.name=sda"    
-    [master-\\1.spec.public_ipv4]="%master-([012]+).metadata.annotations.kni.io\/sdnIPv4"
+    # Optional rule
+    [master-\\1.spec.public_ipv4]="|%master-([012]+).metadata.annotations.kni.io\/sdnIPv4"
     [master-\\1.spec.public_mac]="%master-([012]+).metadata.annotations.kni.io\/sdnNetworkMac"
     # The following is an example of a rule that allows
     # a new entry to be generated that is a constant value
@@ -91,7 +94,6 @@ declare -A CLUSTER_MASTER_MAP=(
     [master-\\1.spec.bootMACAddress]="%master-([012]+).spec.bootMACAddress"
 )
 export CLUSTER_MASTER_MAP
-
 
 declare -A WORKER_MAP=(
     [matchbox_client_cert]="==$MATCHBOX_DIR/scripts/tls/client.crt"
@@ -113,7 +115,8 @@ export WORKER_MAP
 declare -A CLUSTER_WORKER_MAP=(
     [worker-\\1.metadata.ns]="=worker-([012]+).metadata.name=$BM_IP_NS"
     [worker-\\1.metadata.name]="%worker-([012]+).metadata.name"
-    [master-\\1.public_ipv4]="%worker-([012]+).metadata.annotations.kni.io\/sdnIPv4"
+    [worker-\\1.public_ipv4]="|%worker-([012]+).metadata.annotations.kni.io\/sdnIPv4"
+    [worker-\\1.spec.public_mac]="%worker-([012]+).metadata.annotations.kni.io\/sdnNetworkMac"
     [worker-\\1.spec.bmc.address]="%worker-([012]+).spec.bmc.address"
     [worker-\\1.spec.bmc.user]="%worker-([012]+).spec.bmc.[credentialsName].stringdata.username@"
     [worker-\\1.spec.bmc.password]="%worker-([012]+).spec.bmc.[credentialsName].stringdata.password@"

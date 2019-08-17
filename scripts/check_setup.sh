@@ -32,8 +32,8 @@ EOM
 }
 
 check_lookups() {
-    local cluster_id="${FINAL_VALS[cluster_id]}"
-    local cluster_domain="${FINAL_VALS[cluster_domain]}"
+    local cluster_id="${CLUSTER_FINAL_VALS[cluster_id]}"
+    local cluster_domain="${CLUSTER_FINAL_VALS[cluster_domain]}"
 
     declare -A LOOKUP_MAP=(
         ["api.$cluster_id.$cluster_domain."]="$(nthhost "$BM_IP_CIDR" 1)"
