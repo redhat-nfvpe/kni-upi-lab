@@ -7,6 +7,7 @@ haproxy_dir = ./haproxy
 openshift_dir = ./ocp
 matchbox_dir = ./matchbox
 matchbox_data_dir = ./matchbox-data
+matchbox_etc_dir = $(matchbox_data_dir)/etc/matchbox
 upi_rt_dir = ./upi-rt
 build_dir = ./build
 
@@ -15,12 +16,14 @@ dnsmasq_bm_conf := $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.conf $(dnsmasq_dir)/b
 haproxy_conf := $(haproxy_dir)/haproxy.cfg
 dnsmasq_conf := $(dnsmasq_bm_conf) $(dnsmasq_prov_conf)
 coredns_conf := $(coredns_dir)/Corefile
-terraform_cluster := $(upi_rt_dir)/terraform/cluster/terraform.tfvars
-terraform_worker := $(upi_rt_dir)/terraform/workers/terraform.tfvars
+terraform_cluster := $(terraform_dir)/cluster/terraform.tfvars
+terraform_worker := $(terraform_dir)/workers/terraform.tfvars
+terraform_cluster_upi := $(upi_rt_dir)/terraform/cluster/terraform.tfvars
+terraform_worker_upi := $(upi_rt_dir)/terraform/workers/terraform.tfvars
 ignitions := $(openshift_dir)/worker.ign $(openshift_dir)/master.ign
 matchbox_git := $(matchbox_dir)/.git
 upi_rt_git := $(upi_rt_dir)/.git
-matchbox-data-files := $(matchbox_data_dir)/etc/matchbox/ca.crt
+matchbox-data-files := $(matchbox_etc_dir)/server/ca.crt
 common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh 
 kickstart_cfg := $(matchbox_data_dir)/var/lib/matchbox/assets/rhel8-worker-kickstart.cfg
 
@@ -35,7 +38,7 @@ haproxy_container := $(haproxy_dir)/imageid
 all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
 	echo "All config files generated and copied into their proper locations..."
 
-## = cluster
+## = cluster                 - Invoke terrafor to create cluster
 .PHONY: cluster
 cluster:
 	cd $(upi_rt_dir)/terraform/cluster && terraform init  && \
@@ -44,11 +47,11 @@ cluster:
 
 ## = clean                   - Remove all config files
 clean:
-	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir)  upi-rt
+	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) 
 
-## = dist-clean              - Remove all config fiels and data files
+## = dist-clean              - Remove all config files and data files
 dist-clean: clean
-	rm -f $(matchbox_data_dir) $(matchbox_dir)
+	rm -f $(matchbox_data_dir) $(matchbox_dir) upi-rt
 ## = help                    - Show this screen
 .PHONY : help
 help : Makefile
@@ -73,14 +76,16 @@ $(upi_rt_git):
 matchbox-con-%: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
 	./scripts/gen_matchbox.sh $*
 
-matchbox: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
+matchbox: $(matchbox_git)
+
+$(matchbox_git):
 	./scripts/gen_matchbox.sh repo
 
 ## = matchbox-data           - Generate data / config files for Matchbox
 ## =
 matchbox-data: $(matchbox-data-files)
 
-$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
+$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh 
 	./scripts/gen_matchbox.sh data
 
 ## => Baremetal dnsmasq <======================================================
@@ -171,7 +176,7 @@ $(terraform-bin):
 
 ## = terraform-conf       - Generate the Terraform config files
 ## =
-terraform-conf: $(terraform_cluster) $(terraform_worker) 
+terraform-conf: $(terraform_cluster) $(terraform_worker) $(terraform_cluster_upi) $(terraform_worker_upi)
 $(terraform_cluster): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh cluster
 	cp $(terraform_dir)/cluster/terraform.tfvars $(upi_rt_dir)/terraform/cluster 

@@ -49,9 +49,9 @@ export NO_TERRAFORM_MAP
 declare -A CLUSTER_MAP=(
     [bootstrap_ign_file]="==$OPENSHIFT_DIR/bootstrap.ign"
     [master_ign_file]="==$OPENSHIFT_DIR/master.ign"
-    [matchbox_client_cert]="==$MATCHBOX_DIR/scripts/tls/client.crt"
-    [matchbox_client_key]="==$MATCHBOX_DIR/scripts/tls/client.key"
-    [matchbox_trusted_ca_cert]="==$MATCHBOX_DIR/scripts/tls/ca.crt"
+    [matchbox_client_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.crt"
+    [matchbox_client_key]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.key"
+    [matchbox_trusted_ca_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/ca.crt"
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
     [pxe_initrd_url]="==$DEFAULT_INITRD"
@@ -96,9 +96,9 @@ declare -A CLUSTER_MASTER_MAP=(
 export CLUSTER_MASTER_MAP
 
 declare -A WORKER_MAP=(
-    [matchbox_client_cert]="==$MATCHBOX_DIR/scripts/tls/client.crt"
-    [matchbox_client_key]="==$MATCHBOX_DIR/scripts/tls/client.key"
-    [matchbox_trusted_ca_cert]="==$MATCHBOX_DIR/scripts/tls/ca.crt"
+    [matchbox_client_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.crt"
+    [matchbox_client_key]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.key"
+    [matchbox_trusted_ca_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/tls/ca.crt"
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
     [worker_kickstart]="==$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"

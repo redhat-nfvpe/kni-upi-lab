@@ -64,7 +64,7 @@ start_matchbox() {
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
     if ! cid=$(sudo podman run -d --net=host --name "$CONTAINER_NAME" -v "$MATCHBOX_VAR_LIB:/var/lib/matchbox:Z" \
-        -v "$MATCHBOX_ETC_DIR:/etc/matchbox:Z,ro" quay.io/poseidon/matchbox:latest -address=0.0.0.0:8080 \
+        -v "$MATCHBOX_ETC_DIR/server:/etc/matchbox:Z,ro" quay.io/poseidon/matchbox:latest -address=0.0.0.0:8080 \
         -rpc-address=0.0.0.0:8081 -log-level=debug); then
         printf "Could not start %s container!\n" "$CONTAINER_NAME"
         exit 1
@@ -116,8 +116,8 @@ make_certs() {
             export SAN
 
             if ./cert-gen; then
-                cp ca.crt server.crt server.key "$MATCHBOX_DATA_DIR/etc/matchbox"
-                cp ca.crt client.crt client.key ~/.matchbox
+                cp ca.crt server.crt server.key "$MATCHBOX_ETC_DIR/server"
+                cp ca.crt client.crt client.key "$MATCHBOX_ETC_DIR/client"
             else
                 printf "cert-gen failed!\n"
                 exit 1
@@ -133,7 +133,8 @@ make_dirs() {
 
     mkdir -p ~/.matchbox || exit 1
     mkdir -p "$MATCHBOX_DIR" || exit 1
-    mkdir -p "$MATCHBOX_ETC_DIR" || exit 1
+    mkdir -p "$MATCHBOX_ETC_DIR/server" || exit 1
+    mkdir -p "$MATCHBOX_ETC_DIR/client" || exit 1
     mkdir -p "$MATCHBOX_VAR_LIB" || exit 1
     mkdir -p "$MATCHBOX_VAR_LIB/assets" || exit 1
 }
