@@ -7,7 +7,7 @@ haproxy_dir = ./haproxy
 openshift_dir = ./ocp
 matchbox_dir = ./matchbox
 matchbox_data_dir = ./matchbox-data
-upi-rt_dir = ./upi-rt
+upi_rt_dir = ./upi-rt
 build_dir = ./build
 
 dnsmasq_prov_conf := $(dnsmasq_dir)/prov/etc/dnsmasq.d/dnsmasq.conf
@@ -15,11 +15,11 @@ dnsmasq_bm_conf := $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.conf $(dnsmasq_dir)/b
 haproxy_conf := $(haproxy_dir)/haproxy.cfg
 dnsmasq_conf := $(dnsmasq_bm_conf) $(dnsmasq_prov_conf)
 coredns_conf := $(coredns_dir)/Corefile
-terraform_cluster := $(terraform_dir)/cluster/terraform.tfvars
-terraform_worker := $(terraform_dir)/workers/terraform.tfvars
+terraform_cluster := $(upi_rt_dir)/terraform/cluster/terraform.tfvars
+terraform_worker := $(upi_rt_dir)/terraform/workers/terraform.tfvars
 ignitions := $(openshift_dir)/worker.ign $(openshift_dir)/master.ign
 matchbox_git := $(matchbox_dir)/.git
-upi-rt_git := $(upi-rt_dir)/.git
+upi_rt_git := $(upi_rt_dir)/.git
 matchbox-data-files := $(matchbox_data_dir)/etc/matchbox/ca.crt
 common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh 
 kickstart_cfg := $(matchbox_data_dir)/var/lib/matchbox/assets/rhel8-worker-kickstart.cfg
@@ -30,16 +30,24 @@ openshift-oc := /usr/local/bin/oc
 haproxy_container := $(haproxy_dir)/imageid
 
 ## => General <================================================================
+## = cluster
+.PHONY: cluster
+cluster:
+	cd $(upi_rt_dir)/terraform/cluster && terraform init  && \
+	terraform destroy --auto-approve && \
+	terraform apply --auto-approve
+
 ## = all (default)           - Generate all configuration files
-all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart
+all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
+	echo "All config files generated and copied into their proper locations..."
 
 ## = clean                   - Remove all config files
 clean:
-	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) $(matchbox_dir) upi-rt
+	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir)  upi-rt
 
 ## = dist-clean              - Remove all config fiels and data files
 dist-clean: clean
-	rm -f $(matchbox_data_dir)
+	rm -f $(matchbox_data_dir) $(matchbox_dir)
 ## = help                    - Show this screen
 .PHONY : help
 help : Makefile
@@ -48,10 +56,9 @@ help : Makefile
 dns_conf: $(dnsmasq_prov_conf) $(dnsmasq_bm_conf) $(coredns_conf)
 
 ## = upi-rt                  - Clone upi-rt repo
-.PHONY: upi-rt
 upi-rt: $(upi-rt_git)
 
-$(upi-rt_git):
+$(upi_rt_git):
 	git clone https://github.com/redhat-nfvpe/upi-rt.git
 
 ## => Matchbox <===============================================================
@@ -163,11 +170,14 @@ $(terraform-bin):
 
 ## = terraform-conf       - Generate the Terraform config files
 ## =
-terraform-conf: $(terraform_cluster) $(terraform_worker)
-$(terraform_cluster): $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
-	./scripts/gen_terraform.sh all
-$(terraform_worker): $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
-	./scripts/gen_terraform.sh all
+terraform-conf: $(terraform_cluster) $(terraform_worker) 
+$(terraform_cluster): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
+	./scripts/gen_terraform.sh cluster
+	cp $(terraform_dir)/cluster/terraform.tfvars $(upi_rt_dir)/terraform/cluster 
+
+$(terraform_worker): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
+	./scripts/gen_terraform.sh workers
+	cp $(terraform_dir)/workers/terraform.tfvars $(upi_rt_dir)/terraform/workers 
 
 cluster/manifest_vals.sh: $(manifests)
 	./scripts/parse_manifests.sh
@@ -183,7 +193,7 @@ $(ignitions): $(manifests) ./scripts/gen_ignition.sh $(openshift-bin) $(common_s
 ## = kickstart                - Create the required kickstart files
 kickstart: $(kickstart_cfg)
 ##
-$(kickstart_cfg): $(matchbox-data-files) $(manifests) $(ignitions) ./scripts/gen_kickstart.sh $(common_scripts)
+$(kickstart_cfg): $(upi_rt_git) $(matchbox-data-files) $(manifests) $(ignitions) ./scripts/gen_kickstart.sh $(common_scripts)
 	./scripts/gen_kickstart.sh kickstart
 
 ## => Container Management <===============================================================
@@ -191,10 +201,10 @@ $(kickstart_cfg): $(matchbox-data-files) $(manifests) $(ignitions) ./scripts/gen
 ## = con-start        - Start all containers
 ## = con-remove       - Stop and remove all containers
 ## = con-isrunning    - Check if all containers are running
-con-%: 
+con-start:
+con-%: all
 	-./scripts/gen_config_prov.sh $*
 	-./scripts/gen_config_bm.sh $*
 	-./scripts/gen_haproxy.sh $*
 	-./scripts/gen_coredns.sh $*
 	-./scripts/gen_matchbox.sh $*
-
