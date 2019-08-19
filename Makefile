@@ -41,9 +41,9 @@ all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignit
 ## = cluster                 - Invoke terrafor to create cluster
 .PHONY: cluster
 cluster:
-	cd $(upi_rt_dir)/terraform/cluster && terraform init  && \
-	terraform destroy --auto-approve && \
-	terraform apply --auto-approve
+	cd $(upi_rt_dir)/terraform/cluster && terraform init
+	-cd $(upi_rt_dir)/terraform/cluster && terraform destroy --auto-approve 
+	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
 
 ## = clean                   - Remove all config files
 clean:
