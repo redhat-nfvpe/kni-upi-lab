@@ -134,7 +134,7 @@ gen_terraform_cluster() {
                 exit 1
             fi
             printf "  {\n"
-            printf "    name: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.metadata.name]}"
+            printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${CLUSTER_FINAL_VALS[$m.metadata.name]}"
             printf "    public_ipv4: \"%s\",\n" "$(get_master_bm_ip $i)"
             printf "    ipmi_host: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.address]}"
             printf "    ipmi_user: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.user]}"
