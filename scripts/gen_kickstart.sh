@@ -61,11 +61,11 @@ create_settings_env() {
 update_settings_env() {
     ofile="$1"
 
-    sed -ire "s/.*CLUSTER_NAME.*/export CLUSTER_NAME=\"${MANIFEST_VALS[install\-config.metadata.name]}\"/" "$ofile"
-    sed -ire "s/.*BASE_DOMAIN.*/export BASE_DOMAIN=\"${MANIFEST_VALS[install\-config.baseDomain]}\"/" "$ofile"
-    sed -ire "s/.*PULL_SECRET.*/export PULL_SECRET=\"${MANIFEST_VALS[install\-config.pullSecret]}\"/" "$ofile"
-    sed -ire "s|.*KUBECONFIG_PATH.*|export KUBECONFIG_PATH=\"$PROJECT_DIR/ocp/auth/kubeconfig\"|" "$ofile"
-    sed -ire "s|.*RHEL_INSTALL_ENDPOINT.*|export RHEL_INSTALL_ENDPOINT=\"$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8\"|" "$ofile"
+    sed -i -re "s/.*CLUSTER_NAME.*/export CLUSTER_NAME=\"${MANIFEST_VALS[install\-config.metadata.name]}\"/" "$ofile"
+    sed -i -re "s/.*BASE_DOMAIN.*/export BASE_DOMAIN=\"${MANIFEST_VALS[install\-config.baseDomain]}\"/" "$ofile"
+    sed -i -re "s/.*PULL_SECRET.*/export PULL_SECRET=\"${MANIFEST_VALS[install\-config.pullSecret]}\"/" "$ofile"
+    sed -i -re "s|.*KUBECONFIG_PATH.*|export KUBECONFIG_PATH=\"$PROJECT_DIR/ocp/auth/kubeconfig\"|" "$ofile"
+    sed -i -re "s|.*RHEL_INSTALL_ENDPOINT.*|export RHEL_INSTALL_ENDPOINT=\"$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8\"|" "$ofile"
 }
 
 create_kickstart() {
