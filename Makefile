@@ -46,7 +46,7 @@ cluster:
 	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
 
 ## = clean                   - Remove all config files
-clean:
+clean: con-remove
 	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) 
 
 ## = dist-clean              - Remove all config files and data files
@@ -207,6 +207,7 @@ $(kickstart_cfg): $(upi_rt_git) $(matchbox-data-files) $(manifests) $(ignitions)
 ## = con-start        - Start all containers
 ## = con-remove       - Stop and remove all containers
 ## = con-isrunning    - Check if all containers are running
+conf-remove:
 con-start:
 con-%: all
 	-./scripts/gen_config_prov.sh $*
