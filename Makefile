@@ -20,8 +20,9 @@ terraform_worker := $(terraform_dir)/workers/terraform.tfvars
 ignitions := $(openshift_dir)/worker.ign $(openshift_dir)/master.ign
 matchbox_git := $(matchbox_dir)/.git
 upi-rt_git := $(upi-rt_dir)/.git
-matchbox-data-files := $(matchbox_data_dir)/etc/matchbox/ca.cert
+matchbox-data-files := $(matchbox_data_dir)/etc/matchbox/ca.crt
 common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh 
+kickstart_cfg := $(matchbox_data_dir)/var/lib/matchbox/assets/rhel8-worker-kickstart.cfg
 
 terraform-bin := /usr/bin/terraform
 openshift-bin := /usr/local/bin/openshift-install
@@ -30,7 +31,7 @@ haproxy_container := $(haproxy_dir)/imageid
 
 ## => General <================================================================
 ## = all (default)           - Generate all configuration files
-all: dns_conf haproxy terraform-install matchbox matchbox-data upi-rt
+all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart
 
 ## = clean                   - Remove all config files
 clean:
@@ -52,6 +53,7 @@ upi-rt: $(upi-rt_git)
 
 $(upi-rt_git):
 	git clone https://github.com/redhat-nfvpe/upi-rt.git
+
 ## => Matchbox <===============================================================
 ## = matchbox                - Install the Matchbox repo
 ## =
@@ -60,9 +62,9 @@ matchbox: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
 
 ## = matchbox-data           - Generate data / config files for Matchbox
 ## =
-matchbox-data: $(matchbox-data-files) $(common_scripts)
+matchbox-data: $(matchbox-data-files)
 
-$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh matchbox $(common_scripts)
+$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
 	./scripts/gen_matchbox.sh data
 
 ## => Baremetal dnsmasq <======================================================
@@ -165,7 +167,13 @@ cluster/manifest_vals.sh: $(manifests)
 ## => Ignition Files <=========================================================
 ## = ignition                - Create the required ignition files
 ignition: $(ignitions) 
-##
-$(ignitions): $(manifests) ./scripts/gen_ignition.sh openshift-install $(common_scripts)
+## =
+$(ignitions): $(manifests) ./scripts/gen_ignition.sh $(openshift-bin) $(common_scripts)
 	./scripts/gen_ignition.sh
 
+## => Kickstart Files <=========================================================
+## = kickstart                - Create the required kickstart files
+kickstart: $(kickstart_cfg)
+##
+$(kickstart_cfg): $(matchbox-data-files) $(manifests) $(ignitions) ./scripts/gen_kickstart.sh $(common_scripts)
+	./scripts/gen_kickstart.sh kickstart

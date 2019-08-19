@@ -1,3 +1,4 @@
+settings.env
 upi-rt
 dnsmasq/*
 terraform/*

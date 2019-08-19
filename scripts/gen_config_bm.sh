@@ -192,8 +192,6 @@ fi
 source "$PROJECT_DIR/scripts/utils.sh"
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/paths.sh"
-# shellcheck disable=SC1090
-source "$PROJECT_DIR/scripts/paths.sh"
 
 manifest_dir=${manifest_dir:-$MANIFEST_DIR}
 manifest_dir=$(realpath "$manifest_dir")

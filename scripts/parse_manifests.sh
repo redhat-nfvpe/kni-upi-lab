@@ -62,21 +62,5 @@ parse_prep_bm_host_src "$prep_host_setup_src"
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/network_conf.sh"
 
-
+# The following writes the manfifest output
 parse_manifests "$manifest_dir"
-
-mapfile sorted < <(printf '%s\0' "${!MANIFEST_VALS[@]}" | sort)
-
-ofile="$manifest_dir/manifest_vals.sh"
-
-{
-    printf "# AUTOMATICALLY GENERATED -- Do Not Edit --\n"
-    printf "declare -A MANIFEST_VALS=(\n"
-
-    for v in "${sorted[@]}"; do
-        printf "  [%s]=\"%s\"\n" "$v" "${MANIFEST_VALS[$v]}"
-    done
-
-    printf ")\n"
-    printf "export MANIFEST_VALS\n"
-} >"$ofile"

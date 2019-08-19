@@ -106,8 +106,6 @@ declare -A WORKER_MAP=(
     [worker_initrd]="==assets/rhel8/images/pxeboot/initrd.img"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
-    [provisioning_interface]="==${PROV_INTF}"
-    [baremetal_interface]="==${BM_INTF}"
     [worker_count]="%install-config.compute.0.replicas"
 )
 export WORKER_MAP
