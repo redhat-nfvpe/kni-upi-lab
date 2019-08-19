@@ -195,12 +195,11 @@ start)
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
     if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host \
-        -v "$PROJECT_DIR/dnsmasq/bm/var/run:/var/run/dnsmasq:Z" \
-        -v "$PROJECT_DIR/dnsmasq/bm/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
+        -v "$PROJECT_DIR/dnsmasq/prov/var/run:/var/run/dnsmasq:Z" \
+        -v "$PROJECT_DIR/dnsmasq/prov/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
         --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 \
         --expose=69/udp --cap-add=NET_ADMIN "$CONTAINER_IMAGE" \
         --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q); then
-        printf "Could not start %s container!\n" "$CONTAINER_NAME"
 
         exit 1
     fi
