@@ -156,6 +156,8 @@ update)
     gen_settings_env "$PROJECT_DIR/$SETTINGS_FILE"
     ;;
 kickstart)
+    gen_settings_env "$PROJECT_DIR/$SETTINGS_FILE"
+    
     if ! create_kickstart "$PROJECT_DIR/$SETTINGS_FILE" "$UPI_RT_DIR/kickstart/add_kickstart_for_rhel8.sh"; then
         printf "Creation of kickstart failed!"
     fi
