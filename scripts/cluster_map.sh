@@ -98,7 +98,7 @@ export CLUSTER_MASTER_MAP
 declare -A WORKER_MAP=(
     [matchbox_client_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.crt"
     [matchbox_client_key]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.key"
-    [matchbox_trusted_ca_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/tls/ca.crt"
+    [matchbox_trusted_ca_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/ca.crt"
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
     [worker_kickstart]="==$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
