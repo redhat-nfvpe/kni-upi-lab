@@ -30,16 +30,17 @@ openshift-oc := /usr/local/bin/oc
 haproxy_container := $(haproxy_dir)/imageid
 
 ## => General <================================================================
+
+## = all (default)           - Generate all configuration files
+all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
+	echo "All config files generated and copied into their proper locations..."
+
 ## = cluster
 .PHONY: cluster
 cluster:
 	cd $(upi_rt_dir)/terraform/cluster && terraform init  && \
 	terraform destroy --auto-approve && \
 	terraform apply --auto-approve
-
-## = all (default)           - Generate all configuration files
-all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
-	echo "All config files generated and copied into their proper locations..."
 
 ## = clean                   - Remove all config files
 clean:
