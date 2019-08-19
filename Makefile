@@ -57,6 +57,14 @@ $(upi-rt_git):
 ## => Matchbox <===============================================================
 ## = matchbox                - Install the Matchbox repo
 ## =
+## = matchbox-con-stop         - Stop the dnsmasq-bm container
+## = matchbox-con-start        - Start the dnsmasq-bm container (regen configs)
+## = matchbox-con-remove       - Stop and remove the dnsmasq-bm container
+## = matchbox-con-isrunning    - Check if dnsmasq-bm container is running
+## =
+matchbox-con-%: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
+	./scripts/gen_matchbox.sh $*
+
 matchbox: $(manifests) ./scripts/gen_matchbox.sh $(common_scripts)
 	./scripts/gen_matchbox.sh repo
 
@@ -177,3 +185,16 @@ kickstart: $(kickstart_cfg)
 ##
 $(kickstart_cfg): $(matchbox-data-files) $(manifests) $(ignitions) ./scripts/gen_kickstart.sh $(common_scripts)
 	./scripts/gen_kickstart.sh kickstart
+
+## => Container Management <===============================================================
+## = con-stop         - Stop all containers
+## = con-start        - Start all containers
+## = con-remove       - Stop and remove all containers
+## = con-isrunning    - Check if all containers are running
+con-%: 
+	-./scripts/gen_config_prov.sh $*
+	-./scripts/gen_config_bm.sh $*
+	-./scripts/gen_haproxy.sh $*
+	-./scripts/gen_coredns.sh $*
+	-./scripts/gen_matchbox.sh $*
+
