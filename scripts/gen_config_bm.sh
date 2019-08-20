@@ -208,18 +208,12 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$DNSMASQ_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
-
-map_cluster_vars
-map_worker_vars
-
 case "$COMMAND" in
 bm | config)
+    gen_variables "$manifest_dir"
     gen_config "$out_dir"
     ;;
 start)
-    gen_config "$out_dir"
-
     podman_exists "$CONTAINER_NAME" &&
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")

@@ -205,7 +205,6 @@ gen_workers() {
 
     map_worker_vars
     gen_terraform_workers "$terraform_dir"
-
 }
 
 gen_install() {

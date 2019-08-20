@@ -271,16 +271,13 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$HAPROXY_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
-
-map_cluster_vars
-map_worker_vars
-
 case "$COMMAND" in
 build)
+    gen_variables "$manifest_dir"
     build_haproxy "$out_dir"
     ;;
 gen-config)
+    gen_variables "$manifest_dir"
     ofile=$(gen_config_haproxy "$out_dir")
     printf "Generated %s...\n" "$ofile"
     ;;

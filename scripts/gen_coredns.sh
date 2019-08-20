@@ -203,26 +203,22 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$COREDNS_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
-
-map_cluster_vars
-map_worker_vars
-
 case "$COMMAND" in
 all)
+    gen_variables "$manifest_dir"
     gen_config "$out_dir"
     ;;
 corefile)
+    gen_variables "$manifest_dir"
     ofile=$(gen_config_corefile "$out_dir")
     printf "Generated %s...\n" "$ofile"
     ;;
 db)
+    gen_variables "$manifest_dir"
     ofile=$(gen_config_db "$out_dir")
     printf "Generated %s...\n" "$ofile"
     ;;
 start)
-    gen_config "$out_dir"
-
     podman_exists "$CONTAINER_NAME" &&
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")

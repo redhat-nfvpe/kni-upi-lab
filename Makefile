@@ -46,8 +46,14 @@ cluster:
 	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
 
 ## = clean                   - Remove all config files
-clean: con-remove
+clean: 
 	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) 
+	-./scripts/gen_config_prov.sh remove
+	-./scripts/gen_config_bm.sh remove
+	-./scripts/gen_haproxy.sh remove
+	-./scripts/gen_coredns.sh remove
+	-./scripts/gen_matchbox.sh remove
+
 
 ## = dist-clean              - Remove all config files and data files
 dist-clean: clean
@@ -94,7 +100,7 @@ $(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh
 ## = dns-bm-con-remove       - Stop and remove the dnsmasq-bm container
 ## = dns-bm-con-isrunning    - Check if dnsmasq-bm container is running
 ## =
-dns-bm-con-%: ./scripts/gen_config_bm.sh $(common_scripts)
+dns-bm-con-%: ./scripts/gen_config_bm.sh dns-bm-conf $(common_scripts)
 	./scripts/gen_config_bm.sh $*
 
 ## = dns-bm-conf             - Generate dnsmasq-bm configuration
@@ -207,7 +213,6 @@ $(kickstart_cfg): $(upi_rt_git) $(matchbox-data-files) $(manifests) $(ignitions)
 ## = con-start        - Start all containers
 ## = con-remove       - Stop and remove all containers
 ## = con-isrunning    - Check if all containers are running
-conf-remove:
 con-start:
 con-%: all
 	-./scripts/gen_config_prov.sh $*

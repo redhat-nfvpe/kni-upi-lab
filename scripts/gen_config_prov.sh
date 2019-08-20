@@ -188,8 +188,6 @@ prov)
     gen_config "$out_dir"
     ;;
 start)
-    gen_config "$out_dir"
-
     podman_exists "$CONTAINER_NAME" &&
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
