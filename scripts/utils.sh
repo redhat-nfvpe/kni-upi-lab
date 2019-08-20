@@ -38,7 +38,7 @@ parse_manifests() {
             printf "Error during parsing..."
             exit 1
         fi
-        mapfile -t lines < <(echo "$values" | sed -e 's/^"//' -e 's/"$//' -e 's/\\"//g')
+        mapfile -t lines < <(echo "$values" | sed -e 's/^"//' -e 's/"$//' -e 's/\\\\\\"/"/g' -e 's/\\"//g' )
         unset manifest_vars
         declare -A manifest_vars
         for line in "${lines[@]}"; do
