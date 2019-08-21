@@ -225,7 +225,7 @@ start)
 
     if ! cid=$(sudo podman run -d --expose=53/udp --name "$CONTAINER_NAME" \
         -p "$(nthhost "$BM_IP_CIDR" 1):53:53" -p "$(nthhost "$BM_IP_CIDR" 1):53:53/udp" \
-        -v "$PROJECT_DIR/coredns:/etc/coredns:z" --name coredns coredns/coredns:latest \
+        -v "$PROJECT_DIR/coredns:/etc/coredns:z" coredns/coredns:latest \
         -conf /etc/coredns/Corefile); then
         printf "Could not start coredns container!\n"
         exit 1
