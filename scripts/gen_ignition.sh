@@ -28,9 +28,26 @@ gen_ignition() {
     mkdir -p "$out_dir"
     cp "$manifest_dir/install-config.yaml" "$out_dir"
 
+    if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
+        printf "openshift-install create manifests failed!\n"
+        exit 1
+    fi
+
     if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
         printf "openshift-install create ignition-configs failed!\n"
         exit 1
+    fi
+    if [ -z "$PATH_NM_WAIT" ]; then
+        for ign in bootstrap.ign master.ign worker.ign; do
+            jq '.systemd.units += [{"name": "NetworkManager-wait-online.service", 
+     "dropins": [{ 
+       "name": "timeout.conf", 
+       "contents": "[Service]\nExecStart=\nExecStart=/usr/bin/nm-online -s -q --timeout=300" 
+     }]}]' <"$out_dir/$ign" >"$out_dir/$ign.bak"
+
+        mv "$out_dir/$ign.bak" "$out_dir/$ign"
+        
+        done
     fi
 
     if [ ! -f "${CLUSTER_FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${CLUSTER_FINAL_VALS[master_ign_file]}" ]; then

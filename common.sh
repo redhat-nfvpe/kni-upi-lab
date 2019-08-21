@@ -13,6 +13,9 @@ export OPENSHIFT_RHCOS_URL
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PROJECT_DIR
 
+PATCH_NM_WAIT=true
+export PATCH_NM_WAIT
+
 #function finish() {
 #
 #}
