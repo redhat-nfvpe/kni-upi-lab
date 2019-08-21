@@ -269,7 +269,7 @@ if ! [ -f "${DNSCONF}" ]; then
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
 if ! [ -f "${DNSMASQCONF}" ]; then
-    echo server=/tt.testing/192.168.111.1 | sudo tee "${DNSMASQCONF}"
+    echo server=/tt.testing/$(nthhost "$BM_IP_CIDR" 1) | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
 if [ -n "$DNSCHANGED" ]; then
@@ -291,95 +291,6 @@ if [[ ! -d "/var/lib/tftpboot" ]]; then
         curl -O http://boot.ipxe.org/ipxe.efi
         curl -O http://boot.ipxe.org/undionly.kpxe
     ) || exit 1
-fi
-
-###-------------------------###
-### Start HAProxy container ###
-###-------------------------###
-
-printf "\nStarting haproxy container...\n\n"
-
-if ! ./scripts/gen_haproxy.sh build; then
-    echo "HAProxy container build error.  Exiting!"
-    exit 1
-fi
-
-if ! ./scripts/gen_haproxy.sh start; then
-    echo "HAProxy container start error.  Exiting!"
-    exit 1
-fi
-
-###--------------------------------------###
-### Start provisioning dnsmasq container ###
-###--------------------------------------###
-
-printf "\nStarting provisioning dnsmasq container...\n\n"
-
-if ! ./scripts/gen_config_prov.sh; then
-    echo "Provisioning dnsmasq container config generation error.  Exiting!"
-    exit 1
-fi
-
-DNSMASQ_PROV_CONTAINER=$(podman ps | grep dnsmasq-prov)
-
-if [[ -z "$DNSMASQ_PROV_CONTAINER" ]]; then
-    podman run -d --name dnsmasq-prov --net=host -v "$PROJECT_DIR/dnsmasq/prov/var/run:/var/run/dnsmasq:Z" \
-        -v "$PROJECT_DIR/dnsmasq/prov/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
-        --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 --expose=69/udp \
-        --cap-add=NET_ADMIN quay.io/poseidon/dnsmasq --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q
-fi
-
-###-----------------------------------###
-### Start baremetal dnsmasq container ###
-###-----------------------------------###
-
-printf "\nStarting baremetal dnsmasq container...\n\n"
-
-if ! ./scripts/gen_config_bm.sh; then
-    echo "Baremetal dnsmasq container config generation error.  Exiting!"
-    exit 1
-fi
-
-DNSMASQ_BM_CONTAINER=$(podman ps | grep dnsmasq-bm)
-
-if [[ -z "$DNSMASQ_BM_CONTAINER" ]]; then
-    podman run -d --name dnsmasq-bm --net=host -v "$PROJECT_DIR/dnsmasq/bm/var/run:/var/run/dnsmasq:Z" \
-        -v "$PROJECT_DIR/dnsmasq/bm/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
-        --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 --expose=69/udp \
-        --cap-add=NET_ADMIN quay.io/poseidon/dnsmasq --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q
-fi
-
-###----------------------------------------###
-### Configure and start matchbox container ###
-###----------------------------------------###
-
-printf "\nConfiguring and starting matchbox container...\n\n"
-
-if ! ./scripts/gen_matchbox.sh all; then
-    echo "Matchbox install failed.  Exiting!"
-    exit 1
-fi
-
-###----------------------------------------###
-### Configure coredns Corefile and db file ###
-###----------------------------------------###
-
-printf "\nConfiguring CoreDNS...\n\n"
-
-if ! ./scripts/gen_coredns.sh; then
-    echo "CoreDNS config generation error.  Exiting!"
-    exit 1
-fi
-
-###-------------------------###
-### Start coredns container ###
-###-------------------------###
-
-printf "\nStarting CoreDNS container...\n\n"
-
-if ! ./scripts/gen_coredns.sh start; then
-    echo "CoreDNS container start error.  Exiting!"
-    exit 1
 fi
 
 ###----------------------------###
@@ -432,35 +343,5 @@ if ! ./scripts/gen_terraform.sh all; then
     echo "Terraform config generation error.  Exiting!"
     exit 1
 fi
-
-###-------------------###
-### Prepare ignitions ###
-###-------------------###
-
-printf "\nGenerating ignition config...\n\n"
-
-if ! ./scripts/gen_ignition.sh; then
-    echo "Ignition config generation error.  Exiting!"
-    exit 1
-fi
-
-###-----------------------------------------------------###
-### Clone upi-rt repo and copy generated config into it ###
-###-----------------------------------------------------###
-
-printf "\nCloning upi-rt repo and applying generated config...\n\n"
-
-mkdir -p upi-rt
-
-(
-    cd upi-rt
-
-    if [[ ! -f "README.md" ]]; then
-        git clone https://github.com/redhat-nfvpe/upi-rt.git .
-    fi
-
-    cp -f "$PROJECT_DIR/terraform/cluster/terraform.tfvars" terraform/cluster/.
-    cp -f "$PROJECT_DIR/terraform/workers/terraform.tfvars" terraform/workers/.
-) || exit 1
 
 printf "\nDONE\n"
