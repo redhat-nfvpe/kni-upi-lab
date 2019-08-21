@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-CONTAINER_NAME="dnsmasq-bm"
+CONTAINER_NAME="kni-dnsmasq-bm"
 CONTAINER_IMAGE="quay.io/poseidon/dnsmasq"
 
 set -o pipefail

@@ -17,7 +17,7 @@ export OPENSHIFT_RHCOS_ASSET_MAP
 
 MATCHBOX_REPO="https://github.com/poseidon/matchbox.git"
 
-CONTAINER_NAME="matchbox"
+CONTAINER_NAME="kni-matchbox"
 
 set -o pipefail
 

@@ -79,7 +79,7 @@ check_container_status() {
 check_containers() {
     check_container_status "dnsmasq_prov"
     check_container_status "dnsmasq_bm"
-    check_container_status "akraino-haproxy"
+    check_container_status "kni-haproxy"
     check_container_status "coredns"
     check_container_status "matchbox"
 }

@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-CONTAINER_NAME="dnsmasq-prov"
+CONTAINER_NAME="kni-dnsmasq-prov"
 CONTAINER_IMAGE="quay.io/poseidon/dnsmasq"
 
 # Script to generate dnsmasq.conf for the provisioning network

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-HAPROXY_IMAGE_NAME="akraino-haproxy"
+HAPROXY_IMAGE_NAME="kni-haproxy"
 HAPROXY_IMAGE_TAG="latest"
 
-CONTAINER_NAME="akraino-haproxy"
+CONTAINER_NAME="kni-haproxy"
 HAPROXY_KUBEAPI_PORT="6443"
 HAPROXY_MCS_MAIN_PORT="22623"
 
@@ -111,7 +111,7 @@ EOF
             printf "    server %s %s:%s check\n" "$cluster_id-master-1" "$(get_master_bm_ip 1)" "$HAPROXY_KUBEAPI_PORT"
         fi
 
-        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ] ; then
+        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-2" "$(get_master_bm_ip 2)" "$HAPROXY_KUBEAPI_PORT"
         fi
         printf "\n"
@@ -169,7 +169,7 @@ gen_build() {
 
     cat <<'EOF' >"$docker_file"
 FROM haproxy:1.7
-COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
+#COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
 
 ENV HAPROXY_USER haproxy
 
@@ -207,6 +207,8 @@ build_haproxy() {
         return 1
     fi
     printf "%s\n" "$image_id" >"$HAPROXY_DIR/imageid"
+
+    echo "$image_id"
 }
 
 VERBOSE="false"
@@ -283,14 +285,16 @@ gen-config)
     ;;
 start)
     if ! image_id=$(sudo podman images | grep $HAPROXY_IMAGE_NAME | awk '{print $3}'); then
-        build_haproxy "$out_dir" || printf "Cannot build image \"%s\"" "$HAPROXY_IMAGE_NAME"
+        image_id=$(build_haproxy "$out_dir") || printf "Cannot build image \"%s\"" "$HAPROXY_IMAGE_NAME"
     fi
 
     podman_exists "$CONTAINER_NAME" &&
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
-    if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host -p 80:80 -p 443:443 -p 6443:6443 -p 22623:22623 "$image_id" -f /usr/local/etc/haproxy/haproxy.cfg); then
+    if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host -p 80:80 \
+        -v "$PROJECT_DIR/haproxy:/usr/local/etc/haproxy:Z" \
+        -p 443:443 -p 6443:6443 -p 22623:22623 "$image_id" -f /usr/local/etc/haproxy/haproxy.cfg); then
         printf "Could not start haproxy container!"
         exit 1
     fi

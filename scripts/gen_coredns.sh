@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-CONTAINER_NAME="coredns"
+CONTAINER_NAME="kni-coredns"
 
 set -o pipefail
 
@@ -223,7 +223,7 @@ start)
         (podman_rm "$CONTAINER_NAME" ||
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
-    if ! cid=$(sudo podman run -d --expose=53/udp --name "$COREDNS_CONTAINTER_NAME" \
+    if ! cid=$(sudo podman run -d --expose=53/udp --name "$CONTAINER_NAME" \
         -p "$(nthhost "$BM_IP_CIDR" 1):53:53" -p "$(nthhost "$BM_IP_CIDR" 1):53:53/udp" \
         -v "$PROJECT_DIR/coredns:/etc/coredns:z" --name coredns coredns/coredns:latest \
         -conf /etc/coredns/Corefile); then

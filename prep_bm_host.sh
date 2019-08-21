@@ -339,9 +339,4 @@ printf "\nInstalling OpenShift binaries...\n\n"
     fi
 ) || exit 1
 
-if ! ./scripts/gen_terraform.sh all; then
-    echo "Terraform config generation error.  Exiting!"
-    exit 1
-fi
-
 printf "\nDONE\n"
