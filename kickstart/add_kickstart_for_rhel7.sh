@@ -16,7 +16,7 @@ rootpw --plaintext ${ROOT_PASSWORD}
 reboot
 cmdline
 install
-url --url=${RHEL_INSTALL_ENDPOINT}
+url --url=${OS_INSTALL_ENDPOINT}
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel

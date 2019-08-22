@@ -16,7 +16,7 @@ rootpw --plaintext ${ROOT_PASSWORD}
 reboot
 cmdline
 install
-url --url=http://mirror.centos.org/centos/7.6.1810/os/x86_64/
+url --url=${OS_INSTALL_ENDPOINT}
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
