@@ -1,0 +1,46 @@
+// The domain of the cluster.
+// All the records for the cluster are created under this domain.
+// Note: This field MUST be set manually prior to creating the cluster.
+cluster_domain = "kni.home"
+cluster_id="test"
+
+// The number of workers required
+worker_count = "1"
+
+// Client certificate used to authenticate with the matchbox RPC API.
+//
+// For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
+matchbox_client_cert = "/path/to/local/matchbox/scripts/tls/client.crt"
+
+// Client certificate's key used to authenticate with the matchbox RPC API.
+//
+// For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
+matchbox_client_key = "/path/to/local/matchbox/scripts/tls/client.key"
+
+// HTTPS endpoint for matchbox. This must include the scheme
+//
+// For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
+matchbox_http_endpoint = "http://${PROVISION_IP}:8080"
+
+// RPC endpoint for matchbox.
+//
+// For more info: https://godoc.org/github.com/coreos/matchbox/matchbox/client
+matchbox_rpc_endpoint = "${PROVISION_IP}:8081"
+
+// Certificate Authority certificate to trust the matchbox endpoint.
+matchbox_trusted_ca_cert = "/path/to/local/matchbox/scripts/tls/ca.crt"
+
+worker_nodes = [
+  {
+    name: "${WORKER0_NAME}",
+    public_ipv4: "${WORKER0_IP}",
+    ipmi_host: "${WORKER0_IPMI_HOST}",
+    ipmi_user: "${WORKER0_IPMI_USER}",
+    ipmi_pass: "${WORKER0_IPMI_PASS}",
+    mac_address: "${WORKER0_MAC}"
+  }
+]
+
+worker_kernel = "assets/rhel_vmlinuz"
+worker_initrd = "assets/rhel_initrd.img"
+worker_kickstart = "http://${PROVISION_IP}:8080/assets/centos-rt-worker-kickstart.cfg"
