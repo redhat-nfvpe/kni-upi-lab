@@ -70,28 +70,41 @@ update_settings_env() {
 
 create_kickstart() {
     ks_config="$1"
-    ks_script="$2"
-
-    if ! ks=$(cat "$ks_script"); then
-        printf "Missing file: %s!\n" "$ks_config"
-        exit 1
-    fi
+    ks_script_dir="$2"
 
     # shellcheck disable=SC1090
     source "$ks_config"
-    ks=$(echo "$ks" | sed -re "s|.*settings_upi.env$||")
 
-    ks=$(echo "$ks" | sed -re "s|^CORE_SSH_KEY.*|CORE_SSH_KEY=\"${MANIFEST_VALS[install\-config.sshKey]}\"|")
-
+    # Scripts must be executed in kickstart repo dir
     (
         cd "$UPI_RT_DIR/kickstart" || return 1
 
-        eval "$ks"
+        for scr in "$ks_script_dir"/add_*.sh; do
+            [[ "$VERBOSE" =~ true ]] && printf "Processing %s\n" "$scr"
 
-        mv rhel8-worker-kickstart.cfg "$BUILD_DIR"
+            if ! ks=$(cat "$scr"); then
+                printf "Missing file: %s!\n" "$scr"
+                exit 1
+            fi
+
+            ks=$(echo "$ks" | sed -re "s|.*settings_upi.env$||")
+
+            ks=$(echo "$ks" | sed -re "s|^CORE_SSH_KEY.*|CORE_SSH_KEY=\"${MANIFEST_VALS[install\-config.sshKey]}\"|")
+
+            cfg_file=$(echo "$ks" | sed -nre 's/cat\s*>\s*([^ ]+).*<<\s*EOT.*/\1/p')
+
+            if [ -z "$cfg_file" ]; then
+                printf "Unable to parse %s to locate output script!\n" "$scr"
+                return 1
+            fi
+
+            eval "$ks"
+
+            mv "$cfg_file" "$BUILD_DIR"
+
+            cp "$BUILD_DIR/$cfg_file" "$MATCHBOX_DATA_DIR/var/lib/matchbox/assets"
+        done
     )
-
-    cp "$BUILD_DIR/rhel8-worker-kickstart.cfg" "$MATCHBOX_DATA_DIR/var/lib/matchbox/assets"
 }
 
 VERBOSE="false"
@@ -156,8 +169,8 @@ update)
     ;;
 kickstart)
     gen_settings_env "$PROJECT_DIR/$SETTINGS_FILE"
-    
-    if ! create_kickstart "$PROJECT_DIR/$SETTINGS_FILE" "$UPI_RT_DIR/kickstart/add_kickstart_for_rhel8.sh"; then
+
+    if ! create_kickstart "$PROJECT_DIR/$SETTINGS_FILE" "$UPI_RT_DIR/kickstart"; then
         printf "Creation of kickstart failed!"
     fi
     ;;
