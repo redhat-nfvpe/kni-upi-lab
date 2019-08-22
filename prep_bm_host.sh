@@ -34,12 +34,6 @@ source "scripts/network_conf.sh"
 # shellcheck disable=SC1091
 source "scripts/utils.sh"
 
-###-------------------------------###
-### Call gen_*.sh scripts second! ###
-###-------------------------------###
-
-# ?
-
 ###-------------------------------------------###
 ### Install virt repo and get latest libvirtd ###
 ###-------------------------------------------###
