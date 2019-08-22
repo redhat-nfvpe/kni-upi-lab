@@ -21,7 +21,7 @@ url --url=${RHEL_INSTALL_ENDPOINT}
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
-autopart --nohome
+part / --fstype ext4 --grow
 auth --passalgo=sha512 --useshadow
 selinux --disabled
 services --enabled=iptables
