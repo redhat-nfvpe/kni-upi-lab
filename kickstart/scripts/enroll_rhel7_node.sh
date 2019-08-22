@@ -37,6 +37,9 @@ systemctl enable cri-o
 # disable swap
 swapoff -a
 
+# maskin firewalld, iptables
+systemctl mask firewalld iptables
+
 # enable ip forwarding
 sysctl -w net.ipv4.ip_forward=1
 sysctl --system
