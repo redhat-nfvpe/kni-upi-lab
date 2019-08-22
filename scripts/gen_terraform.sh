@@ -71,11 +71,6 @@
 #     credentialsName: ha-lab-ipmi-secret
 #   bootMACAddress: 0c:c4:7a:8e:ee:0c
 
-CLUSTER_DIR=cluster
-CLUSTER_TFVARS="$CLUSTER_DIR/terraform.tfvars"
-WORKER_DIR=workers
-WORKER_TFVARS="$WORKER_DIR/terraform.tfvars"
-
 usage() {
     cat <<EOM
 
@@ -95,7 +90,6 @@ usage() {
         -b base_dir -- Where to put the output [defaults to ./dnsmasq/...]
         -s [path/]prep_host_setup.src -- Location of the config file for host prep
             Default to ./prep_host_setup.src
-        -t terraform_dir -- Location to place terraform output.  Defaults to ./terraform
 EOM
     exit 0
 }
@@ -103,11 +97,7 @@ EOM
 gen_terraform_cluster() {
     local out_dir="$1"
 
-    local cluster_dir="$out_dir/cluster"
-
-    mkdir -p "$cluster_dir"
-
-    local ofile="$cluster_dir/terraform.tfvars"
+    local ofile="$out_dir/cluster/terraform.tfvars"
 
     mapfile -t sorted < <(printf '%s\n' "${!CLUSTER_MAP[@]}" | sort)
 
@@ -153,11 +143,7 @@ gen_terraform_cluster() {
 gen_terraform_workers() {
     local out_dir="$1"
 
-    local worker_dir="$out_dir/workers"
-
-    mkdir -p "$worker_dir"
-
-    local ofile="$worker_dir/terraform.tfvars"
+    local ofile="$out_dir/workers/terraform.tfvars"
 
     mapfile -t sorted < <(printf '%s\n' "${!WORKER_MAP[@]}" | sort)
 
@@ -194,17 +180,17 @@ gen_terraform_workers() {
 }
 
 gen_cluster() {
-    local terraform_dir="$1"
+    local tdir="$1"
 
     map_cluster_vars
-    gen_terraform_cluster "$terraform_dir"
+    gen_terraform_cluster "$tdir"
 }
 
 gen_workers() {
-    local terraform_dir="$1"
+    local tdir="$1"
 
     map_worker_vars
-    gen_terraform_workers "$terraform_dir"
+    gen_terraform_workers "$tdir"
 }
 
 gen_install() {
@@ -240,13 +226,10 @@ fi
 VERBOSE="false"
 export VERBOSE
 
-while getopts ":hm:t:v" opt; do
+while getopts ":hm:v" opt; do
     case ${opt} in
     m)
         manifest_dir=$OPTARG
-        ;;
-    t)
-        terraform_dir=$OPTARG
         ;;
     v)
         VERBOSE="true"
@@ -284,11 +267,6 @@ manifest_dir=${manifest_dir:-$MANIFEST_DIR}
 check_directory_exists "$manifest_dir"
 manifest_dir=$(realpath "$manifest_dir")
 
-terraform_dir=${terraform_dir:-$TERRAFORM_DIR}
-terraform_dir=$(realpath "$terraform_dir")
-
-mkdir -p "$terraform_dir"
-
 # get prep_host_setup.src file info
 parse_prep_bm_host_src "$manifest_dir/prep_bm_host.src"
 
@@ -302,31 +280,17 @@ shift # Remove 'prov|bm' from the argument list
 case "$command" in
 # Parse options to the install sub command
 all)
-    gen_cluster "$terraform_dir"
-    gen_workers "$terraform_dir"
+    gen_cluster "$TERRAFORM_DIR"
+    gen_workers "$TERRAFORM_DIR"
     ;;
 cluster)
-    gen_cluster "$terraform_dir"
+    gen_cluster "$TERRAFORM_DIR"
     ;;
 workers)
-    gen_workers "$terraform_dir"
+    gen_workers "$TERRAFORM_DIR"
     ;;
 install)
     gen_install
-    ;;
-apply-cluster)
-    cp "$out_dir/$CLUSTER_TFVARS" upi-rt/terraform/cluster
-    (
-        cd upi-rt/terraform/cluster || exit
-        terraform apply --auto-approve
-    )
-    ;;
-apply-workers)
-    cp "$out_dir/$WORKER_TFVARS" upi-rt/terraform/workers
-    (
-        cd upi-rt/terraform/workers || exit
-        terraform apply --auto-approve
-    )
     ;;
 *)
     echo "Unknown command: $command"

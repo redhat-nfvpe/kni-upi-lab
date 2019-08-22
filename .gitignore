@@ -1,7 +1,6 @@
 settings.env
 upi-rt
 dnsmasq/*
-terraform/*
 ocp/*
 matchbox/*
 haproxy/*

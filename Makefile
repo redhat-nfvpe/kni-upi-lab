@@ -39,15 +39,15 @@ all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignit
 	echo "All config files generated and copied into their proper locations..."
 
 ## = cluster                 - Invoke terrafor to create cluster
-.PHONY: cluster
-cluster:
-	cd $(upi_rt_dir)/terraform/cluster && terraform init
-	-cd $(upi_rt_dir)/terraform/cluster && terraform destroy --auto-approve 
-	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
+#.PHONY: cluster
+#cluster:#
+#	cd $(upi_rt_dir)/terraform/cluster && terraform init
+#	-cd $(upi_rt_dir)/terraform/cluster && terraform destroy --auto-approve 
+#	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
 
 ## = clean                   - Remove all config files
 clean: 
-	rm -rf $(build_dir) $(coredns_dir) $(terraform_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) 
+	rm -rf $(build_dir) $(coredns_dir) $(dnsmasq_dir) $(haproxy_dir) $(openshift_dir) 
 	-./scripts/gen_config_prov.sh remove
 	-./scripts/gen_config_bm.sh remove
 	-./scripts/gen_haproxy.sh remove
@@ -185,11 +185,9 @@ $(terraform-bin):
 terraform-conf: $(terraform_cluster) $(terraform_worker) $(terraform_cluster_upi) $(terraform_worker_upi)
 $(terraform_cluster): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh cluster
-	cp $(terraform_dir)/cluster/terraform.tfvars $(upi_rt_dir)/terraform/cluster 
 
 $(terraform_worker): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh workers
-	cp $(terraform_dir)/workers/terraform.tfvars $(upi_rt_dir)/terraform/workers 
 
 cluster/manifest_vals.sh: $(manifests)
 	./scripts/parse_manifests.sh
