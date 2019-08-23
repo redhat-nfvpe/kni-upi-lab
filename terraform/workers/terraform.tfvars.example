@@ -7,6 +7,9 @@ cluster_id="test"
 // The number of workers required
 worker_count = "1"
 
+// Path to ign file
+worker_ign_file = "/path/to/local/worker.ign"
+
 // Client certificate used to authenticate with the matchbox RPC API.
 //
 // For more info: https://github.com/coreos/matchbox/blob/master/Documentation/api.md
@@ -38,9 +41,23 @@ worker_nodes = [
     ipmi_user: "${WORKER0_IPMI_USER}",
     ipmi_pass: "${WORKER0_IPMI_PASS}",
     mac_address: "${WORKER0_MAC}"
-  }
+    initrd: "assets/centos_initrd.img",
+    kernel: "assets/centos_vmlinuz",
+    kickstart: "http://${PROVISION_IP}:8080/assets/centos-rt-worker-kickstart.cfg",
+    os_profile: "centos",
+  },
+  {
+    name: "${WORKER1_NAME}",
+    public_ipv4: "${WORKER1_IP}",
+    ipmi_host: "${WORKER1_IPMI_HOST}",
+    ipmi_user: "${WORKER1_IPMI_USER}",
+    ipmi_pass: "${WORKER1_IPMI_PASS}",
+    mac_address: "${WORKER1_MAC}"
+    initrd: "assets/rhcos_initrd.img",
+    kernel: "assets/rhcos_vmlinuz",
+    os_profile: "rhcos",
+    install_dev: "sda",
+    pxe_os_image_url: "http://${PROVISION_IP}:8080/assets/rhcos-4.1.0-x86_64-metal-bios.raw.gz",
+  },
 ]
 
-worker_kernel = "assets/rhel_vmlinuz"
-worker_initrd = "assets/rhel_initrd.img"
-worker_kickstart = "http://${PROVISION_IP}:8080/assets/centos-rt-worker-kickstart.cfg"

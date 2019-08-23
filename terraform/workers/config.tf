@@ -43,12 +43,6 @@ variable "worker_nodes" {
   type = list(map(string))
 }
 
-variable "worker_kernel" {
-  type = "string"
-}
-variable "worker_initrd" {
-  type = "string"
-}
-variable "worker_kickstart" {
+variable "worker_ign_file" {
   type = "string"
 }
