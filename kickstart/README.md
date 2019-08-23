@@ -1,7 +1,7 @@
 # Kickstart generation
 
 Regular RHCOS nodes can be enrolled using ignition files directly. But for CentOS nodes, ignition on boot is not supported and an additional kickstart configuration is needed to embed it. The generated kickstart file can be added with **inst.ks** parameter on PXE kernel args.
-Two different scripts are provided, one for generating configuration for a regular CentOS node ([https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos.sh](https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos.sh)) and another for RT node ([https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos_rt.sh](https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos_rt.sh) ).
+Script to generate configurations for RHEL 7, 8 and CentOS are provided: ([https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_rhel7.sh](https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_rhel7.sh)), ([https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_rhel8.sh](https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_rhel8.sh)), ([https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos.sh](https://github.com/redhat-nfvpe/upi-rt/blob/master/kickstart/add_kickstart_for_centos.sh)) 
 The procedure is as simple as to execute those scripts with a set of vars. This will generate a *kickstart\*.cfg file, that can be copied to matchbox assets directory, and used from pxe kernel args.
 
 ## Variables needed
