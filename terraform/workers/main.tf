@@ -30,17 +30,18 @@ resource "matchbox_group" "default" {
 resource "matchbox_profile" "worker" {
   count = var.worker_count
   name   = var.worker_nodes[count.index]["name"]
-  kernel = "${var.worker_kernel}"
+  kernel = var.worker_nodes[count.index]["kernel"]
 
   initrd = [
-    "${var.worker_initrd}",
+    var.worker_nodes[count.index]["initrd"]
   ]
 
   args = flatten([
     "${local.kernel_args}",
-    "inst.ks=${var.worker_kickstart}",
+    (var.worker_nodes[count.index]["os_profile"] == "rhcos" ? "coreos.inst=yes coreos.inst.install_dev=${var.worker_nodes[count.index]["install_dev"]} coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.worker_nodes[count.index]["mac_address"]} coreos.inst.image_url=${var.worker_nodes[count.index]["pxe_os_image_url"]}" : "inst.ks=${var.worker_nodes[count.index]["kickstart"]}")
   ])
 
+  raw_ignition= "${file(var.worker_ign_file)}"
 }
 
 resource "matchbox_group" "worker" {
