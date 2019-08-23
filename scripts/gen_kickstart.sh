@@ -19,12 +19,6 @@ EOM
     exit 0
 }
 
-# [ostype]="kernel_path:initrd_path"
-declare -A OSType=(
-    [rhel8]="assets/rhel8/images/pxeboot/vmlinuz:assets/rhel8/images/pxeboot/initrd.img"
-    [rhcos]="assets/rhcos-4.1.0-x86_64-installer-kernel:assets/rhcos-4.1.0-x86_64-installer-initramfs.img"
-)
-
 gen_settings_env() {
     ofile="$1"
 
@@ -77,7 +71,7 @@ create_kickstart() {
 
     # Scripts must be executed in kickstart repo dir
     (
-        cd "$UPI_RT_DIR/kickstart" || return 1
+        cd "$ks_script_dir" || return 1
 
         for scr in "$ks_script_dir"/add_*.sh; do
             [[ "$VERBOSE" =~ true ]] && printf "Processing %s\n" "$scr"
@@ -170,7 +164,7 @@ update)
 kickstart)
     gen_settings_env "$PROJECT_DIR/$SETTINGS_FILE"
 
-    if ! create_kickstart "$PROJECT_DIR/$SETTINGS_FILE" "$UPI_RT_DIR/kickstart"; then
+    if ! create_kickstart "$PROJECT_DIR/$SETTINGS_FILE" "$KICKSTART_DIR"; then
         printf "Creation of kickstart failed!"
     fi
     ;;

@@ -32,8 +32,8 @@ export COREDNS_DIR
 BUILD_DIR="$PROJECT_DIR/build"
 export BUILD_DIR
 
-UPI_RT_DIR="$PROJECT_DIR/upi-rt"
-export UPI_RT_DIR
+KICKSTART_DIR="$PROJECT_DIR/kickstart"
+export KICKSTART_DIR
 
 # Create directory for debug output
 mkdir -p "$BUILD_DIR"

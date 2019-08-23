@@ -94,6 +94,7 @@ EOM
     exit 0
 }
 
+
 gen_terraform_cluster() {
     local out_dir="$1"
 
@@ -140,6 +141,44 @@ gen_terraform_cluster() {
 
 }
 
+gen_rhcos() {
+    local worker_name="$1"
+    local osProfile="$2"
+
+    local initramfs
+    local kernel
+    local raw
+
+    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets; do
+        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $osProfile =~ "bios" ]]; then
+            raw="$file"
+        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $osProfile =~ "uefi" ]]; then
+            raw="$file"            
+        elif [[ $file =~ rhcos.*installer-initramfs.img ]]; then
+            initramfs="$file"
+        elif [[ $file =~ rhcos.*installer-kernel ]]; then
+            kernel="$file"
+        fi
+    done
+
+    printf "    pxe_os_image_url: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/$raw"
+    printf "    initrd: %s\n" "assets/$initramfs"
+    printf "    kernel: %s\n" "assets/$kernel"
+    printf "    install_dev: %s,\n" "${WORKER_FINAL_VALS[$worker_name.install_dev]}"
+}
+
+gen_centos() {
+    printf "    initrd: assets/centos7/images/pxeboot/initrd.img"
+    printf "    kernel: assets/centos7/images/pxeboot/vmlinuz"
+    printf "    kickstart: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/centos-worker-kickstart.cfg"
+}
+
+gen_rhel() {
+    printf "    initrd: assets/rhel8/images/pxeboot/initrd.img\n"
+    printf "    kernel: assets/rhel8/images/pxeboot/vmlinuz\n"
+    printf "    kickstart: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
+}
+
 gen_terraform_workers() {
     local out_dir="$1"
 
@@ -170,6 +209,7 @@ gen_terraform_workers() {
             printf "    ipmi_user: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.user]}"
             printf "    ipmi_pass: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.password]}"
             printf "    mac_address: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bootMACAddress]}"
+            gen_rhcos "$m" "bios"
             printf "  },\n"
 
         done

@@ -8,7 +8,6 @@ openshift_dir = ./ocp
 matchbox_dir = ./matchbox
 matchbox_data_dir = ./matchbox-data
 matchbox_etc_dir = $(matchbox_data_dir)/etc/matchbox
-upi_rt_dir = ./upi-rt
 build_dir = ./build
 
 dnsmasq_prov_conf := $(dnsmasq_dir)/prov/etc/dnsmasq.d/dnsmasq.conf
@@ -18,11 +17,10 @@ dnsmasq_conf := $(dnsmasq_bm_conf) $(dnsmasq_prov_conf)
 coredns_conf := $(coredns_dir)/Corefile
 terraform_cluster := $(terraform_dir)/cluster/terraform.tfvars
 terraform_worker := $(terraform_dir)/workers/terraform.tfvars
-terraform_cluster_upi := $(upi_rt_dir)/terraform/cluster/terraform.tfvars
-terraform_worker_upi := $(upi_rt_dir)/terraform/workers/terraform.tfvars
+terraform_cluster_upi := terraform/cluster/terraform.tfvars
+terraform_worker_upi := terraform/workers/terraform.tfvars
 ignitions := $(openshift_dir)/worker.ign $(openshift_dir)/master.ign
 matchbox_git := $(matchbox_dir)/.git
-upi_rt_git := $(upi_rt_dir)/.git
 matchbox-data-files := $(matchbox_etc_dir)/server/ca.crt
 common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh 
 kickstart_cfg := $(matchbox_data_dir)/var/lib/matchbox/assets/rhel8-worker-kickstart.cfg
@@ -37,13 +35,6 @@ haproxy_container := $(haproxy_dir)/imageid
 ## = all (default)           - Generate all configuration files
 all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
 	echo "All config files generated and copied into their proper locations..."
-
-## = cluster                 - Invoke terrafor to create cluster
-#.PHONY: cluster
-#cluster:#
-#	cd $(upi_rt_dir)/terraform/cluster && terraform init
-#	-cd $(upi_rt_dir)/terraform/cluster && terraform destroy --auto-approve 
-#	cd $(upi_rt_dir)/terraform/cluster && terraform apply --auto-approve
 
 ## = clean                   - Remove all config files
 clean: 

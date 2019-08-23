@@ -3,11 +3,11 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-declare -A OPENSHIFT_RHCOS_ASSET_MAP=(
-    ["rhcos-4.1.0-x86_64-installer-initramfs.img"]="$OPENSHIFT_RHCOS_URL"
-    ["rhcos-4.1.0-x86_64-installer-kernel"]="$OPENSHIFT_RHCOS_URL"
-    ["rhcos-4.1.0-x86_64-metal-bios.raw.gz"]="$OPENSHIFT_RHCOS_URL"
-    ["rhcos-4.1.0-x86_64-metal-uefi.raw.gz"]="$OPENSHIFT_RHCOS_URL"
+declare -a OPENSHIFT_RHCOS_ASSETS=(
+    's/^([^ ]+)\s+(rhcos-(.*)-installer-initramfs.img)/\1 \2 \3/p'
+    's/^([^ ]+)\s+(rhcos-(.*)-installer-kernel)/\1 \2 \3/p'
+    's/^([^ ]+)\s+(rhcos-(.*)-metal-bios.raw.gz)/\1 \2 \3/p'
+    's/^([^ ]+)\s+(rhcos-(.*)-metal-uefi.raw.gz)/\1 \2 \3/p'
 )
 
 SHA256_FILE="sha256sum.txt"
@@ -82,24 +82,25 @@ download_assets() {
                 printf "Unable to fetch: %s" "$SHA256_URL"
             fi
 
-            declare -A SHAMAP
+            if ! sha_file=$(cat "$SHA256_FILE"); then
+                printf "Missing file: %s!\n" "$SHA256_FILE"
+                exit 1
+            fi
 
-            while read -r line; do
-                read -ra a <<<"$line"
-                SHAMAP[${a[1]}]=${a[0]}
-            done <"$SHA256_FILE"
-
-            for asset in "${!OPENSHIFT_RHCOS_ASSET_MAP[@]}"; do
-                if [ -f "$asset" ] && sum=$(sha256sum "$asset"); then
-                    sum=${sum%% *}
-                    if [[ ${SHAMAP[$asset]} == "$sum" ]]; then
-                        printf "%s already present with correct sha256sum..skipping...\n" "$asset"
+            for asset_regex in "${OPENSHIFT_RHCOS_ASSETS[@]}"; do
+                if ! read -r chksum file version <<<"$(echo "$sha_file" | sed -nre "$asset_regex")" &&
+                    [ -n "$chksum" ] && [ -n "$file" ] && [ -n "$version" ]; then
+                    printf "Parse of %s failed!" "$SHA256_FILE"
+                    return 1
+                fi
+                if [ -f "$file" ] && sum=$(sha256sum "$file" | awk '{print $1}'); then
+                    if [[ "$chksum" == "$sum" ]]; then
+                        printf "%s already present with correct sha256sum..skipping...\n" "$file"
                         continue
                     fi
                 fi
-                url="${OPENSHIFT_RHCOS_ASSET_MAP[$asset]}"
-                printf "Fetching %s...\n" "$url/$asset"
-                curl -O "$url/$asset"
+                printf "Fetching %s...\n" "$OPENSHIFT_RHCOS_URL/$file"
+                curl -O "$OPENSHIFT_RHCOS_URL/$file"
             done
         else
             printf "Failed to download assets..."
@@ -207,12 +208,12 @@ parse_manifests "$manifest_dir"
 map_cluster_vars
 
 case "$COMMAND" in
-all) 
+all)
     make_clone
     download_assets
     make_certs
     start_matchbox
-;;
+    ;;
 data)
     download_assets
     make_certs
@@ -234,7 +235,7 @@ stop)
     ;;
 remove)
     podman_rm "$CONTAINER_NAME" && printf "Removed %s\n" "$CONTAINER_NAME" || exit 1
-    ;;    
+    ;;
 isrunning)
     if ! podman_isrunning "$CONTAINER_NAME"; then
         printf "%s is NOT running...\n" "$CONTAINER_NAME"
