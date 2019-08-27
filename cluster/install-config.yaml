@@ -1,0 +1,105 @@
+apiVersion: v1
+baseDomain: tt.testing
+compute:
+ - name: worker
+   replicas: 1
+controlPlane:
+   name: master
+   platform: {}
+   replicas: 1
+metadata:
+   name: test1
+networking:
+  clusterNetworks:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+   none: {}
+   apiVIP: 192.168.111.5
+   ingressVIP: 192.168.111.4
+   dnsVIP: 192.168.111.3
+   hosts:
+      # Master nodes are always RHCOS
+      -  name: master-0
+         role: master
+         bmc:
+            address: ipmi://10.19.110.12
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:A9:93  # provisioning network mac
+         sdnMacAddress: 0c:c4:7a:19:6f:92   # baremetal network mac
+         # sdnIPAddress: 192.168.111.11     # Optional -- Set static IP
+         hardwareProfile: default
+         osProfile: 
+            # With role == master, the osType is always rhcos
+            # And with type rhcos, the following are settings are available
+            pxe: bios         # pxe boot type either bios (default if not specified) or uefi
+            install_dev: sda  # where to install the operating system (sda is the default)
+      -  name: master-1
+         role: master
+         bmc:
+            address: ipmi://192.168.111.10
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:A8:59
+         sdnMacAddress: 0c:c4:7a:19:70:cc
+         hardwareProfile: default
+         # Not need to specify osProfile...
+      -  name: master-2
+         role: master
+         bmc:
+            address: ipmi://192.168.111.8
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:AC:03
+         sdnMacAddress: 0c:c4:7a:19:6f:7e
+         hardwareProfile: default
+
+      # Worker nodes can be either rhcos (default) || centos (7.x) || rhel (8.x)
+      -  name: worker-0
+         role: worker
+         bmc: 
+            address: ipmi://192.168.111.10
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:A8:59
+         sdnMacAddress: 0c:c4:7a:19:70:cc
+         hardwareProfile: default
+         # If an osProfile/type is not defined, rhe node defaults to RHCOS
+         # osProfile: 
+            # type: rhcos
+            # With type: rhcos the following are settings are available
+            # pxe: bios|uefi    # pxe boot type either bios (default if not specified) or uefi
+            # install_dev: sda  # where to install the operating system (sda is the default)
+
+      -  name: worker-1
+         role: worker
+         bmc:
+            address: ipmi://192.168.111.8
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:AC:03
+         sdnMacAddress: 0c:c4:7a:19:6f:7e
+         hardwareProfile: default
+         osProfile:
+            type: centos
+            # Don't set the following unless you know what you are doing
+            # initrd: assets/centos7/images/pxeboot/initrd.img (default if not specified)
+            # kernel: assets/centos7/images/pxeboot/vmlinuz" (default if not specified) 
+            # kickstart: "centos-rt-worker-kickstart.cfg"
+      -  name: worker-2
+         role: worker
+         bmc:
+            address: ipmi://192.168.111.8
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:AC:03
+         sdnMacAddress: 0c:c4:7a:19:6f:7e
+         hardwareProfile: default
+         osProfile:
+            type: rhel
+            # Don't set the following unless you know what you are doing
+            initrd: assets/rhel8/images/pxeboot/initrd.img # (default if not specified)
+            kernel: assets/rhel8/images/pxeboot/vmlinuz # (default if not specified) 
+
+
+pullSecret: 'setac-astronomy'
+sshKey: |
+   your-key-here
