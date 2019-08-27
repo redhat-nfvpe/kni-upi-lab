@@ -11,6 +11,11 @@ export CLUSTER_FINAL_VALS
 declare -A WORKERS_FINAL_VALS
 export WORKERS_FINAL_VALS
 
+declare -A HOSTS_FINAL_VALS
+export HOSTS_FINAL_VALS
+
+export HOSTS_JSON
+
 if [[ -z "$PROJECT_DIR" ]]; then
     usage
     exit 1
@@ -42,11 +47,8 @@ parse_manifests() {
         unset manifest_vars
         declare -A manifest_vars
         for line in "${lines[@]}"; do
-            # shellcheck disable=SC2206
-            l=($line)
             # create the associative array
-            manifest_vars[${l[0]}]=${l[1]}
-            #echo "manifest_vars[${l[0]}] == ${l[1]}"
+            manifest_vars[${line%% *}]=${line#* }
         done
 
         recognized=false
@@ -58,6 +60,11 @@ parse_manifests() {
             kind="install-config"
             name="install-config"
             recognized=true
+
+            if ! HOSTS_JSON=$(yq '.platform.hosts' "$file"); then
+                printf "Unable to extract .platform.hosts from %s\n" "$file"
+                exit 1
+            fi            
         elif [[ ${manifest_vars[kind]} ]]; then
             # All the manifest types must have at least one entry
             # in MANIFEST_CHECK.  The entry can just be an optional
@@ -85,8 +92,16 @@ parse_manifests() {
                 v_vars=$(join_by "." "${split[@]:2}")
                 # Now check if there is a value for this MANIFEST_CHECK entry
                 # in the parsed manifest
-                if [[ ${manifest_vars[$v_vars]} ]]; then
-                    if [[ ! "${manifest_vars[$v_vars]}" =~ ${MANIFEST_CHECK[$v]} ]]; then
+                regex="/$v_vars/p"
+                mapfile -t matches < <(printf "%s\n" "${!manifest_vars[@]}" | sed -nre "$regex")
+                if [[ ${#matches[@]} -eq 0 ]] && [[ "$required" =~ true ]]; then
+                    # There was no value found in the manifest and the value
+                    # was required.
+                    printf "Missing value, %s, in %s...\n" "$v" "$file"
+                    exit 1
+                fi
+                for match in "${matches[@]}"; do
+                    if [[ ! "${manifest_vars[$match]}" =~ ${MANIFEST_CHECK[$v]} ]]; then
                         printf "Invalid value for \"%s\" : \"%s\" does not match %s in %s\n" "$v" "${manifest_vars[$v_vars]}" "${MANIFEST_CHECK[$v]}" "$file"
                         exit 1
                     fi
@@ -94,13 +109,8 @@ parse_manifests() {
                     # The regex contains a capture group that retrieves the value to use
                     # from the field in the yaml file
                     # Update manifest_var with the captured value.
-                    manifest_vars[$v_vars]="${BASH_REMATCH[1]}"
-                elif [[ "$required" =~ true ]]; then
-                    # There was no value found in the manifest and the value
-                    # was required.
-                    printf "Missing value, %s, in %s...\n" "$v" "$file"
-                    exit 1
-                fi
+                    manifest_vars[$match]="${BASH_REMATCH[1]}"
+                done
             fi
         done
 
@@ -206,6 +216,7 @@ process_rule() {
             return
         fi
     fi
+    # Find the matches in a single step
     regex="/$rule/p"
     unset matches
     mapfile -t matches < <(printf "%s\n" "${!MANIFEST_VALS[@]}" | sed -nre "$regex")
@@ -231,6 +242,7 @@ process_rule() {
             printf "Error processing %s\n" "$rule"
             exit 1
         fi
+        [[ "$VERBOSE" =~ true ]] && printf "Final rule match: %s\n" "$r"
         # Did we find a match?
         if [ -n "$r" ]; then
 
@@ -314,14 +326,6 @@ map_cluster_vars() {
         process_rule "$rule" "$v" set_cluster_vars
     done
 
-    # Generate the cluster terraform values for the master nodes
-    #
-    for v in "${!CLUSTER_MASTER_MAP[@]}"; do
-        rule=${CLUSTER_MASTER_MAP[$v]}
-
-        process_rule "$rule" "$v" set_cluster_vars
-    done
-
     mapfile -t sorted < <(printf '%s\n' "${!CLUSTER_FINAL_VALS[@]}" | sort)
 
     ofile="$BUILD_DIR/cluster_vals.sh"
@@ -353,34 +357,14 @@ map_worker_vars() {
     # shellcheck disable=SC1091
     source scripts/cluster_map.sh
 
-    # The keys in the following associative array
-    # specify varies to be emitted in the terraform vars file.
-    # the associated value contains
-    #  1. A static string value
-    #  2. A string with ENV vars that have been previously defined
-    #  3. A string prepended with '%' to indicate the final value is
-    #     located in the MANIFEST_VALS array
-    #  4. MANIFEST_VALS references may contain path.[field].field
-    #     i.e. bootstrap.spec.bmc.[credentialsName].password
-    #     in this instance [name].field references another manifest file
-    #  5. If a rule ends with an '@', the field will be base64 decoded
-    #
 
-    # Generate the cluster terraform values for the fixed
+    # Generate the worker terraform values for the fixed
     # variables
     #
     local v
 
     for v in "${!WORKER_MAP[@]}"; do
         rule=${WORKER_MAP[$v]}
-
-        process_rule "$rule" "$v" set_workers_vars
-    done
-
-    # Generate the cluster terraform values for the master nodes
-    #
-    for v in "${!CLUSTER_WORKER_MAP[@]}"; do
-        rule=${CLUSTER_WORKER_MAP[$v]}
 
         process_rule "$rule" "$v" set_workers_vars
     done
@@ -399,6 +383,49 @@ map_worker_vars() {
 
         printf ")\n"
         printf "export WORKERS_FINAL_VALS\n"
+    } >"$ofile"
+}
+
+set_hosts_vars() {
+    local key="$1"
+    local value="$2"
+
+    HOSTS_FINAL_VALS[$key]="$value"
+}
+
+map_hosts_vars() {
+    [[ "$VERBOSE" =~ true ]] && printf "Mapping hosts vars...\n"
+
+    # shellcheck disable=SC1091
+    source scripts/cluster_map.sh
+
+    # Generate the cluster terraform values for the fixed
+    # variables
+    #
+    local v
+
+    # Generate the cluster terraform values for the master nodes
+    #
+    for v in "${!HOSTS_MAP[@]}"; do
+        rule=${HOSTS_MAP[$v]}
+
+        process_rule "$rule" "$v" set_hosts_vars
+    done
+
+    mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
+
+    ofile="$BUILD_DIR/hosts_vals.sh"
+    {
+        printf "#!/bin/bash\n\n"
+
+        printf "declare -A HOSTS_FINAL_VALS=(\n"
+
+        for v in "${sorted[@]}"; do
+            printf "  [%s]=\"%s\"\n" "$v" "${HOSTS_FINAL_VALS[$v]}"
+        done
+
+        printf ")\n"
+        printf "export HOSTS_FINAL_VALS\n"
     } >"$ofile"
 }
 
@@ -446,8 +473,10 @@ gen_variables() {
     local manifest_dir="$1"
 
     parse_manifests "$manifest_dir"
+
     map_cluster_vars
     map_worker_vars
+    map_hosts_vars
 }
 #
 # The prep_bm_host.src file contains information

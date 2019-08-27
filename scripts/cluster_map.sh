@@ -80,15 +80,20 @@ declare -A CLUSTER_MASTER_MAP=(
     [master-\\1.install_dev]="=master-([012]+).metadata.name=sda"    
     # Optional rule
     [master-\\1.spec.public_ipv4]="|%master-([012]+).metadata.annotations.kni.io\/sdnIPv4"
+
     [master-\\1.spec.public_mac]="%master-([012]+).metadata.annotations.kni.io\/sdnNetworkMac"
+
     # The following is an example of a rule that allows
     # a new entry to be generated that is a constant value
     [master-\\1.metadata.ns]="=master-([012]+).metadata.name=$BM_IP_NS"
+
     [master-\\1.metadata.name]="%master-([012]+).metadata.name"
+
     [master-\\1.spec.bmc.address]="%master-([012]+).spec.bmc.address"
+
     [master-\\1.spec.bmc.user]="%master-([012]+).spec.bmc.[credentialsName].stringdata.username@"
+
     [master-\\1.spec.bmc.password]="%master-([012]+).spec.bmc.[credentialsName].stringdata.password@"
-    [master-\\1.spec.bootMACAddress]="%master-([012]+).spec.bootMACAddress"
 )
 export CLUSTER_MASTER_MAP
 
@@ -98,6 +103,7 @@ declare -A WORKER_MAP=(
     [matchbox_trusted_ca_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/ca.crt"
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
+    [worker_ign_file]="==$OPENSHIFT_DIR/worker.ign"
     [worker_kickstart]="==$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
     [worker_kernel]="==assets/rhel8/images/pxeboot/vmlinuz"
     [worker_initrd]="==assets/rhel8/images/pxeboot/initrd.img"
@@ -118,3 +124,23 @@ declare -A CLUSTER_WORKER_MAP=(
     [worker-\\1.spec.bootMACAddress]="%worker-([012]+).spec.bootMACAddress"
 )
 export CLUSTER_WORKER_MAP
+
+declare -A HOSTS_MAP=(
+    [\\1.name]="%install-config.platform.(hosts.[0-9]+).name"
+    [\\1.role]="|%install-config.platform.(hosts.[0-9]+).role"
+    [\\1.bmc.address]="%install-config.platform.(hosts.[0-9]+).bmc.address"    
+    [\\1.bmc.user]="%install-config.platform.(hosts.[0-9]+).bmc.[credentialsName].stringdata.username@"
+    [\\1.bmc.password]="%install-config.platform.(hosts.[0-9]+).bmc.[credentialsName].stringdata.password@"
+    [\\1.bootMACAddress]="%install-config.platform.(hosts.[0-9]+).bootMACAddress"
+    [\\1.sdnIPAddress]="|%install-config.platform.(hosts.[0-9]+).sdnIPAddress"
+    [\\1.sdnMacAddress]="%install-config.platform.(hosts.[0-9]+).sdnMacAddress"
+
+    [\\1.osProfile.install_dev]="|%install-config.platform.(hosts.[0-9]+).osProfile.install_dev"    
+    [\\1.osProfile.pxe]="|%install-config.platform.(hosts.[0-9]+).osProfile.pxe"    
+    [\\1.osProfile.type]="|%install-config.platform.(hosts.[0-9]+).osProfile.type"    
+    [\\1.osProfile.initrd]="|%install-config.platform.(hosts.[0-9]+).osProfile.initrd"    
+    [\\1.osProfile.kernel]="|%install-config.platform.(hosts.[0-9]+).osProfile.kernel"    
+    [\\1.osProfile.kickstart]="|%install-config.platform.(hosts.[0-9]+).osProfile.kickstart"    
+
+)
+export HOSTS_MAP

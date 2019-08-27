@@ -94,7 +94,6 @@ EOM
     exit 0
 }
 
-
 gen_terraform_cluster() {
     local out_dir="$1"
 
@@ -116,23 +115,69 @@ gen_terraform_cluster() {
         printf "master_nodes = [\n"
 
     } >"$ofile"
+
+    # Number of masters called for...
+    num_masters="${CLUSTER_FINAL_VALS[master_count]}"
+
+    mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
+
+    IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
+
+    mapfile -t masters < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).role=master$/\1/p')
+
+    if [[ ${#masters[@]} -lt "$num_masters" ]]; then
+        printf "Fewer Masters defined that called for!\n"
+        return 1
+    fi
+
     {
-        num_masters="${CLUSTER_FINAL_VALS[master_count]}"
         for ((i = 0; i < num_masters; i++)); do
-            m="master-$i"
-            if [[ -z ${CLUSTER_FINAL_VALS[$m.metadata.name]} ]]; then
-                printf "\n Missing manifest data for %s, %d masters(replicas) were specified in install-config.yaml\n" "$m" "$num_masters"
+            host_index=${masters[$i]}
+            host="hosts.$host_index"
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.name]} ]]; then
+                printf "Error: platform.hosts[%s] missing .name in install-config.yaml!\n" "$host_index" 1>&2
                 exit 1
             fi
-            printf "  {\n"
-            printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${CLUSTER_FINAL_VALS[$m.metadata.name]}"
-            printf "    public_ipv4: \"%s\",\n" "$(get_master_bm_ip $i)"
-            printf "    ipmi_host: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.address]}"
-            printf "    ipmi_user: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.user]}"
-            printf "    ipmi_pass: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bmc.password]}"
-            printf "    mac_address: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.spec.bootMACAddress]}"
-            printf "    install_dev: \"%s\",\n" "${CLUSTER_FINAL_VALS[$m.install_dev]}"
 
+            public_ipv4=$(get_master_bm_ip $i)
+            if [[ -n ${HOSTS_FINAL_VALS[$host.sdnIPAddress]} ]]; then
+                public_ipv4=${HOSTS_FINAL_VALS[$host.sdnIPAddress]}
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.address]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.address in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.user]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.user in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.password]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.password in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bootMACAddress]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bootMACAddress in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            install_dev="sda"
+            if [[ -n ${HOSTS_FINAL_VALS[$host.install_dev]} ]]; then
+                install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
+            fi
+
+            printf "  {\n"
+            printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
+            printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
+            printf "    ipmi_host: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.address]}"
+            printf "    ipmi_user: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.user]}"
+            printf "    ipmi_pass: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.password]}"
+            printf "    mac_address: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bootMACAddress]}"
+            printf "    install_dev: \"%s\",\n" "$install_dev"
             printf "  },\n"
         done
 
@@ -142,41 +187,89 @@ gen_terraform_cluster() {
 }
 
 gen_rhcos() {
-    local worker_name="$1"
-    local osProfile="$2"
+    local host="$1"
 
     local initramfs
     local kernel
     local raw
 
-    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets; do
-        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $osProfile =~ "bios" ]]; then
-            raw="$file"
-        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $osProfile =~ "uefi" ]]; then
-            raw="$file"            
+    pxe="bios"
+    if [[ -n ${HOSTS_FINAL_VALS[$host.pxe]} ]]; then
+        install_dev=${HOSTS_FINAL_VALS[$host.pxe]}
+    fi
+    printf "    install_dev: \"%s\",\n" "$install_dev"
+
+    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
+        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $pxe =~ "bios" ]]; then
+            raw="${file##*/}"
+        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $pxe =~ "uefi" ]]; then
+            raw="${file##*/}"
         elif [[ $file =~ rhcos.*installer-initramfs.img ]]; then
-            initramfs="$file"
+            initramfs="${file##*/}"
         elif [[ $file =~ rhcos.*installer-kernel ]]; then
-            kernel="$file"
+            kernel="${file##*/}"
         fi
     done
 
-    printf "    pxe_os_image_url: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/$raw"
-    printf "    initrd: %s\n" "assets/$initramfs"
-    printf "    kernel: %s\n" "assets/$kernel"
-    printf "    install_dev: %s,\n" "${WORKER_FINAL_VALS[$worker_name.install_dev]}"
+    printf "    os_profile: \"rhcos\",\n"
+    printf "    pxe_os_image_url: \"%s\",\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/$raw"
+    printf "    initrd: \"assets/%s\",\n" "$initramfs"
+    printf "    kernel: \"assets/%s\",\n" "$kernel"
+
+    install_dev="sda"
+    if [[ -n ${HOSTS_FINAL_VALS[$host.install_dev]} ]]; then
+        install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
+    fi
+    printf "    install_dev: \"%s\",\n" "$install_dev"
 }
 
 gen_centos() {
-    printf "    initrd: assets/centos7/images/pxeboot/initrd.img"
-    printf "    kernel: assets/centos7/images/pxeboot/vmlinuz"
-    printf "    kickstart: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/centos-worker-kickstart.cfg"
+    local host="$1"
+
+    printf "    os_profile: \"centos\",\n"
+    initrd="assets/centos7/images/pxeboot/initrd.img"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.initrd]}" ]; then
+        initrd="${HOSTS_FINAL_VALS[$host.osProfile.initrd]}"
+    fi
+    printf "    initrd: \"%s\",\n" "$initrd"
+
+    kernel="assets/centos7/images/pxeboot/vmlinuz"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kernel]}" ]; then
+        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kernel]}"
+    fi
+    printf "    kernel: \"%s\",\n" "$kernel"
+
+    kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos7-worker-kickstart.cfg"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}" ]; then
+        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}"
+    fi
+
+    printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
 gen_rhel() {
-    printf "    initrd: assets/rhel8/images/pxeboot/initrd.img\n"
-    printf "    kernel: assets/rhel8/images/pxeboot/vmlinuz\n"
-    printf "    kickstart: %s\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
+    local host="$1"
+
+    printf "    os_profile: \"rhel\",\n"
+
+    initrd="assets/rhel8/images/pxeboot/initrd.img"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.initrd]}" ]; then
+        initrd="${HOSTS_FINAL_VALS[$host.osProfile.initrd]}"
+    fi
+    printf "    initrd: \"%s\",\n" "$initrd"
+
+    kernel="assets/rhel8/images/pxeboot/vmlinuz"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kernel]}" ]; then
+        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kernel]}"
+    fi
+    printf "    kernel: \"%s\",\n" "$kernel"
+
+    kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
+    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}" ]; then
+        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}"
+    fi
+
+    printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
 gen_terraform_workers() {
@@ -197,19 +290,82 @@ gen_terraform_workers() {
         printf "worker_nodes = [\n"
     } >"$ofile"
 
+    num_workers="${WORKERS_FINAL_VALS[worker_count]}"
+
+    mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
+
+    IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
+
+    mapfile -t workers < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).role=worker$/\1/p')
+
+    if [[ ${#workers[@]} -lt "$num_workers" ]]; then
+        printf "Fewer Masters defined that called for!\n"
+        return 1
+    fi
+
     {
-        num_workers="${WORKERS_FINAL_VALS[worker_count]}"
         for ((i = 0; i < num_workers; i++)); do
-            m="worker-$i"
+            host_index=${workers[$i]}
+            host="hosts.$host_index"
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.name]} ]]; then
+                printf "Error: platform.hosts[%s] missing .name in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            public_ipv4=$(get_worker_bm_ip $i)
+            if [[ -n ${HOSTS_FINAL_VALS[$host.sdnIPAddress]} ]]; then
+                public_ipv4=${HOSTS_FINAL_VALS[$host.sdnIPAddress]}
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.address]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.address in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.user]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.user in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.password]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bmc.password in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
+
+            if [[ -z ${HOSTS_FINAL_VALS[$host.bootMACAddress]} ]]; then
+                printf "Error: platform.hosts[%s] missing .bootMACAddress in install-config.yaml!\n" "$host_index" 1>&2
+                exit 1
+            fi
 
             printf "  {\n"
-            printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "${WORKERS_FINAL_VALS[$m.metadata.name]}"
-            printf "    public_ipv4: \"%s\",\n" "$(get_worker_bm_ip $i)"
-            printf "    ipmi_host: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.address]}"
-            printf "    ipmi_user: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.user]}"
-            printf "    ipmi_pass: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bmc.password]}"
-            printf "    mac_address: \"%s\",\n" "${WORKERS_FINAL_VALS[$m.spec.bootMACAddress]}"
-            gen_rhcos "$m" "bios"
+            printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
+            printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
+            printf "    ipmi_host: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.address]}"
+            printf "    ipmi_user: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.user]}"
+            printf "    ipmi_pass: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.password]}"
+            printf "    mac_address: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bootMACAddress]}"
+
+            type="rhcos"
+            if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.type]}" ]; then
+                type=${HOSTS_FINAL_VALS[$host.osProfile.type]}
+            fi
+
+            case $type in
+            rhcos)
+                gen_rhcos "$host"
+                ;;
+            centos)
+                gen_centos "$host"
+                ;;
+            rhel)
+                gen_rhel "$host"
+                ;;
+            *)
+                printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$host_index"
+                ;;
+            esac
+
             printf "  },\n"
 
         done
@@ -223,6 +379,7 @@ gen_cluster() {
     local tdir="$1"
 
     map_cluster_vars
+    map_hosts_vars
     gen_terraform_cluster "$tdir"
 }
 
@@ -230,6 +387,7 @@ gen_workers() {
     local tdir="$1"
 
     map_worker_vars
+    map_hosts_vars
     gen_terraform_workers "$tdir"
 }
 
