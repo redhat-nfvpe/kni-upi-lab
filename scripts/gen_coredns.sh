@@ -78,11 +78,14 @@ gen_config_db() {
 _etcd-server-ssl._tcp.$cluster_id.$cluster_domain. 8640 IN    SRV 0 10 2380 etcd-0.$cluster_id.$cluster_domain.
 EOF
 
+    master1_mac=$(get_host_var "master-1" "sdnMacAddress")
+    master2_mac=$(get_host_var "master-2" "sdnMacAddress")
+
     # shellcheck disable=SC2129
     {
         if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
-            [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
-            [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+            [ -n "$master1_mac" ] &&
+            [ -n "$master2_mac" ]; then
             printf "                                                   SRV 0 10 2380 etcd-1.%s.%s.\n" "$cluster_id" "$cluster_domain"
             printf "                                                   SRV 0 10 2380 etcd-2.%s.%s.\n" "$cluster_id" "$cluster_domain"
         fi
@@ -97,8 +100,8 @@ EOF
 
     {
         if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
-            [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] &&
-            [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ]; then
+            [ -n "$master1_mac" ] &&
+            [ -n "$master2_mac" ]; then
             printf "%s-master-1.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 1)"
             printf "%s-master-2.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 2)"
         fi

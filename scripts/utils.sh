@@ -412,6 +412,17 @@ map_hosts_vars() {
         process_rule "$rule" "$v" set_hosts_vars
     done
 
+
+    mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
+
+    IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
+
+    mapfile -t names < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).name=([_a-zA-Z0-9\-]+)$/\2 \1/p')
+
+    for name in "${names[@]}"; do
+        HOSTS_FINAL_VALS[${name%% *}]=${name#* }
+    done
+
     mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
 
     ofile="$BUILD_DIR/hosts_vals.sh"
@@ -558,4 +569,38 @@ podman_isrunning_logs() {
     local name="$1"
 
     podman_isrunning "$name" || (sudo podman logs "$name" && return 1)
+}
+
+get_host_var() {
+    local host="$1"
+    local field="$2"
+
+    if [ -z "${HOSTS_FINAL_VALS[$host]}" ]; then
+        return 1
+    fi
+
+    host_var="hosts.${HOSTS_FINAL_VALS[$host]}.$field"
+
+    if [ -z "${HOSTS_FINAL_VALS[$host_var]}" ]; then
+        return 1
+    fi
+
+    echo "${HOSTS_FINAL_VALS[$host_var]}"
+}
+
+test_host_var() {
+    local host="$1"
+    local field="$2"
+
+    if [ -z "${HOSTS_FINAL_VALS[$host]}" ]; then
+        return 1
+    fi
+
+    host_var="hosts.${HOSTS_FINAL_VALS[$host]}.$field"
+
+    if [ -z "${HOSTS_FINAL_VALS[$host_var]}" ]; then
+        return 1
+    fi
+
+    return 0
 }

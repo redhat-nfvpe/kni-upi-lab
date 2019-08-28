@@ -55,24 +55,29 @@ gen_hostfile_bm() {
     cdomain="${CLUSTER_FINAL_VALS[cluster_domain]}"
     {
         printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[bootstrap_sdn_mac_address]}" "$BM_IP_BOOTSTRAP" "$cid-bootstrap-0.$cdomain"
-        printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-0.spec.public_mac]}" "$(get_master_bm_ip 0)" "$cid-master-0.$cdomain"
+        printf "%s,%s,%s\n" "$(get_host_var "master-0" "sdnMacAddress")" "$(get_master_bm_ip 0)" "$cid-master-0.$cdomain"
 
     } >"$hostsfile"
+    
+    master1_mac=$(get_host_var "master-1" "sdnMacAddress")
+    master2_mac=$(get_host_var "master-2" "sdnMacAddress")
 
-    if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -z "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+    if [ -n "$master1_mac" ] && [ -z "$master2_mac" ]; then
         echo "Both master-1 and master-2 must be set."
         exit 1
     fi
 
-    if [ -z "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+    if [ -z "$master1_mac" ] && [ -n "$master2_mac" ]; then
         echo "Both master-1 and master-2 must be set."
         exit 1
     fi
 
-    if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" ] && [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" ]; then
+    num_masters="${CLUSTER_FINAL_VALS[master_count]}"
+
+    if [ -n "$master1_mac" ] && [ -n "$master2_mac" ] && [ "$num_masters" -eq 3 ]; then
         {
-            printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-1.spec.public_mac]}" "$(get_master_bm_ip 1)" "$cid-master-1.$cdomain"
-            printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[master\-2.spec.public_mac]}" "$(get_master_bm_ip 2)" "$cid-master-2.$cdomain"
+            printf "%s,%s,%s\n" "$master1_mac" "$(get_master_bm_ip 1)" "$cid-master-1.$cdomain"
+            printf "%s,%s,%s\n" "$master2_mac" "$(get_master_bm_ip 2)" "$cid-master-2.$cdomain"
         } >>"$hostsfile"
     fi
 
@@ -80,7 +85,7 @@ gen_hostfile_bm() {
     for ((i = 0; i < num_workers; i++)); do
         m="worker-$i"
         {
-            printf "%s,%s,%s\n" "${WORKERS_FINAL_VALS[$m.spec.public_mac]}" "$(get_worker_bm_ip "$i")" "$cid-$m.$cdomain"
+            printf "%s,%s,%s\n" "$(get_host_var $m sdnMacAddress)" "$(get_worker_bm_ip "$i")" "$cid-$m.$cdomain"
         } >>"$hostsfile"
     done
 }

@@ -104,14 +104,17 @@ backend kubeapi-main
     balance source
     mode tcp
 EOF
+    master1_mac=$(get_host_var "master-1" "sdnMacAddress")
+    master2_mac=$(get_host_var "master-2" "sdnMacAddress")
+
     {
         printf "    server %s %s:%s check\n" "$cluster_id-bootstrap" "$BM_IP_BOOTSTRAP" "$HAPROXY_KUBEAPI_PORT"
         printf "    server %s %s:%s check\n" "$cluster_id-master-0" "$(get_master_bm_ip 0)" "$HAPROXY_KUBEAPI_PORT"
-        if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
+        if [ -n "$master1_mac" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-1" "$(get_master_bm_ip 1)" "$HAPROXY_KUBEAPI_PORT"
         fi
 
-        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
+        if [ -n "$master2_mac" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-2" "$(get_master_bm_ip 2)" "$HAPROXY_KUBEAPI_PORT"
         fi
         printf "\n"
@@ -123,11 +126,11 @@ EOF
         printf "    server %s %s:%s check\n" "$cluster_id-bootstrap" "$BM_IP_BOOTSTRAP" "$HAPROXY_MCS_MAIN_PORT"
         printf "    server %s %s:%s check\n" "$cluster_id-master-0" "$(get_master_bm_ip 0)" "$HAPROXY_MCS_MAIN_PORT"
 
-        if [ -n "${CLUSTER_FINAL_VALS[master\-1.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
+        if [ -n "$master1_mac" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-1" "$(get_master_bm_ip 1)" "$HAPROXY_MCS_MAIN_PORT"
         fi
 
-        if [ -n "${CLUSTER_FINAL_VALS[master\-2.spec.bootMACAddress]}" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
+        if [ -n "$master2_mac" ] && [ "${CLUSTER_FINAL_VALS[master_count]}" -gt 1 ]; then
             printf "    server %s %s:%s check\n" "$cluster_id-master-2" "$(get_master_bm_ip 2)" "$HAPROXY_MCS_MAIN_PORT"
         fi
         printf "\n"
