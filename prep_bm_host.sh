@@ -297,18 +297,26 @@ printf "\nInstalling OpenShift binaries...\n\n"
     cd /tmp
 
     if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-        # FIXME: This is a cheap hack to get the latest version, but will fail if the
-        # target index page's HTML fields change
-        LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-install-linux | cut -d '"' -f 8)
-        curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_INSTALLER"
-        tar xvf "$LATEST_OCP_INSTALLER"
+        if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+            tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+        else
+            LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_INSTALLER"
+            tar xvf "$LATEST_OCP_INSTALLER"
+        fi
         sudo mv openshift-install /usr/local/bin/
     fi
 
     if [[ ! -f "/usr/local/bin/oc" ]]; then
-        LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-client-linux | cut -d '"' -f 8)
-        curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_CLIENT"
-        tar xvf "$LATEST_OCP_CLIENT"
+        if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+            tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+        else
+            LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
+            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_CLIENT"
+            tar xvf "$LATEST_OCP_CLIENT"
+        fi
         sudo mv oc /usr/local/bin/
     fi
 
