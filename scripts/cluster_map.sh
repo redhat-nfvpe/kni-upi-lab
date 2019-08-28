@@ -76,27 +76,6 @@ declare -A CLUSTER_MAP=(
 )
 export CLUSTER_MAP
 
-declare -A CLUSTER_MASTER_MAP=(
-    [master-\\1.install_dev]="=master-([012]+).metadata.name=sda"    
-    # Optional rule
-    [master-\\1.spec.public_ipv4]="|%master-([012]+).metadata.annotations.kni.io\/sdnIPv4"
-
-    [master-\\1.spec.public_mac]="%master-([012]+).metadata.annotations.kni.io\/sdnNetworkMac"
-
-    # The following is an example of a rule that allows
-    # a new entry to be generated that is a constant value
-    [master-\\1.metadata.ns]="=master-([012]+).metadata.name=$BM_IP_NS"
-
-    [master-\\1.metadata.name]="%master-([012]+).metadata.name"
-
-    [master-\\1.spec.bmc.address]="%master-([012]+).spec.bmc.address"
-
-    [master-\\1.spec.bmc.user]="%master-([012]+).spec.bmc.[credentialsName].stringdata.username@"
-
-    [master-\\1.spec.bmc.password]="%master-([012]+).spec.bmc.[credentialsName].stringdata.password@"
-)
-export CLUSTER_MASTER_MAP
-
 declare -A WORKER_MAP=(
     [matchbox_client_cert]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.crt"
     [matchbox_client_key]="==$MATCHBOX_DATA_DIR/etc/matchbox/client/client.key"
@@ -104,26 +83,11 @@ declare -A WORKER_MAP=(
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
     [worker_ign_file]="==$OPENSHIFT_DIR/worker.ign"
-    [worker_kickstart]="==$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
-    [worker_kernel]="==assets/rhel8/images/pxeboot/vmlinuz"
-    [worker_initrd]="==assets/rhel8/images/pxeboot/initrd.img"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
     [worker_count]="%install-config.compute.0.replicas"
 )
 export WORKER_MAP
-
-declare -A CLUSTER_WORKER_MAP=(
-    [worker-\\1.metadata.ns]="=worker-([012]+).metadata.name=$BM_IP_NS"
-    [worker-\\1.metadata.name]="%worker-([012]+).metadata.name"
-    [worker-\\1.public_ipv4]="|%worker-([012]+).metadata.annotations.kni.io\/sdnIPv4"
-    [worker-\\1.spec.public_mac]="%worker-([012]+).metadata.annotations.kni.io\/sdnNetworkMac"
-    [worker-\\1.spec.bmc.address]="%worker-([012]+).spec.bmc.address"
-    [worker-\\1.spec.bmc.user]="%worker-([012]+).spec.bmc.[credentialsName].stringdata.username@"
-    [worker-\\1.spec.bmc.password]="%worker-([012]+).spec.bmc.[credentialsName].stringdata.password@"
-    [worker-\\1.spec.bootMACAddress]="%worker-([012]+).spec.bootMACAddress"
-)
-export CLUSTER_WORKER_MAP
 
 declare -A HOSTS_MAP=(
     [\\1.name]="%install-config.platform.(hosts.[0-9]+).name"
