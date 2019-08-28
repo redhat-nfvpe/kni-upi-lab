@@ -339,7 +339,7 @@ gen_terraform_workers() {
             fi
 
             printf "  {\n"
-            printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
+            printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
             printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
             printf "    ipmi_host: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.address]}"
             printf "    ipmi_user: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.user]}"
