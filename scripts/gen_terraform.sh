@@ -282,7 +282,7 @@ gen_centos() {
     kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/centos7/images/pxeboot/vmlinuz"
     printf "    kernel: \"%s\",\n" "$kernel"
 
-    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos7-worker-kickstart.cfg"
+    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos-worker-kickstart.cfg"
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
