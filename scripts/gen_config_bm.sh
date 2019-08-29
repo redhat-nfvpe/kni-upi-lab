@@ -72,7 +72,7 @@ gen_hostfile_bm() {
         exit 1
     fi
 
-    num_masters="${CLUSTER_FINAL_VALS[master_count]}"
+    num_masters="${HOSTS_FINAL_VALS[master_count]}"
 
     if [ -n "$master1_mac" ] && [ -n "$master2_mac" ] && [ "$num_masters" -eq 3 ]; then
         {
@@ -81,11 +81,11 @@ gen_hostfile_bm() {
         } >>"$hostsfile"
     fi
 
-    num_workers="${WORKERS_FINAL_VALS[worker_count]}"
-    for ((i = 0; i < num_workers; i++)); do
-        m="worker-$i"
+    IFS=' ' read -r -a workers <<< "${HOSTS_FINAL_VALS[worker_hosts]}"
+    for worker in "${workers[@]}"; do
         {
-            printf "%s,%s,%s\n" "$(get_host_var $m sdnMacAddress)" "$(get_worker_bm_ip "$i")" "$cid-$m.$cdomain"
+            index=${worker##*-}
+            printf "%s,%s,%s\n" "$(get_host_var "$worker" sdnMacAddress)" "$(get_worker_bm_ip "$index")" "$cid-$worker.$cdomain"
         } >>"$hostsfile"
     done
 }

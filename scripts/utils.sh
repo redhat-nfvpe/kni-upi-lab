@@ -64,7 +64,7 @@ parse_manifests() {
             if ! HOSTS_JSON=$(yq '.platform.hosts' "$file"); then
                 printf "Unable to extract .platform.hosts from %s\n" "$file"
                 exit 1
-            fi            
+            fi
         elif [[ ${manifest_vars[kind]} ]]; then
             # All the manifest types must have at least one entry
             # in MANIFEST_CHECK.  The entry can just be an optional
@@ -81,6 +81,7 @@ parse_manifests() {
         for v in "${!MANIFEST_CHECK[@]}"; do
             # Split the path (i.e. bootstrap.spec.hardwareProfile ) into array
             IFS='.' read -r -a split <<<"$v"
+            unset IFS
             # MANIFEST_CHECK has the kind as the first component
             # do we recognize this kind?
             if [[ ${split[0]} =~ $kind ]]; then
@@ -357,7 +358,6 @@ map_worker_vars() {
     # shellcheck disable=SC1091
     source scripts/cluster_map.sh
 
-
     # Generate the worker terraform values for the fixed
     # variables
     #
@@ -412,16 +412,57 @@ map_hosts_vars() {
         process_rule "$rule" "$v" set_hosts_vars
     done
 
+    ## do some checks on the host data
+    # Check that only one type of pxe boot is specified for all masters
+    #
+    #mapfile -t matches < <(printf "%s\n" "${!HOSTS_FINAL_VALS[@]}" | sed -nre "s/^hosts.([0-9]+).role")
 
+    # the following places a new entry into HOSTS_FINAL_VALS for head host using
+    # the name field of that host as the index.  The entries value is the hosts index.
+    #
     mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
+    mapfile -t host_list < <(for key in "${sorted[@]}"; do printf "%s=%s\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
+    mapfile -t deploy_hosts < <(printf '%s\n' "${host_list[@]}" | sed -nre 's/^hosts.([0-9]+).role=(worker|master)$/\1/p')
 
-    IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
+    local worker_count=0
+    local master_count=0
 
-    mapfile -t names < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).name=([_a-zA-Z0-9\-]+)$/\2 \1/p')
+    for h in "${deploy_hosts[@]}"; do
+        host_name=${HOSTS_FINAL_VALS[hosts.$h.name]}
+        HOSTS_FINAL_VALS[$host_name]=$h
 
-    for name in "${names[@]}"; do
-        HOSTS_FINAL_VALS[${name%% *}]=${name#* }
+        role=${HOSTS_FINAL_VALS[hosts.$h.role]}
+        case $role in
+        master)
+            ((master_count++))
+            ;;
+        worker)
+            ((worker_count++))
+            ;;
+        *)
+            printf "Unknown role: %s!\n" "$role"
+            ;;
+        esac
     done
+
+    HOSTS_FINAL_VALS[master_count]=$master_count
+    HOSTS_FINAL_VALS[worker_count]=$worker_count
+
+    mapfile -t master_hosts_indices < <(printf '%s\n' "${host_list[@]}" | sed -nre 's/^hosts.([0-9]+).role=master$/\1/p')
+    declare -a master_hosts
+    for host in "${master_hosts_indices[@]}"; do
+        master_hosts+=("master-$host")
+    done
+    IFS=' '
+    HOSTS_FINAL_VALS[master_hosts]=${master_hosts[*]}
+
+    mapfile -t worker_hosts_indices < <(printf '%s\n' "${host_list[@]}" | sed -nre 's/^hosts.([0-9]+).role=worker$/\1/p')
+    declare -a worker_hosts
+    for host in "${worker_hosts_indices[@]}"; do
+        name=${HOSTS_FINAL_VALS[hosts.$host.name]}
+        worker_hosts+=("$name")
+    done
+    HOSTS_FINAL_VALS[worker_hosts]="${worker_hosts[*]}"
 
     mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
 
@@ -572,14 +613,14 @@ podman_isrunning_logs() {
 }
 
 get_host_var() {
-    local host="$1"
+    local host_name="$1"
     local field="$2"
 
-    if [ -z "${HOSTS_FINAL_VALS[$host]}" ]; then
+    if [ -z "${HOSTS_FINAL_VALS[$host_name]}" ]; then
         return 1
     fi
 
-    host_var="hosts.${HOSTS_FINAL_VALS[$host]}.$field"
+    host_var="hosts.${HOSTS_FINAL_VALS[$host_name]}.$field"
 
     if [ -z "${HOSTS_FINAL_VALS[$host_var]}" ]; then
         return 1

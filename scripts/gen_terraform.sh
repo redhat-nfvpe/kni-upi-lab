@@ -94,6 +94,47 @@ EOM
     exit 0
 }
 
+get_asset_raw() {
+    local pxe="$1"
+    local raw
+
+    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
+        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $pxe =~ "bios" ]]; then
+            raw="${file##*/}"
+        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $pxe =~ "uefi" ]]; then
+            raw="${file##*/}"
+        fi
+    done
+
+    [[ -z $raw ]] && return 1 || echo "$raw"
+}
+
+get_asset_initramfs() {
+    local initramfs
+
+    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
+        if [[ $file =~ rhcos.*installer-initramfs.img ]]; then
+            initramfs="${file##*/}"
+        elif [[ $file =~ rhcos.*installer-kernel ]]; then
+            kernel="${file##*/}"
+        fi
+    done
+
+    [[ -z $initramfs ]] && return 1 || echo "$initramfs"
+}
+
+get_asset_kernel() {
+    local kernel
+
+    for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
+        if [[ $file =~ rhcos.*installer-kernel ]]; then
+            kernel="${file##*/}"
+        fi
+    done
+
+    [[ -z $kernel ]] && return 1 || echo "$kernel"
+}
+
 gen_terraform_cluster() {
     local out_dir="$1"
 
@@ -117,18 +158,13 @@ gen_terraform_cluster() {
     } >"$ofile"
 
     # Number of masters called for...
-    num_masters="${CLUSTER_FINAL_VALS[master_count]}"
+    num_masters="${HOSTS_FINAL_VALS[master_count]}"
 
     mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
 
     IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
 
     mapfile -t masters < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).role=master$/\1/p')
-
-    if [[ ${#masters[@]} -lt "$num_masters" ]]; then
-        printf "Fewer Masters defined that called for!\n"
-        return 1
-    fi
 
     {
         for ((i = 0; i < num_masters; i++)); do
@@ -192,12 +228,9 @@ gen_rhcos() {
     local initramfs
     local kernel
     local raw
+    local install_dev
 
-    pxe="bios"
-    if [[ -n ${HOSTS_FINAL_VALS[$host.pxe]} ]]; then
-        install_dev=${HOSTS_FINAL_VALS[$host.pxe]}
-    fi
-    printf "    install_dev: \"%s\",\n" "$install_dev"
+    pxe=$(get_host_var "$host" pxe) || pxe="bios"
 
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
         if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $pxe =~ "bios" ]]; then
@@ -216,10 +249,7 @@ gen_rhcos() {
     printf "    initrd: \"assets/%s\",\n" "$initramfs"
     printf "    kernel: \"assets/%s\",\n" "$kernel"
 
-    install_dev="sda"
-    if [[ -n ${HOSTS_FINAL_VALS[$host.install_dev]} ]]; then
-        install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
-    fi
+    install_dev=$(get_host_var "$host" install_dev) || install_dev="sda"
     printf "    install_dev: \"%s\",\n" "$install_dev"
 }
 
@@ -227,23 +257,14 @@ gen_centos() {
     local host="$1"
 
     printf "    os_profile: \"centos\",\n"
-    initrd="assets/centos7/images/pxeboot/initrd.img"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.initrd]}" ]; then
-        initrd="${HOSTS_FINAL_VALS[$host.osProfile.initrd]}"
-    fi
+
+    initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/centos7/images/pxeboot/initrd.img"
     printf "    initrd: \"%s\",\n" "$initrd"
 
-    kernel="assets/centos7/images/pxeboot/vmlinuz"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kernel]}" ]; then
-        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kernel]}"
-    fi
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/centos7/images/pxeboot/vmlinuz"
     printf "    kernel: \"%s\",\n" "$kernel"
 
-    kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos7-worker-kickstart.cfg"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}" ]; then
-        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}"
-    fi
-
+    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos7-worker-kickstart.cfg"
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
@@ -252,23 +273,13 @@ gen_rhel() {
 
     printf "    os_profile: \"rhel\",\n"
 
-    initrd="assets/rhel8/images/pxeboot/initrd.img"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.initrd]}" ]; then
-        initrd="${HOSTS_FINAL_VALS[$host.osProfile.initrd]}"
-    fi
+    initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/rhel8/images/pxeboot/initrd.img"
     printf "    initrd: \"%s\",\n" "$initrd"
 
-    kernel="assets/rhel8/images/pxeboot/vmlinuz"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kernel]}" ]; then
-        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kernel]}"
-    fi
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel8/images/pxeboot/initrd.img"
     printf "    kernel: \"%s\",\n" "$kernel"
 
-    kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
-    if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}" ]; then
-        kernel="${HOSTS_FINAL_VALS[$host.osProfile.kickstart]}"
-    fi
-
+    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
@@ -290,79 +301,65 @@ gen_terraform_workers() {
         printf "worker_nodes = [\n"
     } >"$ofile"
 
-    num_workers="${WORKERS_FINAL_VALS[worker_count]}"
-
     mapfile -t sorted < <(printf '%s\n' "${!HOSTS_FINAL_VALS[@]}" | sort)
 
     IFS= host_list=$(for key in "${sorted[@]}"; do printf "%s=%s\n\n" "$key" "${HOSTS_FINAL_VALS[$key]}"; done)
 
     mapfile -t workers < <(echo "$host_list" | sed -nre 's/^hosts.([0-9]+).role=worker$/\1/p')
-
-    if [[ ${#workers[@]} -lt "$num_workers" ]]; then
-        printf "Fewer Masters defined that called for!\n"
-        return 1
-    fi
-
+    IFS=' ' read -r -a workers <<<"${HOSTS_FINAL_VALS[worker_hosts]}"
     {
-        for ((i = 0; i < num_workers; i++)); do
-            host_index=${workers[$i]}
-            host="hosts.$host_index"
+        for worker in "${workers[@]}"; do
+            index=${worker##*-}
 
-            if [[ -z ${HOSTS_FINAL_VALS[$host.name]} ]]; then
-                printf "Error: platform.hosts[%s] missing .name in install-config.yaml!\n" "$host_index" 1>&2
+            if ! test_host_var "$worker" "name"; then
+                printf "Error: platform.hosts[%s] missing .name in install-config.yaml!\n" "$worker" 1>&2
                 exit 1
             fi
 
-            public_ipv4=$(get_worker_bm_ip $i)
-            if [[ -n ${HOSTS_FINAL_VALS[$host.sdnIPAddress]} ]]; then
-                public_ipv4=${HOSTS_FINAL_VALS[$host.sdnIPAddress]}
-            fi
+            public_ipv4=$(get_host_var "$worker" sdnIPAddress) || public_ipv4=$(get_worker_bm_ip "$index")
 
-            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.address]} ]]; then
-                printf "Error: platform.hosts[%s] missing .bmc.address in install-config.yaml!\n" "$host_index" 1>&2
+            if ! test_host_var "$worker" "bmc.address"; then
+                printf "Error: platform.hosts[%s] missing .bmc.address in install-config.yaml!\n" "$worker" 1>&2
                 exit 1
             fi
 
-            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.user]} ]]; then
-                printf "Error: platform.hosts[%s] missing .bmc.user in install-config.yaml!\n" "$host_index" 1>&2
+            if ! test_host_var "$worker" "bmc.user"; then
+                printf "Error: platform.hosts[%s] missing .bmc.user in install-config.yaml!\n" "$worker" 1>&2
                 exit 1
             fi
 
-            if [[ -z ${HOSTS_FINAL_VALS[$host.bmc.password]} ]]; then
-                printf "Error: platform.hosts[%s] missing .bmc.password in install-config.yaml!\n" "$host_index" 1>&2
+            if ! test_host_var "$worker" "bmc.password"; then
+                printf "Error: platform.hosts[%s] missing .bmc.password in install-config.yaml!\n" "$worker" 1>&2
                 exit 1
             fi
 
-            if [[ -z ${HOSTS_FINAL_VALS[$host.bootMACAddress]} ]]; then
+            if ! test_host_var "$worker" "bootMACAddress"; then
                 printf "Error: platform.hosts[%s] missing .bootMACAddress in install-config.yaml!\n" "$host_index" 1>&2
                 exit 1
             fi
 
             printf "  {\n"
-            printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
+            printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "$(get_host_var "$worker" "name")"
             printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
-            printf "    ipmi_host: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.address]}"
-            printf "    ipmi_user: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.user]}"
-            printf "    ipmi_pass: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.password]}"
-            printf "    mac_address: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bootMACAddress]}"
+            printf "    ipmi_host: \"%s\",\n" "$(get_host_var "$worker" "bmc.address")"
+            printf "    ipmi_user: \"%s\",\n" "$(get_host_var "$worker" "bmc.user")"
+            printf "    ipmi_pass: \"%s\",\n" "$(get_host_var "$worker" "bmc.password")"
+            printf "    mac_address: \"%s\",\n" "$(get_host_var "$worker" "bmc.bootMACAddress")"
 
-            type="rhcos"
-            if [ -n "${HOSTS_FINAL_VALS[$host.osProfile.type]}" ]; then
-                type=${HOSTS_FINAL_VALS[$host.osProfile.type]}
-            fi
+            type=$(get_host_var "$worker" "osProfile.type") || type="rhcos"
 
             case $type in
             rhcos)
-                gen_rhcos "$host"
+                gen_rhcos "$worker"
                 ;;
             centos)
-                gen_centos "$host"
+                gen_centos "$worker"
                 ;;
             rhel)
-                gen_rhel "$host"
+                gen_rhel "$worker"
                 ;;
             *)
-                printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$host_index"
+                printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$worker"
                 ;;
             esac
 

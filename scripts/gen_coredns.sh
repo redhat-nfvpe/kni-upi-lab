@@ -83,7 +83,7 @@ EOF
 
     # shellcheck disable=SC2129
     {
-        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
+        if [ "${HOSTS_FINAL_VALS[master_count]}" = 3 ] &&
             [ -n "$master1_mac" ] &&
             [ -n "$master2_mac" ]; then
             printf "                                                   SRV 0 10 2380 etcd-1.%s.%s.\n" "$cluster_id" "$cluster_domain"
@@ -99,17 +99,19 @@ $cluster_id-master-0.$cluster_domain.                   A $(get_master_bm_ip 0)
 EOF
 
     {
-        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ] &&
+        if [ "${HOSTS_FINAL_VALS[master_count]}" = 3 ] &&
             [ -n "$master1_mac" ] &&
             [ -n "$master2_mac" ]; then
             printf "%s-master-1.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 1)"
             printf "%s-master-2.%s.                   A %s\n" "$cluster_id" "$cluster_domain" "$(get_master_bm_ip 2)"
         fi
 
-        num_workers="${WORKERS_FINAL_VALS[worker_count]}"
+        num_workers="${HOSTS_FINAL_VALS[worker_count]}"
         if [ "$num_workers" -gt 0 ]; then
-            for ((i = 0; i < num_workers; i++)); do
-                printf "%s-worker-%s.%s.                   A %s\n" "$cluster_id" "$i" "$cluster_domain" "$(get_worker_bm_ip $i)"
+            IFS=' ' read -r -a workers <<<"${HOSTS_FINAL_VALS[worker_hosts]}"
+            for worker in "${workers[@]}"; do
+                index=${worker##*-}
+                printf "%s-%s.%s.                   A %s\n" "$cluster_id" "$worker" "$cluster_domain" "$(get_worker_bm_ip "$index")"
             done
         fi
     } >>"$cfg_file"
@@ -120,7 +122,7 @@ $cluster_id-bootstrap.$cluster_domain.                  A $(nthhost "$BM_IP_CIDR
 etcd-0.$cluster_id.$cluster_domain.                     IN CNAME $cluster_id-master-0.$cluster_domain.
 EOF
     {
-        if [ "${CLUSTER_FINAL_VALS[master_count]}" = 3 ]; then
+        if [ "${HOSTS_FINAL_VALS[master_count]}" = 3 ]; then
             printf "etcd-1.%s.%s.                     IN CNAME %s-master-1.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
             printf "etcd-2.%s.%s.                     IN CNAME %s-master-2.%s.\n" "$cluster_id" "$cluster_domain" "$cluster_id" "$cluster_domain"
             printf "\n"
