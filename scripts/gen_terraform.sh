@@ -144,7 +144,7 @@ gen_terraform_cluster() {
         exit 1
     fi
 
-    CLUSTER_FINAL_VALS["pxe_os_image_url"]="assets/$raw"
+    CLUSTER_FINAL_VALS["pxe_os_image_url"]="$PROV_IP_MATCHBOX_HTTP_URL/assets/$raw"
 
     if ! initrd=$(get_asset_initramfs); then
         printf "Could not find initrd image file in assets!\n"
