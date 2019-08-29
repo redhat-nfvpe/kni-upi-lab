@@ -33,7 +33,7 @@ haproxy_container := $(haproxy_dir)/imageid
 ## => General <================================================================
 
 ## = all (default)           - Generate all configuration files
-all: dns_conf haproxy-conf terraform-install matchbox matchbox-data upi-rt ignition kickstart terraform-conf
+all: dns_conf haproxy-conf terraform-install matchbox matchbox-data ignition kickstart terraform-conf
 	echo "All config files generated and copied into their proper locations..."
 
 ## = clean                   - Remove all config files
@@ -48,19 +48,13 @@ clean:
 
 ## = dist-clean              - Remove all config files and data files
 dist-clean: clean
-	rm -f $(matchbox_data_dir) $(matchbox_dir) upi-rt
+	rm -f $(matchbox_data_dir) $(matchbox_dir)
 ## = help                    - Show this screen
 .PHONY : help
 help : Makefile
 	@sed -n 's/^##//p' $<
 
 dns_conf: $(dnsmasq_prov_conf) $(dnsmasq_bm_conf) $(coredns_conf)
-
-## = upi-rt                  - Clone upi-rt repo
-upi-rt: $(upi-rt_git)
-
-$(upi_rt_git):
-	git clone https://github.com/redhat-nfvpe/upi-rt.git
 
 ## => Matchbox <===============================================================
 ## = matchbox                - Install the Matchbox repo

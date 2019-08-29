@@ -42,7 +42,7 @@ create_settings_env() {
         printf "export RH_USERNAME=\"\"\n"
         printf "export RH_PASSWORD=\"\"\n"
         printf "export RH_POOL=\"\"\n"
-        printf "export RHEL_INSTALL_ENDPOINT=\"%s\"\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8"
+        printf "export OS_INSTALL_ENDPOINT=\"%s\"\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8"
         printf "# i.e. 1:4-10-12\n"
         printf "export RT_TUNED_ISOLATE_CORES=\"\"\n"
         printf "export RT_TUNED_HUGEPAGE_SIZE_DEFAULT=\"2G\"\n"
@@ -59,7 +59,7 @@ update_settings_env() {
     sed -i -re "s/.*BASE_DOMAIN.*/export BASE_DOMAIN=\"${MANIFEST_VALS[install\-config.baseDomain]}\"/" "$ofile"
     sed -i -re "s/.*PULL_SECRET.*/export PULL_SECRET=\'${MANIFEST_VALS[install\-config.pullSecret]}\'/" "$ofile"
     sed -i -re "s|.*KUBECONFIG_PATH.*|export KUBECONFIG_PATH=\"$PROJECT_DIR/ocp/auth/kubeconfig\"|" "$ofile"
-    sed -i -re "s|.*RHEL_INSTALL_ENDPOINT.*|export RHEL_INSTALL_ENDPOINT=\"$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8\"|" "$ofile"
+    sed -i -re "s|.*OS_INSTALL_ENDPOINT.*|export OS_INSTALL_ENDPOINT=\"$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8\"|" "$ofile"
 }
 
 create_kickstart() {
@@ -76,6 +76,17 @@ create_kickstart() {
         for scr in "$ks_script_dir"/add_*.sh; do
             [[ "$VERBOSE" =~ true ]] && printf "Processing %s\n" "$scr"
 
+            if [[ $scr =~ centos ]]; then
+                OS_INSTALL_ENDPOINT="http://${PROV_IP_MATCHBOX_HTTP_URL}/assets/centos7"
+            elif [[ $scr =~ rhel8 ]]; then
+                OS_INSTALL_ENDPOINT="http://${PROV_IP_MATCHBOX_HTTP_URL}/assets/rhel8"
+            elif [[ $scr =~ rhel7 ]]; then
+                OS_INSTALL_ENDPOINT="http://${PROV_IP_MATCHBOX_HTTP_URL}/assets/rhel7"
+            else
+                printf "Unknown kickstart type: %s!\n" "$scr"
+            fi
+            export OS_INSTALL_ENDPOINT
+            
             if ! ks=$(cat "$scr"); then
                 printf "Missing file: %s!\n" "$scr"
                 exit 1
