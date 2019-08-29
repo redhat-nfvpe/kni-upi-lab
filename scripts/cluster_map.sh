@@ -4,9 +4,6 @@
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/paths.sh"
 
-DEFAULT_INITRD="assets/rhcos-4.1.0-x86_64-installer-initramfs.img"
-DEFAULT_KERNEL="assets/rhcos-4.1.0-x86_64-installer-kernel"
-
 declare -A NO_TERRAFORM_MAP=(
     [bootstrap_sdn_mac_address]="true"
 )
@@ -55,9 +52,9 @@ declare -A CLUSTER_MAP=(
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
 # The following three need to be set after manifest processing
-#    [pxe_initrd_url]="==$DEFAULT_INITRD"
-#    [pxe_kernel_url]="==$DEFAULT_KERNEL"
-#    [pxe_os_image_url]="==$PROV_IP_MATCHBOX_HTTP_URL/assets/rhcos-4.1.0-x86_64-metal-bios.raw.gz"
+    [pxe_initrd_url]="==patch"
+    [pxe_kernel_url]="==patch"
+    [pxe_os_image_url]="==patch"
     [bootstrap_public_ipv4]="==${BM_IP_BOOTSTRAP}"
     # hardcoded as it is hardcoded in VM
     [bootstrap_mac_address]="==52:54:00:82:68:3f"

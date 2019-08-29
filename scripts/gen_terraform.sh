@@ -111,12 +111,9 @@ get_asset_raw() {
 
 get_asset_initramfs() {
     local initramfs
-
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
         if [[ $file =~ rhcos.*installer-initramfs.img ]]; then
             initramfs="${file##*/}"
-        elif [[ $file =~ rhcos.*installer-kernel ]]; then
-            kernel="${file##*/}"
         fi
     done
 
@@ -139,6 +136,27 @@ gen_terraform_cluster() {
     local out_dir="$1"
 
     local ofile="$out_dir/cluster/terraform.tfvars"
+
+    # Patches
+    pxe=$(get_host_var "master-0" pxe) || pxe="bios"
+    if ! raw=$(get_asset_raw "$pxe"); then
+        printf "Could not find raw image file in assets!\n"
+        exit 1
+    fi
+
+    CLUSTER_FINAL_VALS["pxe_os_image_url"]="assets/$raw"
+
+    if ! initrd=$(get_asset_initramfs); then
+        printf "Could not find initrd image file in assets!\n"
+        exit 1
+    fi
+    CLUSTER_FINAL_VALS["pxe_initrd_url"]="assets/$initrd"
+
+    if ! kernel=$(get_asset_kernel); then
+        printf "Could not find kernel image file in assets!\n"
+        exit 1
+    fi
+    CLUSTER_FINAL_VALS["pxe_kernel_url"]="assets/$kernel"
 
     mapfile -t sorted < <(printf '%s\n' "${!CLUSTER_MAP[@]}" | sort)
 
