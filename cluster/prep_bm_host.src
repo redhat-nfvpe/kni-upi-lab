@@ -5,7 +5,7 @@ export PROV_INTF=eno2
 export PROV_BRIDGE=provisioning
 
 export BM_INTF=ens1f0
-export BM_BRIDEG=baremetal
+export BM_BRIDGE=baremetal
 
 export EXT_INTF=eno1
 export PROV_IP_CIDR="172.22.0.0/24"
