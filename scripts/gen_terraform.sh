@@ -362,7 +362,7 @@ gen_terraform_workers() {
             printf "    ipmi_host: \"%s\",\n" "$(get_host_var "$worker" "bmc.address")"
             printf "    ipmi_user: \"%s\",\n" "$(get_host_var "$worker" "bmc.user")"
             printf "    ipmi_pass: \"%s\",\n" "$(get_host_var "$worker" "bmc.password")"
-            printf "    mac_address: \"%s\",\n" "$(get_host_var "$worker" "bmc.bootMACAddress")"
+            printf "    mac_address: \"%s\",\n" "$(get_host_var "$worker" "bootMACAddress")"
 
             type=$(get_host_var "$worker" "osProfile.type") || type="rhcos"
 
