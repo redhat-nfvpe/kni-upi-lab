@@ -2,6 +2,11 @@
 set -eux
 dhclient eno2 || true
 
+# create directories for cri-o before it gets started
+mkdir -p {/var/lib/cni/bin,/etc/kubernetes/cni/net.d,/opt/cni/bin}
+chown root:root /var/lib/cni/bin /etc/kubernetes/cni/net.d /opt/cni/bin
+chmod 755 /var/lib/cni/bin /etc/kubernetes/cni/net.d /opt/cni/bin
+
 # install packages
 yum -y install epel-release
 
