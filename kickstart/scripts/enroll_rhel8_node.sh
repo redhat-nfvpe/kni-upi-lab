@@ -1,5 +1,11 @@
 #!/bin/bash
 set -eux
+
+# create directories for cri-o before it gets started
+mkdir -p {/var/lib/cni/bin,/etc/kubernetes/cni/net.d,/opt/cni/bin}
+chown root:root /var/lib/cni/bin /etc/kubernetes/cni/net.d /opt/cni/bin
+chmod 755 /var/lib/cni/bin /etc/kubernetes/cni/net.d /opt/cni/bin
+
 # enable subscription
 source /etc/profile.env
 subscription-manager register --username $RH_USERNAME --password $RH_PASSWORD --force
