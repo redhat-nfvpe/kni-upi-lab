@@ -25,6 +25,124 @@ Before you deploy a OpenShift Container Platform cluster that uses user-provisio
 
 Review the OpenShift Container Platform 4.x Tested Integrations page before you create the supporting infrastructure for your cluster.
 
+### Quick Start
+
+#### Populate cluster/prep_bm_host.src
+
+* PROV_INTF -- Interface connected to the Provisioning network.  The interface will be added to PROV_BRIDGE
+* PROV_BRIDGE -- Name for the internal linux bridge that will be created
+* BM_INTF -- Interface connected to the Baremetal network,  The interface will be added to BM_BRIDGE
+* BM_BRIDGE -- Name for the internal linux bridge that will be created
+* EXT_INTF -- Interface that provides internet connectivity
+* PROV_IP_CIDR -- CIDR of the Provisioning network
+* BM_IP_CIDR -- CIDR of the Baremetal network
+
+For example...
+
+```bash
+   export PROV_INTF=eno2
+   export PROV_BRIDGE=provisioning
+   export BM_INTF=ens1f0
+   export BM_BRIDGE=baremetal
+   export EXT_INTF=eno1
+   export PROV_IP_CIDR="172.22.0.0/24"
+   export BM_IP_CIDR="192.168.111.0/24"
+```
+
+#### Populate cluster/install-config.yaml
+
+Populate the hosts: section with information about the hardware hosts you are going to use for the cluster.  
+
+| Field       |  Default     | Definition                           |
+| ---------   | ------------ | ------------------------------------ |
+| name        | none         | Either master-N or worker-M          |
+| role        | none         | Either master|worker|nodeploy        |
+| bmc/address | none         | ipmi:/ipaddr                         |
+| bmc/credentialsName | none | Name of yaml file containing user/password |
+| bootMacAddress | none | MAC address of the provisioning MAC |
+| sdnMacAddress  | none | MAC address of the baremetal MAC    |
+| hardwareProfile | unused | |
+| osProfile/ | | |
+| type       | rhcos | OS Type rhcos, centos, or rhel |
+| pxe        | bios | boot method, bios or uefi |
+| install_dev | sda | DISK to install OS onto... |
+| initrd | depends on type | location of initramfs (Should not be set)
+| kernel | depends on type | location of boot kernel (Should not be set)
+| kickstart | depends on type | kickstart file to use (Should not be set)
+
+When role==**nodeploy**, the host is not provisioned.  **nodeploy** can be used to
+temporarily remove / add nodes.
+
+Example below:
+
+```yaml
+   hosts:
+      # Master nodes are always RHCOS-based
+      # You must define either 1 or 3 masters
+      -  name: master-0 # Must be of the form master-N or worker-M
+         role: master   # Can be either master|worker|nodeploy
+         bmc:
+            address: ipmi://10.19.110.12
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:A9:93  # provisioning network mac
+         sdnMacAddress: 0c:c4:7a:19:6f:92   # baremetal network mac
+         # sdnIPAddress: 192.168.111.11     # Optional -- Set static IP
+         hardwareProfile: default           # NOT USED
+         osProfile:
+            # With role == master, the osType is always rhcos
+            # And with type rhcos, the following are settings are available
+            pxe: bios         # pxe boot type either bios (default if not specified) or                      # uefi
+                              # all masters must have the same pxe value.  
+                              # Either defaulting to bios
+                              # or all masters with pxe: uefi
+            install_dev: sda  # where to install the operating system (sda is the default)
+      -  name: worker-2
+         role: worker
+         bmc:
+            address: ipmi://110.19.110.8
+            credentialsName: ha-lab-ipmi
+         bootMACAddress: 0C:C4:7A:DB:AC:03
+         sdnMacAddress: 0c:c4:7a:19:6f:7e
+         hardwareProfile: default
+         osProfile:
+            type: rhel
+            # Don't set the following unless you know what you are doing
+            initrd: assets/rhel8/images/pxeboot/initrd.img # (default if not specified)
+            kernel: assets/rhel8/images/pxeboot/vmlinuz # (default if not specified)
+
+```
+
+#### Make Procedure
+
+```bash
+make clean
+make all
+make con-start
+```
+
+If there are no errors,
+
+```bash
+cd terraform/cluster
+terraform init
+terraform apply --auto-approve
+cd ..
+cd ..
+openshift-install --dir ocp wait-for install-complete
+```
+
+Wait for master nodes to deploy
+
+```bash
+cd ../workers
+terraform init
+terraform apply --auto-aprove
+```
+
+# Enjoy your OpenShift cluster
+
+## Automation Operation
+
 ### Procedure
 
 1. Configure DHCP.  
@@ -39,7 +157,7 @@ Review the OpenShift Container Platform 4.x Tested Integrations page before you 
 
 #### DHCP
 
-The KNI AF conditionally instantiates two dnsmasq to provide DHCP for the infrastructure.  The dnsmasq containers provide DHCP for the provisioning network and the network where the OCP SND network resides.
+The KNI AF conditionally instantiates two dnsmasq to provide DHCP for the infrastructure.  The dnsmasq containers provide DHCP for the provisioning network and the network where the OCP SND network resides.  A CoreDNS server is also started to provide DNS services for the cluster.  
 
 #### Load Balancers
 
@@ -85,22 +203,13 @@ OpenShift Container Platform requires all nodes to have internet access to pull 
 
 Before you install OpenShift Container Platform, you must provision two layer-4 load balancers.
 
-Port	Machines	Internal	External	Description
-6443
-
 Bootstrap and control plane. You remove the bootstrap machine from the load balancer after the bootstrap machine initializes the cluster control plane.
 
-x
-
-x
-
-#  Kubernetes API server
+# Kubernetes API server
 
 22623
 
 Bootstrap and control plane. You remove the bootstrap machine from the load balancer after the bootstrap machine initializes the cluster control plane.
-
-x
 
 ## Machine Config server
 
@@ -108,31 +217,19 @@ x
 
 The machines that run the Ingress router pods, compute, or worker, by default.
 
-x
-
-x
-
 HTTPS traffic
 
 80
 
 The machines that run the Ingress router pods, compute, or worker by default.
 
-x
-
-x
-
 HTTP traffic
 
 A working configuration for the Ingress router is required for an OpenShift Container Platform cluster. You must configure the Ingress router after the control plane initializes.
 
-#  User-provisioned DNS requirements
+# User-provisioned DNS requirements
 
 The following DNS records are required for a OpenShift Container Platform cluster that uses user-provisioned infrastructure. In each record, <cluster_name> is the cluster name and <base_domain> is the cluster base domain that you specify in the install-config.yaml file.
-
-Table 2. Required DNS records
-Component	Record	Description
-Kubernetes API
 
 api.<cluster_name>.<base_domain>
 
@@ -160,11 +257,14 @@ _etcd-server-ssl._tcp.<cluster_name>.<base_domain>
 
 For each control plane machine, OpenShift Container Platform also requires a SRV DNS record for etcd server on that machine with priority 0, weight 10 and port 2380. A cluster that uses three control plane machines requires the following records:
 
-# _service._proto.name.                            TTL    class SRV priority weight port target.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-0.<cluster_name>.<base_domain>.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-1.<cluster_name>.<base_domain>.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-2.<cluster_name>.<base_domain>.
-# _service._proto.name.                            TTL    class SRV priority weight port target.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-0.<cluster_name>.<base_domain>.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-1.<cluster_name>.<base_domain>.
-_etcd-server-ssl._tcp.<cluster_name>.<base_domain>  86400 IN    SRV 0        10     2380 etcd-2.<cluster_name>.<base_domain>.
+| _service._proto.name. | TTL | class | SRV | priority | weight | port | target |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 | etcd-0.<cluster_name>.<base_domain>.|
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 | etcd-1.<cluster_name>.<base_domain>. |
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 | etcd-2.<cluster_name>.<base_domain>.|
+
+| _service._proto.name.                           | TTL  |  class | SRV  | priority  | weight | port  | target. |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 |etcd-0.<cluster_name>.<base_domain>. |
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 |etcd-1.<cluster_name>.<base_domain>. |
+|_etcd-server-ssl._tcp.<cluster_name>.<base_domain> | 86400 | IN | SRV | 0 | 10 | 2380 |etcd-2.<cluster_name>.<base_domain>. |

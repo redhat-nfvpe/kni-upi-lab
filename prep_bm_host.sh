@@ -263,7 +263,7 @@ if ! [ -f "${DNSCONF}" ]; then
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
 if ! [ -f "${DNSMASQCONF}" ]; then
-    echo server=/tt.testing/$(nthhost "$BM_IP_CIDR" 1) | sudo tee "${DNSMASQCONF}"
+    echo server=/tt.testing/"$(nthhost "$BM_IP_CIDR" 1)" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
 if [ -n "$DNSCHANGED" ]; then

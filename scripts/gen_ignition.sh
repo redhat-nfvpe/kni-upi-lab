@@ -45,8 +45,8 @@ gen_ignition() {
        "contents": "[Service]\nExecStart=\nExecStart=/usr/bin/nm-online -s -q --timeout=300" 
      }]}]' <"$out_dir/$ign" >"$out_dir/$ign.bak"
 
-        mv "$out_dir/$ign.bak" "$out_dir/$ign"
-        
+            mv "$out_dir/$ign.bak" "$out_dir/$ign"
+
         done
     fi
 
@@ -70,11 +70,14 @@ install_openshift_bin() {
         cd /tmp
 
         if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-            # FIXME: This is a cheap hack to get the latest version, but will fail if the
-            # target index page's HTML fields change
-            LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-install-linux | cut -d '"' -f 8)
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_INSTALLER"
-            tar xvf "$LATEST_OCP_INSTALLER"
+            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_RHCOS_MINOR_REL.tar.gz"
+                tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+            else
+                LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_INSTALLER"
+                tar xvf "$LATEST_OCP_INSTALLER"
+            fi
             sudo mv openshift-install /usr/local/bin/
         fi
 
@@ -86,9 +89,14 @@ install_openshift_oc() {
         cd /tmp
 
         if [[ ! -f "/usr/local/bin/oc" ]]; then
-            LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ | grep openshift-client-linux | cut -d '"' -f 8)
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/$LATEST_OCP_CLIENT"
-            tar xvf "$LATEST_OCP_CLIENT"
+            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_RHCOS_MINOR_REL.tar.gz"
+                tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
+            else
+                LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_CLIENT"
+                tar xvf "$LATEST_OCP_CLIENT"
+            fi
             sudo mv oc /usr/local/bin/
         fi
     ) || exit 1
