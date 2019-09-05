@@ -10,7 +10,7 @@ chmod 755 /var/lib/cni/bin /etc/kubernetes/cni/net.d /opt/cni/bin
 # enable subscription
 source /etc/profile.env
 subscription-manager register --username $RH_USERNAME --password $RH_PASSWORD --force
-subscription-manager attach --pool=$RH_POOL
+subscription-manager attach --pool=$RH_POOL || true
 subscription-manager repos --enable=rhel-7-server-rpms
 subscription-manager repos --enable=rhel-7-server-extras-rpms
 subscription-manager repos --enable=rhel-7-server-rh-common-rpms
