@@ -1,12 +1,18 @@
 #!/bin/bash
 
 usage() {
+    local out_dir="$1"
+
     cat <<-EOM
     Generate ignition files
 
     Usage:
-        $(basename "$0") [-h] [-m manfifest_dir]  
-            Parse manifest files and generate intermediate variable files
+        $(basename "$0") [-h] [-m manfifest_dir]  ignition|installer|oc
+            Parse manifest files and perform tasks related to deployment
+
+            ignition  -- Generate ignition files into $out_dir, apply any patches
+            installer -- Install the current openshift-install binary
+            oc        -- Install the current oc binary
 
     Options
         -m manifest_dir -- Location of manifest files that describe the deployment.
@@ -17,7 +23,26 @@ EOM
     exit 0
 }
 
+patch_manifest() {
+    local ocp_dir="$1"
+
+    if [ "$(ls -A "$PROJECT_DIR"/cluster/manifest-patches)" ]; then
+        for patch_file in "$PROJECT_DIR"/cluster/manifest-patches/*.yaml; do
+            printf "Adding %s to %s\n" "${patch_file%.*}" "manifests"
+            cp "$patch_file" "$ocp_dir/manifests"
+        done
+    fi
+
+    if [ "$(ls -A "$PROJECT_DIR"/cluster/openshift-patches)" ]; then
+        for patch_file in "$PROJECT_DIR"/cluster/openshift-patches/*.yaml; do
+            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
+            cp "$patch_file" "$ocp_dir/openshift"
+        done
+    fi
+}
+
 gen_ignition() {
+    local out_dir="$1"
 
     if [ ! -f "$manifest_dir/install-config.yaml" ]; then
         printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
@@ -33,10 +58,16 @@ gen_ignition() {
         exit 1
     fi
 
+    patch_manifest "$out_dir"
+
     if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
         printf "openshift-install create ignition-configs failed!\n"
         exit 1
     fi
+
+    #
+    # apply patches to ignition
+    #
     if [ -z "$PATH_NM_WAIT" ]; then
         for ign in bootstrap.ign master.ign worker.ign; do
             jq '.systemd.units += [{"name": "NetworkManager-wait-online.service", 
@@ -46,7 +77,6 @@ gen_ignition() {
      }]}]' <"$out_dir/$ign" >"$out_dir/$ign.bak"
 
             mv "$out_dir/$ign.bak" "$out_dir/$ign"
-
         done
     fi
 
@@ -142,7 +172,7 @@ source "common.sh"
 source "$PROJECT_DIR/scripts/paths.sh"
 
 if [[ -z "$PROJECT_DIR" ]]; then
-    usage
+    printf "Internal error!\n"
     exit 1
 fi
 
@@ -176,7 +206,7 @@ map_worker_vars
 case "$COMMAND" in
 # Parse options to the install sub command
 ignition)
-    gen_ignition
+    gen_ignition "$out_dir"
     ;;
 installer)
     install_openshift_bin
@@ -186,6 +216,6 @@ oc)
     ;;
 *)
     echo "Unknown command: $COMMAND"
-    usage
+    usage "$out_dir"
     ;;
 esac
