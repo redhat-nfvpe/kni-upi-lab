@@ -4,7 +4,7 @@ source $HOME/settings_upi.env
 
 IGNITION_ENDPOINT="https://api.${CLUSTER_NAME}.${BASE_DOMAIN}:22623/config/worker"
 CORE_SSH_KEY=$(cat $HOME/.ssh/id_rsa.pub)
-ENROLL_CENTOS_NODE=$(cat ./scripts/enroll_centos_node.sh)
+ENROLL_NODE=$(cat ./scripts/enroll_rhel7_node.sh)
 PODMAN_SERVICE=$(cat ./scripts/podman_service.sh)
 KUBECONFIG_FILE=$(cat $KUBECONFIG_PATH)
 
@@ -67,7 +67,7 @@ EOF
 
 # write enroll script
 cat <<'EOF' > /tmp/enroll_rhel7_node.sh
-${ENROLL_CENTOS_NODE}
+${ENROLL_NODE}
 EOF
 
 # write runignition script
