@@ -51,7 +51,7 @@ sysctl --system
 
 # set sebool container_manage_cgroup, disable selinux
 setsebool -P container_manage_cgroup on || true
-setenforce 0
+setenforce 0 || true
 
 # create temporary directory and extract contents there
 IGNITION_URL=$(cat /tmp/ignition_endpoint )
