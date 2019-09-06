@@ -23,40 +23,79 @@ EOM
     exit 0
 }
 
+gen_ifcfg_manifest() {
+
+    mkdir -p "$BUILD_DIR/openshift-patches"
+
+    for interface in "eno1"; do
+        export interface
+
+        interface_name="$interface"
+        export interface_name
+
+        for role in "master" "worker"; do
+            export role
+            yaml_name="99-ifcfg-$interface-$role.yaml"
+
+            IFCFG_ENO1="$TEMPLATES_DIR/ifcfg-interface.template"
+            IFCFG_YAML="$TEMPLATES_DIR/ifcfg-interface.yaml"
+            YAML_FILE="$BUILD_DIR/openshift-patches/$yaml_name"
+
+            interface_content=$(envsubst <"${IFCFG_ENO1}" | base64 -w0)
+            export interface_content
+
+            envsubst <"${IFCFG_YAML}.template" >"${YAML_FILE}"
+        done
+    done
+}
+
 patch_manifest() {
     local ocp_dir="$1"
 
-    if [ "$(ls -A "$PROJECT_DIR"/cluster/manifest-patches)" ]; then
+    files=$(find "$PROJECT_DIR/cluster/manifest-patches" -name "*.yaml")
+    if [ -n "$files" ]; then
         for patch_file in "$PROJECT_DIR"/cluster/manifest-patches/*.yaml; do
             printf "Adding %s to %s\n" "${patch_file%.*}" "manifests"
             cp "$patch_file" "$ocp_dir/manifests"
         done
     fi
 
-    if [ "$(ls -A "$PROJECT_DIR"/cluster/openshift-patches)" ]; then
+    files=$(find "$PROJECT_DIR/cluster/openshift-patches" -name "*.yaml")
+    if [ -n "$files" ]; then
         for patch_file in "$PROJECT_DIR"/cluster/openshift-patches/*.yaml; do
             printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
             cp "$patch_file" "$ocp_dir/openshift"
         done
     fi
+
+    files=$(find "$BUILD_DIR/openshift-patches" -name "*.yaml")
+    if [ -n "$files" ]; then
+        for patch_file in "$BUILD_DIR"/openshift-patches/*.yaml; do
+            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
+            cp "$patch_file" "$ocp_dir/openshift"
+        done
+    fi
+
 }
 
 gen_ignition() {
     local out_dir="$1"
+    local cluster_dir="$2"
 
-    if [ ! -f "$manifest_dir/install-config.yaml" ]; then
-        printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
+    if [ ! -f "$cluster_dir/install-config.yaml" ]; then
+        printf "%s does not exists, create!" "$cluster_dir/install-config.yaml"
         exit 1
     fi
 
     rm -rf "$out_dir"
     mkdir -p "$out_dir"
-    cp "$manifest_dir/install-config.yaml" "$out_dir"
+    cp "$cluster_dir/install-config.yaml" "$out_dir"
 
     if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
         printf "openshift-install create manifests failed!\n"
         exit 1
     fi
+    gen_ifcfg_manifest
 
     patch_manifest "$out_dir"
 
@@ -141,7 +180,7 @@ while getopts ":hvm:o:" opt; do
         out_dir=$OPTARG
         ;;
     m)
-        manifest_dir=$OPTARG
+        cluster_dir=$OPTARG
         ;;
     v)
         VERBOSE="true"
@@ -184,10 +223,10 @@ source "$PROJECT_DIR/scripts/utils.sh"
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/paths.sh"
 
-manifest_dir=${manifest_dir:-$MANIFEST_DIR}
-manifest_dir=$(realpath "$manifest_dir")
+cluster_dir=${cluster_dir:-$MANIFEST_DIR}
+cluster_dir=$(realpath "$cluster_dir")
 
-prep_host_setup_src="$manifest_dir/prep_bm_host.src"
+prep_host_setup_src="$cluster_dir/prep_bm_host.src"
 prep_host_setup_src=$(realpath "$prep_host_setup_src")
 
 # get prep_host_setup.src file info
@@ -199,14 +238,14 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$OPENSHIFT_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
+parse_manifests "$cluster_dir"
 map_cluster_vars
 map_worker_vars
 
 case "$COMMAND" in
 # Parse options to the install sub command
 ignition)
-    gen_ignition "$out_dir"
+    gen_ignition "$out_dir" "$cluster_dir"
     ;;
 installer)
     install_openshift_bin

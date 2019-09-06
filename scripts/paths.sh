@@ -35,5 +35,8 @@ export BUILD_DIR
 KICKSTART_DIR="$PROJECT_DIR/kickstart"
 export KICKSTART_DIR
 
+TEMPLATES_DIR="$PROJECT_DIR/templates"
+export TEMPLATES_DIR
+
 # Create directory for debug output
 mkdir -p "$BUILD_DIR"
