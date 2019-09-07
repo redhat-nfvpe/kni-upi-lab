@@ -41,7 +41,7 @@ parse_manifests() {
         printf "Using cached manifest values...\n"
         # shellcheck disable=SC1090
         source "$BUILD_DIR/manifest_vals.sh"
-        
+
         return 0
     fi
 
@@ -637,6 +637,8 @@ get_host_var() {
     local field="$2"
 
     if [ -z "${HOSTS_FINAL_VALS[$host_name]}" ]; then
+        printf "Unknown host: \"%s\"\n" "$host_name"
+        
         return 1
     fi
 

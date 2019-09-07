@@ -28,21 +28,23 @@ gen_ifcfg_manifest() {
     mkdir -p "$BUILD_DIR/openshift-patches"
 
     for interface in "eno1"; do
-        export interface
-
         interface_name="$interface"
-        export interface_name
 
         for role in "master" "worker"; do
-            export role
             yaml_name="99-ifcfg-$interface-$role.yaml"
 
             IFCFG_ENO1="$TEMPLATES_DIR/ifcfg-interface.template"
             IFCFG_YAML="$TEMPLATES_DIR/ifcfg-interface.yaml"
             YAML_FILE="$BUILD_DIR/openshift-patches/$yaml_name"
 
-            interface_content=$(envsubst <"${IFCFG_ENO1}" | base64 -w0)
-            export interface_content
+            # Generate the file contents
+            export interface interface_name
+            content=$(envsubst <"${IFCFG_ENO1}" | base64 -w0)
+
+            mode="0644"
+            path="/etc/sysconfig/network-scripts/ifcfg-$interface"
+            metadata_name="99-ifcfg-$interface-master"
+            export metadata_name path mode content role
 
             envsubst <"${IFCFG_YAML}.template" >"${YAML_FILE}"
         done
@@ -239,6 +241,7 @@ out_dir=${out_dir:-$OPENSHIFT_DIR}
 out_dir=$(realpath "$out_dir")
 
 parse_manifests "$cluster_dir"
+
 map_cluster_vars
 map_worker_vars
 
