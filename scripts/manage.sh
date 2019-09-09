@@ -80,7 +80,7 @@ manage_cluster() {
 manage_workers() {
     cmd="$1"
 
-    if [[ $cmd =~ ^apply$|^destroy$ ]]; then
+    if [[ ! $cmd =~ ^apply$|^destroy$ ]]; then
         printf "Invalid cmd %s\n" "$cmd"
         return 1
     fi
