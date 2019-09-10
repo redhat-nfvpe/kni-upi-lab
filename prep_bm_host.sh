@@ -279,12 +279,12 @@ fi
 printf "\nSetting up tftpboot...\n\n"
 
 if [[ ! -d "/var/lib/tftpboot" ]]; then
-    mkdir -p /var/lib/tftpboot
+    sudo mkdir -p /var/lib/tftpboot
     (
         cd /var/lib/tftpboot
-        curl -O http://boot.ipxe.org/ipxe.efi
-        curl -O http://boot.ipxe.org/undionly.kpxe
-    ) || exit 1
+        sudo curl -O http://boot.ipxe.org/ipxe.efi
+        sudo curl -O http://boot.ipxe.org/undionly.kpxe
+    ) || echo "Failed!"
 fi
 
 ###----------------------------###
