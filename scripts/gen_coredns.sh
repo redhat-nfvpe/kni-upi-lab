@@ -43,7 +43,7 @@ gen_config_corefile() {
 .:53 {
     log
     errors
-    forward . 10.11.5.19
+    forward . $EXT_DNS1 $EXT_DNS2 $EXT_DNS3
 }
 
 $cluster_domain:53 {

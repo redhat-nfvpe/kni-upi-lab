@@ -10,3 +10,8 @@ export BM_BRIDGE=baremetal
 export EXT_INTF=eno1
 export PROV_IP_CIDR="172.22.0.0/24"
 export BM_IP_CIDR="192.168.111.0/24"
+
+# Set at least one upstream DNS
+export EXT_DNS1="10.11.5.19"
+export EXT_DNS2=
+export EXT_DNS3=
