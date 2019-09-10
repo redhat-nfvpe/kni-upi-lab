@@ -36,6 +36,9 @@ Review the OpenShift Container Platform 4.x Tested Integrations page before you 
 * EXT_INTF -- Interface that provides internet connectivity
 * PROV_IP_CIDR -- CIDR of the Provisioning network
 * BM_IP_CIDR -- CIDR of the Baremetal network
+* EXT_DNS1 -- IP Address (4 or 6) of first upstream DNS
+* EXT_DNS2 -- IP Address (4 or 6) of (optional) second upstream DNS
+* EXT_DNS3 -- IP Address (4 or 6) of (optional) third first upstream DNS
 
 For example...
 
