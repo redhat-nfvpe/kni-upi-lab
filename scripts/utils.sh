@@ -29,6 +29,22 @@ source "$PROJECT_DIR/scripts/manifest_check.sh"
 parse_manifests() {
     local manifest_dir=$1
 
+    change=false
+    if [ -f "$BUILD_DIR/manifest_vals.sh" ]; then
+        for file in "$manifest_dir"/*.yaml; do
+            [[ "$BUILD_DIR/manifest_vals.sh" -ot "$file" ]] && change=true
+        done
+    else
+        change=true
+    fi
+    if [[ $change =~ false ]]; then
+        printf "Using cached manifest values...\n"
+        # shellcheck disable=SC1090
+        source "$BUILD_DIR/manifest_vals.sh"
+
+        return 0
+    fi
+
     [[ "$VERBOSE" =~ true ]] && printf "Parsing manifest files in %s\n" "$manifest_dir"
 
     for file in "$manifest_dir"/*.yaml; do
@@ -141,14 +157,11 @@ parse_manifests() {
     ofile="$BUILD_DIR/manifest_vals.sh"
     {
         printf "#!/bin/bash\n\n"
-        printf "declare -A MANIFEST_VALS=(\n"
 
         for v in "${sorted[@]}"; do
-            printf "  [%s]=\"%s\"\n" "$v" "${MANIFEST_VALS[$v]}"
+             printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${MANIFEST_VALS[$v]}"
         done
 
-        printf ")\n"
-        printf "export MANIFEST_VALS\n"
     } >"$ofile"
 
 }
@@ -223,6 +236,13 @@ process_rule() {
     mapfile -t matches < <(printf "%s\n" "${!MANIFEST_VALS[@]}" | sed -nre "$regex")
 
     if [[ "$VERBOSE" =~ true ]]; then
+        if [ ${#matches[@]} -eq 0 ]; then
+            for key in "${!MANIFEST_VALS[@]}"; do
+                printf "%s = %s\n" "$key" "${MANIFEST_VALS[$key]}"
+            done
+
+            printf "No matches for \"%s\"!\n" "$regex"
+        fi
         for m in "${matches[@]}"; do
             printf "\t\"%s\" matches \"%s\"\n" "$regex" "$m"
         done
@@ -617,6 +637,8 @@ get_host_var() {
     local field="$2"
 
     if [ -z "${HOSTS_FINAL_VALS[$host_name]}" ]; then
+        printf "Unknown host: \"%s\"\n" "$host_name"
+        
         return 1
     fi
 
