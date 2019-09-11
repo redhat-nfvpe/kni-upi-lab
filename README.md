@@ -1,7 +1,7 @@
 
-# KNI Automation Framework
+# KNI UPI Automation Framework
 
-The KNI AF provides a series of scripts that simply the deployment of an OCP 4.x cluster.  KNI AF is designed to leverage a prescribed hardware / network setup in order to simplify the deployment process.
+The KNI UI AF provides a series of scripts that simply the deployment of an OCP 4.x cluster using the UPI method of installation.  KNI AF is designed to leverage a prescribed hardware / network setup in order to simplify the deployment process.
 
 The prescribed infrastructure architecture is shown below.
 
@@ -9,31 +9,47 @@ The prescribed infrastructure architecture is shown below.
 
 The architecture requires:
 
-* A provisioning/bastion server where several helper applications are run
+* A provisioning/bastion server where several helper applications are run.  Either Centos 7.6 or greater can be used as well as RHEL.
 * One or more hardware nodes for Master Nodes
 * Zero or more hardware nodes for Worker Nodes
-
-The provisioning nodes is where the KNI AF is run.
+* All master/worker hosts require two physical interfaces and an Out-Of-Band management network connection (IPMI).
+  * Interface #1 will be used for provisioning and must have pxeboot capability.  This interface is  attached to the provisioning network.
+  * Interface #2 will carry all API/Cluster and application traffic.  This interface is attached to the baremetal network.
+  * The OOB management network must be accessible from the provisioning host
+* Network
+  * Provisioning network -- A private, non-routed network that carries pxeboot traffic
+  * Baremetal network --This network carries all OpenShift SDN traffic.
+    * DHCP -- By default, DHCP is provided by an instance of DNSMASQ running on the provisioning host.  An external DHCP server can be used instead.
+    * DNS -- By default, DNS is provided by an instance of CoreDNS running on the provisioning host.  An external DNS server can be used instead (See OpenShift [UPI/baremetal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html) documentation for DNS requirements)
+    * NTP -- An NTP server must be accessible from this network
 
 # UPI Background
 
-## Creating the user-provisioned infrastructure
-
-Before you deploy a OpenShift Container Platform cluster that uses user-provisioned infrastructure (UPI), you must create the underlying infrastructure.
-
-### Prerequistes
+## Prerequistes
 
 Review the OpenShift Container Platform 4.x Tested Integrations page before you create the supporting infrastructure for your cluster.
 
+### SSH Private Key
+
+For OpenShift Container Platform clusters on which you want to perform installation debugging or disaster recovery, you must provide an SSH key that your ssh-agent process uses to the installer.
+
+You can use this key to SSH into the master nodes as the user core. When you deploy the cluster, the key is added to the core user’s ~/.ssh/authorized_keys list.
+
+Most times, this key is the id_rsa.pub for the installation account.  This might need to be created on the provisioning host.
+
+### PULL-SECRET
+
+From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshift/install) page, download your installation pull secret. This pull secret allows you to authenticate with the services that are provided by the included authorities, including Quay.io, which serves the container images for OpenShift Container Platform components.
+
 ### Quick Start
 
-#### Populate cluster/prep_bm_host.src
+#### Populate *cluster/prep_bm_host.src*
 
-* PROV_INTF -- Interface connected to the Provisioning network.  The interface will be added to PROV_BRIDGE
-* PROV_BRIDGE -- Name for the internal linux bridge that will be created
-* BM_INTF -- Interface connected to the Baremetal network,  The interface will be added to BM_BRIDGE
-* BM_BRIDGE -- Name for the internal linux bridge that will be created
-* EXT_INTF -- Interface that provides internet connectivity
+* PROV_INTF -- Provisioning host interface attached to the *provisioning* network.  The interface will be added to **PROV_BRIDGE**
+* PROV_BRIDGE -- Provioning host bridge that will be created for the provisioning network
+* BM_INTF -- Provisioning host interface attached to the *baremetal* network,  The interface will be added to BM_BRIDGE
+* BM_BRIDGE -- Provisioning host bridge that will be created for the *baremetal* bridge
+* EXT_INTF -- Provisioning host interface that provides internet connectivity
 * BM_IP_CIDR -- CIDR of the Baremetal network
   * The default addressing scheme for a network is as follows:
     * The temporary bootstrap node will be located at offset 10 within the cidr
@@ -43,9 +59,6 @@ Review the OpenShift Container Platform 4.x Tested Integrations page before you 
       * .13
     * The first worker node will be at offset 20, second worker at 20 and so on.
     * So for 192.168.111.0/24
-      * 192.169.111.6  -- IP address of baremetal interface
-      * 192.168.111.6  -- Gateway on provisioning host
-      * 192.168.111.3  -- DNS on provisioning host
       * 192.168.111.10 -- bootstrap
       * 192.168.111.11 -- master 0
       * 192.168.111.12 -- master 1
@@ -54,12 +67,13 @@ Review the OpenShift Container Platform 4.x Tested Integrations page before you 
       * 192.168.111.21 -- worker-1
       * ....
 * PROV_IP_CIDR -- CIDR of the Provisioning network
-  * Same as BM_IP_CIDR
+* CLUSTER_DNS -- The IP address of the cluster's external DNS. Defaults to address of CoreDNS running on provisioning host, when DNS is managed externally, change to IP of external DNS.
+* CLUSTER_DEFAULT_GW -- Default gateway for nodes in the cluster. Default to BM_INTF interface of the provisioning host, change to external router if necessary
 * EXT_DNS1 -- IP Address (4 or 6) of first upstream DNS
 * EXT_DNS2 -- IP Address (4 or 6) of (optional) second upstream DNS
 * EXT_DNS3 -- IP Address (4 or 6) of (optional) third first upstream DNS
 
-For example...
+For example in the above diagram...
 
 ```bash
    export PROV_INTF=eno2
@@ -69,11 +83,16 @@ For example...
    export EXT_INTF=eno1
    export PROV_IP_CIDR="172.22.0.0/24"
    export BM_IP_CIDR="192.168.111.0/24"
+   export CLUSTER_DNS="192.168.111.3"
+   export CLUSTER_DEFAULT_GW="$BM_INTF_IP"
+   export EXT_DNS1="10.11.5.19"
 ```
 
 #### Populate cluster/install-config.yaml
 
-Populate the hosts: section with information about the hardware hosts you are going to use for the cluster.  
+The *baseDomain* field sets the cluster domain.  The *metadata/name* field sets the name of the cluster.  The remaining fields (except for *hosts* defined below) should not be changed.
+
+Populate the *hosts:* section with information about the hardware hosts you are going to use for the cluster.  
 
 | Field       |  Default     | Definition                           |
 | ---------   | ------------ | ------------------------------------ |
