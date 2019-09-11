@@ -11,7 +11,7 @@ source cluster/prep_bm_host.src
 
 printf "\nChecking parameters...\n\n"
 
-for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR; do
+for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
     if [[ -z "${!i}" ]]; then
         echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF, BM_BRIDGE, EXT_INTF, PROV_IP_CIDR and BM_IP_CIDR as environment variables!"
         echo "Edit prep_bm_host.src to set these values."
@@ -146,6 +146,18 @@ DEVICE=$BM_INTF
 ONBOOT=yes
 BRIDGE=$BM_BRIDGE
 EOF
+
+if [[ ! $BM_INTF_IP == "$CLUSTER_DNS" ]]; then
+    cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_INTF:1"
+DEVICE=$BM_BRIDGE:1
+Type=Ethernet
+ONBOOT=yes
+NM_CONTROLLED=no
+BOOTPROTO=none
+IPADDR=$CLUSTER_DNS
+PREFIX=24
+EOF
+fi
 
 ifdown "$BM_BRIDGE"
 ifup "$BM_BRIDGE"

@@ -130,7 +130,7 @@ EOF
     } >>"$cfg_file"
     cat <<EOF >>"$cfg_file"
 \$ORIGIN apps.$cluster_id.$cluster_domain.
-*                                            A $BM_INTRF_IP
+*                                            A $BM_INTF_IP
 EOF
     echo "$cfg_file"
 }
