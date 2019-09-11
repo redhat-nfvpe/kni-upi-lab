@@ -34,9 +34,14 @@ parse_manifests() {
         for file in "$manifest_dir"/*.yaml; do
             [[ "$BUILD_DIR/manifest_vals.sh" -ot "$file" ]] && change=true
         done
+
+        for file in "$SCRIPT_DIR"/*.sh; do
+            [[ "$BUILD_DIR/manifest_vals.sh" -ot "$file" ]] && change=true
+        done
     else
         change=true
     fi
+    
     if [[ $change =~ false ]]; then
         printf "Using cached manifest values...\n"
         # shellcheck disable=SC1090

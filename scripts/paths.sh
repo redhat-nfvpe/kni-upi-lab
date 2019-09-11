@@ -5,6 +5,9 @@ if [[ -z "$PROJECT_DIR" ]]; then
     exit 1
 fi
 
+SCRIPT_DIR="$PROJECT_DIR/scripts"
+export SCRIPT_DIR
+
 MANIFEST_DIR="$PROJECT_DIR/cluster"
 export MANIFEST_DIR
 

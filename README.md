@@ -34,8 +34,27 @@ Review the OpenShift Container Platform 4.x Tested Integrations page before you 
 * BM_INTF -- Interface connected to the Baremetal network,  The interface will be added to BM_BRIDGE
 * BM_BRIDGE -- Name for the internal linux bridge that will be created
 * EXT_INTF -- Interface that provides internet connectivity
-* PROV_IP_CIDR -- CIDR of the Provisioning network
 * BM_IP_CIDR -- CIDR of the Baremetal network
+  * The default addressing scheme for a network is as follows:
+    * The temporary bootstrap node will be located at offset 10 within the cidr
+    * The master nodes will be
+      * .11
+      * .12
+      * .13
+    * The first worker node will be at offset 20, second worker at 20 and so on.
+    * So for 192.168.111.0/24
+      * 192.169.111.6  -- IP address of baremetal interface
+      * 192.168.111.6  -- Gateway on provisioning host
+      * 192.168.111.3  -- DNS on provisioning host
+      * 192.168.111.10 -- bootstrap
+      * 192.168.111.11 -- master 0
+      * 192.168.111.12 -- master 1
+      * 192.168.111.13 -- master 2
+      * 192.168.111.20 -- Worker-0
+      * 192.168.111.21 -- worker-1
+      * ....
+* PROV_IP_CIDR -- CIDR of the Provisioning network
+  * Same as BM_IP_CIDR
 * EXT_DNS1 -- IP Address (4 or 6) of first upstream DNS
 * EXT_DNS2 -- IP Address (4 or 6) of (optional) second upstream DNS
 * EXT_DNS3 -- IP Address (4 or 6) of (optional) third first upstream DNS

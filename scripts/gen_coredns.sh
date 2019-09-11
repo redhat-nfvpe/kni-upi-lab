@@ -93,8 +93,8 @@ EOF
     } >>"$cfg_file"
 
     cat <<EOF >>"$cfg_file"
-api.$cluster_id.$cluster_domain.                        A $(nthhost "$BM_IP_CIDR" 1)
-api-int.$cluster_id.$cluster_domain.                    A $(nthhost "$BM_IP_CIDR" 1)
+api.$cluster_id.$cluster_domain.                        A $BM_INTF_IP  # haproxy
+api-int.$cluster_id.$cluster_domain.                    A $BM_INTF_IP  # haproxy
 $cluster_id-master-0.$cluster_domain.                   A $(get_master_bm_ip 0)
 EOF
 
@@ -130,7 +130,7 @@ EOF
     } >>"$cfg_file"
     cat <<EOF >>"$cfg_file"
 \$ORIGIN apps.$cluster_id.$cluster_domain.
-*                                            A $(nthhost "$BM_IP_CIDR" 1)
+*                                            A $BM_INTRF_IP
 EOF
     echo "$cfg_file"
 }
@@ -229,7 +229,7 @@ start)
             printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
     if ! cid=$(sudo podman run -d --expose=53/udp --name "$CONTAINER_NAME" \
-        -p "$(nthhost "$BM_IP_CIDR" 1):53:53" -p "$(nthhost "$BM_IP_CIDR" 1):53:53/udp" \
+        -p "$CLUSTER_DNS:53:53" -p "$CLUSTER_DNS:53:53/udp" \
         -v "$PROJECT_DIR/coredns:/etc/coredns:z" coredns/coredns:latest \
         -conf /etc/coredns/Corefile); then
         printf "Could not start coredns container!\n"

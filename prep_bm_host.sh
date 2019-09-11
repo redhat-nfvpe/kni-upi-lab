@@ -128,7 +128,7 @@ IPV6_FAILURE_FATAL=no
 IPV6_ADDR_GEN_MODE=stable-privacy
 NAME=$BM_BRIDGE
 DEVICE=$BM_BRIDGE
-IPADDR=$(nthhost "$BM_IP_CIDR" 1)
+IPADDR=$BM_INTF_IP
 NETMASK=255.255.255.0
 ONBOOT=yes
 EOF
@@ -263,7 +263,7 @@ if ! [ -f "${DNSCONF}" ]; then
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
 if ! [ -f "${DNSMASQCONF}" ]; then
-    echo server=/tt.testing/"$(nthhost "$BM_IP_CIDR" 1)" | sudo tee "${DNSMASQCONF}"
+    echo server=/tt.testing/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
 if [ -n "$DNSCHANGED" ]; then

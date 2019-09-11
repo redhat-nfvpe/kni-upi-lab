@@ -8,8 +8,13 @@ export BM_INTF=ens1f0
 export BM_BRIDGE=baremetal
 
 export EXT_INTF=eno1
+
 export PROV_IP_CIDR="172.22.0.0/24"
+
 export BM_IP_CIDR="192.168.111.0/24"
+export BM_INTF_IP="192.168.111.6"          # 
+export CLUSTER_DNS="192.168.111.3"         # Defaults to CoreDNS running on Prov host, change to external DNS if necessary 
+export CLUSTER_DEFAULT_GW="$BM_INTF_IP"    # Default to BM_INTF interface, change to external router if necessary
 
 # Set at least one upstream DNS
 export EXT_DNS1="10.11.5.19"
