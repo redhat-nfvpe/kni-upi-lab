@@ -93,8 +93,8 @@ EOF
     } >>"$cfg_file"
 
     cat <<EOF >>"$cfg_file"
-api.$cluster_id.$cluster_domain.                        A $BM_INTF_IP  # haproxy
-api-int.$cluster_id.$cluster_domain.                    A $BM_INTF_IP  # haproxy
+api.$cluster_id.$cluster_domain.                        A $BM_INTF_IP  
+api-int.$cluster_id.$cluster_domain.                    A $BM_INTF_IP  
 $cluster_id-master-0.$cluster_domain.                   A $(get_master_bm_ip 0)
 EOF
 
