@@ -67,4 +67,4 @@ EOL
 chmod 664 /etc/systemd/system/runignition.service
 systemctl enable runignition
 
-sed -i '/^.*linux16.*/ s/$/ ip=eno1:dhcp ip=eno2:dhcp rd.neednet=1/' /boot/grub2/grub.cfg
+sed -i '/^.*linux16.*/ s/$/ rd.neednet=1/' /boot/grub2/grub.cfg
