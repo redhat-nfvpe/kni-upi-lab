@@ -13,7 +13,7 @@ The architecture requires:
 * One or more hardware nodes for Master Nodes
 * Zero or more hardware nodes for Worker Nodes
 * All master/worker hosts require two physical interfaces and an Out-Of-Band management network connection (IPMI).
-  * Interface #1 will be used for provisioning and must have pxeboot capability.  This interface is  attached to the provisioning network.
+  * Interface #1 will be used for provisioning and must have pxeboot capability.  This interface is attached to the provisioning network.
   * Interface #2 will carry all API/Cluster and application traffic.  This interface is attached to the baremetal network.
   * The OOB management network must be accessible from the provisioning host
 * Network
