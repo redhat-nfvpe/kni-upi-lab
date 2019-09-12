@@ -16,6 +16,11 @@ else
         export OPENSHIFT_RHCOS_MINOR_REL
     fi
 fi
+
+# OCP minor release should always match RHCOS
+OPENSHIFT_OCP_MINOR_REL="${OPENSHIFT_RHCOS_MINOR_REL}"
+export OPENSHIFT_OCP_MINOR_REL
+
 export OPENSHIFT_RHCOS_URL
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -142,7 +142,7 @@ install_openshift_bin() {
 
         if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
             if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_RHCOS_MINOR_REL.tar.gz"
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
                 tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
             else
                 LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
@@ -161,7 +161,7 @@ install_openshift_oc() {
 
         if [[ ! -f "/usr/local/bin/oc" ]]; then
             if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_RHCOS_MINOR_REL.tar.gz"
+                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
                 tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
             else
                 LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
