@@ -5,7 +5,7 @@
 regex_filename="^([-_A-Za-z0-9]+)$"
 regex_pos_int="^([0-9]+$)"
 regex_mac_address="^(([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$)"
-regex_ip_address="^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"
+regex_ip_address="^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$"
 
 declare -A MANIFEST_CHECK
 export MANIFEST_CHECK

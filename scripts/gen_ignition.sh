@@ -43,7 +43,7 @@ gen_ifcfg_manifest() {
 
             mode="0644"
             path="/etc/sysconfig/network-scripts/ifcfg-$interface"
-            metadata_name="99-ifcfg-$interface-master"
+            metadata_name="99-ifcfg-$interface-$role"
             export metadata_name path mode content role
 
             envsubst <"${IFCFG_YAML}.template" >"${YAML_FILE}"

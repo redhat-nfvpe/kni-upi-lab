@@ -60,4 +60,4 @@ systemctl enable runignition
 # Inject NM Workaround (required for OCP with multiple physical NICs)
 sed -i "s|^ExecStart=.*|ExecStart=/usr/bin/nm-online -s -q --timeout=300|" /usr/lib/systemd/system/NetworkManager-wait-online.service
 
-sed -i '/^.*linux16.*/ s/$/ ip=eno1:dhcp ip=eno2:dhcp rd.neednet=1/' /boot/grub2/grub.cfg
+sed -i '/^.*linux16.*/ s/$/ rd.neednet=1/' /boot/grub2/grub.cfg

@@ -203,10 +203,6 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$COREDNS_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
-
-map_cluster_vars
-
 case "$COMMAND" in
 all)
     make_clone

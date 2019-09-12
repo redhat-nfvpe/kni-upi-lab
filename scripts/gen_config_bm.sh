@@ -133,7 +133,7 @@ except-interface=lo
 
 dhcp-range=$BM_IP_RANGE_START,$BM_IP_RANGE_END,30m
 #default gateway
-dhcp-option=3,$BM_IP_NS
+dhcp-option=3,$CLUSTER_DEFAULT_GW
 #dns server
 dhcp-option=6,$BM_IP_NS
 

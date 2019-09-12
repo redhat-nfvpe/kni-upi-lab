@@ -11,9 +11,9 @@ source cluster/prep_bm_host.src
 
 printf "\nChecking parameters...\n\n"
 
-for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR; do
+for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
     if [[ -z "${!i}" ]]; then
-        echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF, BM_BRIDGE, EXT_INTF, PROV_IP_CIDR and BM_IP_CIDR as environment variables!"
+        echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF, BM_BRIDGE, EXT_INTF, PROV_IP_CIDR, BM_IP_CIDR, BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW and EXT_DNS1 as environment variables!"
         echo "Edit prep_bm_host.src to set these values."
         exit 1
     else
@@ -83,7 +83,7 @@ IPV4_FAILURE_FATAL=no
 NAME=$PROV_BRIDGE
 DEVICE=$PROV_BRIDGE
 ONBOOT=yes
-IPADDR=$(nthhost "$PROV_IP_CIDR" 10)
+IPADDR=$PROV_IP_MATCHBOX_IP
 NETMASK=255.255.255.0
 ZONE=public
 EOF
@@ -128,7 +128,7 @@ IPV6_FAILURE_FATAL=no
 IPV6_ADDR_GEN_MODE=stable-privacy
 NAME=$BM_BRIDGE
 DEVICE=$BM_BRIDGE
-IPADDR=$(nthhost "$BM_IP_CIDR" 1)
+IPADDR=$BM_INTF_IP
 NETMASK=255.255.255.0
 ONBOOT=yes
 EOF
@@ -146,6 +146,18 @@ DEVICE=$BM_INTF
 ONBOOT=yes
 BRIDGE=$BM_BRIDGE
 EOF
+
+if [[ ! $BM_INTF_IP == "$CLUSTER_DNS" ]]; then
+    cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:1"
+DEVICE=$BM_BRIDGE:1
+Type=Ethernet
+ONBOOT=yes
+NM_CONTROLLED=no
+BOOTPROTO=none
+IPADDR=$CLUSTER_DNS
+PREFIX=24
+EOF
+fi
 
 ifdown "$BM_BRIDGE"
 ifup "$BM_BRIDGE"
@@ -263,7 +275,7 @@ if ! [ -f "${DNSCONF}" ]; then
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
 if ! [ -f "${DNSMASQCONF}" ]; then
-    echo server=/tt.testing/"$(nthhost "$BM_IP_CIDR" 1)" | sudo tee "${DNSMASQCONF}"
+    echo server=/tt.testing/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
 if [ -n "$DNSCHANGED" ]; then
