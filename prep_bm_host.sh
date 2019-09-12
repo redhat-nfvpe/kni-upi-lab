@@ -13,7 +13,7 @@ printf "\nChecking parameters...\n\n"
 
 for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
     if [[ -z "${!i}" ]]; then
-        echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF, BM_BRIDGE, EXT_INTF, PROV_IP_CIDR and BM_IP_CIDR as environment variables!"
+        echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF, BM_BRIDGE, EXT_INTF, PROV_IP_CIDR, BM_IP_CIDR, BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW and EXT_DNS1 as environment variables!"
         echo "Edit prep_bm_host.src to set these values."
         exit 1
     else
