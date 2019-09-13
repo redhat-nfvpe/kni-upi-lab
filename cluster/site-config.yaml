@@ -1,0 +1,29 @@
+apiVersion: kni.akraino.org/v1alpha1
+kind: SiteConfig
+metadata:
+  name: notImportantHere
+config:
+  releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.1
+infrastructure:
+  networks:
+    # The provisioning network's CIDR
+    provIpCidr: 172.22.0.0/24
+    # The baremetal networks's CIDR
+    bmIpCidr: 192.168.111.0/24
+  provHost:
+    interfaces:
+      prov: eno2
+      provIpAddress: 172.22.0.10
+      bm: ens1f0
+      bmIpAddress: 192.168.111.6
+      ext: eno1
+    bridges:
+      prov: provisioning
+      bm: baremetal
+  dns:
+    cluster: 192.168.111.3
+    external1: 10.11.5.19
+
+  routes: 
+    default: 192.168.111.6
+    external: 10.19.110.254
