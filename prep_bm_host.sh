@@ -13,8 +13,19 @@ printf "\nChecking parameters...\n\n"
 
 for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
     if [[ -z "${!i}" ]]; then
-        echo "You must set prov_intf, prov_bridge, bm_intf, bm_bridge, ext_intf, prov_ip_cidr, bm_ip_cidr, bm_intf_ip, cluster_dns, cluster_default_gw and ext_dns1 as yaml variables!"
-        echo "Edit prep_bm_host.yaml to set these values."
+        echo "You must set..."
+        echo "provisioning interface name"
+        echo "provisioning bridge name"
+        echo "baremetal interface name"
+        echo "baremetal bridge name"
+        echo "external interface name" 
+        echo "provisioning ip cidr"
+        echo "baremetal ip cidr"
+        echo "baremetal interface ip"
+        echo "cluster dns ip"
+        echo "cluster default gateway ip"
+        echo "external dns 1 ip" 
+        echo "...as yaml variables!  Edit cluster/site-config.yaml to set these values."
         exit 1
     else
         echo $i": "${!i}
