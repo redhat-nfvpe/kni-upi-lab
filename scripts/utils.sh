@@ -557,24 +557,20 @@ gen_variables() {
     map_worker_vars
     map_hosts_vars
 }
-#
-# The prep_bm_host.src file contains information
-# about the provisioning interface, baremetal interface
-# and external (internet facing) interface of the
-# provisioning host
-#
 
 parse_prep_bm_host_src() {
-    file="$1"
+    local manifest_dir="$1"
 
-    [[ "$VERBOSE" =~ true ]] && printf "Processing prep_host vars in %s\n" "$file"
+    local site_file="$manifest_dir/site-config.yaml"
 
-    check_regular_file_exists "$file"
+    [[ "$VERBOSE" =~ true ]] && printf "Processing prep_host vars in %s\n" "$site_file"
+
+    check_regular_file_exists "$site_file"
 
     # shellcheck disable=SC1090
     source "$PROJECT_DIR/scripts/parse_site_config.sh"
 
-    parse_site_config "./cluster/site-config.yaml" || exit 1
+    parse_site_config "$site_file" || exit 1
     map_site_config || exit 1
 }
 

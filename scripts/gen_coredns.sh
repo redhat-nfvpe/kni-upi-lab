@@ -196,11 +196,8 @@ source "$PROJECT_DIR/scripts/utils.sh"
 manifest_dir=${manifest_dir:-$MANIFEST_DIR}
 manifest_dir=$(realpath "$manifest_dir")
 
-prep_host_setup_src="$manifest_dir/prep_bm_host.src"
-prep_host_setup_src=$(realpath "$prep_host_setup_src")
-
 # get prep_host_setup.src file info
-parse_prep_bm_host_src "$prep_host_setup_src"
+parse_prep_bm_host_src "$manifest_dir"
 
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/network_conf.sh"

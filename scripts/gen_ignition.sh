@@ -82,16 +82,16 @@ patch_manifest() {
 
 gen_ignition() {
     local out_dir="$1"
-    local cluster_dir="$2"
+    local manifest_dir="$2"
 
-    if [ ! -f "$cluster_dir/install-config.yaml" ]; then
-        printf "%s does not exists, create!" "$cluster_dir/install-config.yaml"
+    if [ ! -f "$manifest_dir/install-config.yaml" ]; then
+        printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
         exit 1
     fi
 
     rm -rf "$out_dir"
     mkdir -p "$out_dir"
-    cp "$cluster_dir/install-config.yaml" "$out_dir"
+    cp "$manifest_dir/install-config.yaml" "$out_dir"
 
     if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
         printf "openshift-install create manifests failed!\n"
@@ -182,7 +182,7 @@ while getopts ":hvm:o:" opt; do
         out_dir=$OPTARG
         ;;
     m)
-        cluster_dir=$OPTARG
+        manifest_dir=$OPTARG
         ;;
     v)
         VERBOSE="true"
@@ -225,14 +225,11 @@ source "$PROJECT_DIR/scripts/utils.sh"
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/paths.sh"
 
-cluster_dir=${cluster_dir:-$MANIFEST_DIR}
-cluster_dir=$(realpath "$cluster_dir")
-
-prep_host_setup_src="$cluster_dir/prep_bm_host.src"
-prep_host_setup_src=$(realpath "$prep_host_setup_src")
+manifest_dir=${manifest_dir:-$MANIFEST_DIR}
+manifest_dir=$(realpath "$manifest_dir")
 
 # get prep_host_setup.src file info
-parse_prep_bm_host_src "$prep_host_setup_src"
+parse_prep_bm_host_src "$manifest_dir"
 
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/network_conf.sh"
@@ -240,7 +237,7 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$OPENSHIFT_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$cluster_dir"
+parse_manifests "$manifest_dir"
 
 map_cluster_vars
 map_worker_vars
@@ -248,7 +245,7 @@ map_worker_vars
 case "$COMMAND" in
 # Parse options to the install sub command
 ignition)
-    gen_ignition "$out_dir" "$cluster_dir"
+    gen_ignition "$out_dir" "$manifest_dir"
     ;;
 installer)
     install_openshift_bin
