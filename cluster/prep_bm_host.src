@@ -1,0 +1,36 @@
+# This file stores environment variables required by the prep_bm_host.sh script.
+# Set the values here and then run prep_bm_host.sh.
+
+SRC_FILE="cluster/prep_bm_host.yaml"
+
+# provisioning network interface on the provisioning host
+export PROV_INTF=$(yq .prov_intf $SRC_FILE)
+export PROV_BRIDGE=$(yq .prov_bridge $SRC_FILE)
+
+# baremetal network interface on the provisioning host
+export BM_INTF=$(yq .bm_intf $SRC_FILE)
+export BM_BRIDGE=$(yq .bm_bridge $SRC_FILE)
+
+# The external interface on the provisioning host that
+# has access to the internet
+export EXT_INTF=$(yq .ext_intf $SRC_FILE)
+
+# The provisioning network's CIDR
+export PROV_IP_CIDR="$(yq .prov_ip_cidr $SRC_FILE)"
+# The baremetal networks's CIDR
+export BM_IP_CIDR="$(yq .bm_ip_cidr $SRC_FILE)"
+# The IP address to use for the baremetal network interface on the provisioning host
+export BM_INTF_IP="$(yq .bm_intf_ip $SRC_FILE)"          
+
+# The address of the cluster's external DNS. 
+# Defaults to CoreDNS running on Prov host, change to IP of external DNS if necessary  
+export CLUSTER_DNS="$(yq .cluster_dns $SRC_FILE)"     
+# Default gateway for nodes in the cluster    
+# Default to BM_INTF interface of the provisioning host, change to external router if necessary
+export CLUSTER_DEFAULT_GW="$(yq .cluster_default_gw $SRC_FILE)"   
+
+# Set at least one upstream DNS to use with 
+# CoreDNS
+export EXT_DNS1="$(yq .ext_dns1 $SRC_FILE)"
+export EXT_DNS2="$(yq .ext_dns2 $SRC_FILE)"
+export EXT_DNS3="$(yq .ext_dns3 $SRC_FILE)"
