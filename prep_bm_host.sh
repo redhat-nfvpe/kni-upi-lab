@@ -9,22 +9,8 @@
 # shellcheck disable=SC1091
 source scripts/parse_site_config.sh
 
-parse_site_config "./cluster/site-config.yaml"
-map_site_config
-
-printf "\nChecking parameters...\n\n"
-
-error=false
-for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
-    if [[ -z "${!i}" ]]; then
-        printf "Error: %s is unset in %s, must be set\n\n" "${SITE_CONFIG_MAP[$i]}" "./cluster/site-config.yaml"
-        error=true
-    else
-        printf "%s: %s\n" "${SITE_CONFIG_MAP[$i]}" "${!i}"
-    fi
-done
-
-[[ $error =~ true ]] && exit 1
+parse_site_config "./cluster/site-config.yaml" || exit 1
+map_site_config "true" || exit 1
 
 ###------------------------------###
 ### Source helper scripts first! ###
