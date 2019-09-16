@@ -344,7 +344,11 @@ printf "\nInstalling OpenShift binaries...\n\n"
         sudo mv terraform /usr/bin/.
     fi
 
-    if [[ ! -d "/tmp/terraform-provider-matchbox" ]]; then
+    if [[ ! -f "~/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
+        if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
+            rm -rf /tmp/terraform-provider-matchbox
+        fi
+
         git clone https://github.com/poseidon/terraform-provider-matchbox.git
         cd terraform-provider-matchbox
         go build
