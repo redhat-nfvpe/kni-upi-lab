@@ -9,12 +9,6 @@ CONTAINER_IMAGE="quay.io/poseidon/dnsmasq"
 set -o pipefail
 
 # Script to generate dnsmasq.conf for the baremetal network
-# This script is intended to be called from a master script in the
-# base project or to be run from the base project directory
-# i.e
-#  prep_bm_host.sh calls scripts/gen_config_prov.sh
-#  or
-#  [basedir]./scripts/gen_config_prov.sh
 #
 
 usage() {
@@ -27,7 +21,7 @@ usage() {
     upi project base directory.
 
     Usage:
-        $(basename "$0") [-h] [-s prep_bm_host.src] [-m manfifest_dir] [-o out_dir] 
+        $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir] 
             Generate config files for the baremetal interface
 
     Options
@@ -35,8 +29,6 @@ usage() {
             Requires: install-config.yaml, bootstrap.yaml, master-0.yaml, [masters/workers...]
             Defaults to $PROJECT_DIR/cluster/
         -o out_dir -- Where to put the output [defaults to $PROJECT_DIR/dnsmasq/...]
-        -s [./../prep_host_setup.src -- Location of the config file for host prep
-            Default to $PROJECT_DIR/cluster//prep_host_setup.src
 EOM
 }
 
@@ -160,16 +152,13 @@ gen_config() {
 VERBOSE="false"
 export VERBOSE
 
-while getopts ":ho:s:m:v" opt; do
+while getopts ":ho:m:v" opt; do
     case ${opt} in
     o)
         out_dir=$OPTARG
         ;;
     v)
         VERBOSE="true"
-        ;;
-    s)
-        prep_host_setup_src=$OPTARG
         ;;
     m)
         manifest_dir=$OPTARG
@@ -201,11 +190,8 @@ source "$PROJECT_DIR/scripts/paths.sh"
 manifest_dir=${manifest_dir:-$MANIFEST_DIR}
 manifest_dir=$(realpath "$manifest_dir")
 
-prep_host_setup_src="$manifest_dir/prep_bm_host.src"
-prep_host_setup_src=$(realpath "$prep_host_setup_src")
-
 # get prep_host_setup.src file info
-parse_prep_bm_host_src "$prep_host_setup_src"
+parse_prep_bm_host_src "$manifest_dir"
 
 # shellcheck disable=SC1090
 source "$PROJECT_DIR/scripts/network_conf.sh"

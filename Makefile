@@ -1,4 +1,4 @@
-manifests := cluster/*.yaml cluster/*.src
+manifests := cluster/*.yaml
 
 dnsmasq_dir = ./dnsmasq
 terraform_dir = ./terraform

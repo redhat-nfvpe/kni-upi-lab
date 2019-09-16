@@ -86,6 +86,8 @@ parse_manifests() {
                 printf "Unable to extract .platform.hosts from %s\n" "$file"
                 exit 1
             fi
+        elif [[ $file =~ site-config.yaml ]]; then 
+            continue
         elif [[ ${manifest_vars[kind]} ]]; then
             # All the manifest types must have at least one entry
             # in MANIFEST_CHECK.  The entry can just be an optional
@@ -555,54 +557,21 @@ gen_variables() {
     map_worker_vars
     map_hosts_vars
 }
-#
-# The prep_bm_host.src file contains information
-# about the provisioning interface, baremetal interface
-# and external (internet facing) interface of the
-# provisioning host
-#
+
 parse_prep_bm_host_src() {
-    prep_src="$1"
+    local manifest_dir="$1"
 
-    [[ "$VERBOSE" =~ true ]] && printf "Processing prep_host vars in %s\n" "$prep_src"
+    local site_file="$manifest_dir/site-config.yaml"
 
-    check_regular_file_exists "$prep_src"
+    [[ "$VERBOSE" =~ true ]] && printf "Processing prep_host vars in %s\n" "$site_file"
 
-    # shellcheck source=/dev/null
-    source "$prep_src"
+    check_regular_file_exists "$site_file"
 
-    if [ -z "${PROV_INTF}" ]; then
-        echo "PROV_INTF not set in ${prep_src}, must define PROV_INTF"
-        exit 1
-    fi
+    # shellcheck disable=SC1090
+    source "$PROJECT_DIR/scripts/parse_site_config.sh"
 
-    if [ -z "${PROV_BRIDGE}" ]; then
-        PROV_BRIDGE="provisioning"
-        export PROV_BRIDGE
-    fi
-
-    if [ -z "${BM_INTF}" ]; then
-        echo "BM_INTF not set in ${prep_src}, must define BM_INTF"
-        exit 1
-    fi
-
-    if [ -z "${BM_BRIDGE}" ]; then
-        BM_BRIDGE="baremetal"
-        export BM_BRIDGE
-    fi
-
-    if [[ "$VERBOSE" =~ true ]]; then
-
-        printf "\tPROV_IP_CIDR = \"%s\"\n" "$PROV_IP_CIDR"
-        printf "\tBM_IP_CIDR = \"%s\"\n" "$BM_IP_CIDR"
-        printf "\tPROV_INTF = \"%s\"\n" "$PROV_INTF"
-        printf "\tPROV_BRIDGE = \"%s\"\n" "$PROV_BRIDGE"
-        printf "\tBM_INTF = \"%s\"\n" "$BM_INTF"
-        printf "\tBM_BRIDGE = \"%s\"\n" "$BM_BRIDGE"
-    fi
-
-    # PROV_IP_CIDR has a default value defined in scripts/network_conf.sh
-    # BM_IP_CIDR has a default value defined in scripts/network_conf.sh
+    parse_site_config "$site_file" || exit 1
+    map_site_config || exit 1
 }
 
 podman_exists() {

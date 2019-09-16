@@ -41,7 +41,6 @@
 #│   ├── ha-lab-ipmi-creds.yaml
 #│   ├── install-config.yaml
 #│   ├── master-0.yaml
-#│   ├── prep_bm_host.src
 #│   ├── worker-0.yaml
 #│   └── worker-1.yaml
 
@@ -481,7 +480,7 @@ check_directory_exists "$manifest_dir"
 manifest_dir=$(realpath "$manifest_dir")
 
 # get prep_host_setup.src file info
-parse_prep_bm_host_src "$manifest_dir/prep_bm_host.src"
+parse_prep_bm_host_src "$manifest_dir"
 
 # shellcheck disable=SC1091
 source "scripts/network_conf.sh"

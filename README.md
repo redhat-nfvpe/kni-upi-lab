@@ -43,49 +43,34 @@ From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshif
 
 ### Quick Start
 
-#### Populate *cluster/prep_bm_host.src*
+#### Populate *cluster/site-config.yaml*
 
-* PROV_INTF -- Provisioning host interface attached to the *provisioning* network.  The interface will be added to **PROV_BRIDGE**
-* PROV_BRIDGE -- Provioning host bridge that will be created for the provisioning network
-* BM_INTF -- Provisioning host interface attached to the *baremetal* network,  The interface will be added to BM_BRIDGE
-* BM_BRIDGE -- Provisioning host bridge that will be created for the *baremetal* bridge
-* EXT_INTF -- Provisioning host interface that provides internet connectivity
-* BM_IP_CIDR -- CIDR of the Baremetal network
-  * The default addressing scheme for a network is as follows:
-    * The temporary bootstrap node will be located at offset 10 within the cidr
-    * The master nodes will be
-      * .11
-      * .12
-      * .13
-    * The first worker node will be at offset 20, second worker at 20 and so on.
-    * So for 192.168.111.0/24
-      * 192.168.111.10 -- bootstrap
-      * 192.168.111.11 -- master 0
-      * 192.168.111.12 -- master 1
-      * 192.168.111.13 -- master 2
-      * 192.168.111.20 -- Worker-0
-      * 192.168.111.21 -- worker-1
-      * ....
-* PROV_IP_CIDR -- CIDR of the Provisioning network
-* CLUSTER_DNS -- The IP address of the cluster's external DNS. Defaults to address of CoreDNS running on provisioning host, when DNS is managed externally, change to IP of external DNS.
-* CLUSTER_DEFAULT_GW -- Default gateway for nodes in the cluster. Default to BM_INTF interface of the provisioning host, change to external router if necessary
-* EXT_DNS1 -- IP Address (4 or 6) of first upstream DNS
-* EXT_DNS2 -- IP Address (4 or 6) of (optional) second upstream DNS
-* EXT_DNS3 -- IP Address (4 or 6) of (optional) third first upstream DNS
+The site-config.yaml file describes the infrastructure environment for the cluster.
+Fill in the fields to fit your environment.
 
-For example in the above diagram...
+```yaml
+ networks:
+    provIpCidr: 172.22.0.0/24  # Provisionin network CIDR
+    bmIpCidr: 192.168.111.0/24       # Baremetal network CIDR
+  provHost:
+    interfaces:
+      prov: eno2                  # Prov host provisioning network intf
+      provIpAddress: 172.22.0.10  # Prov host provisioning network intf IP address
+      bm: ens1f0                  # Prov host baremetal network intf
+      bmIpAddress: 192.168.111.6  # Prov host baremetal network intf IP address
+      ext: eno1                   # Prov host external (internet) interface
+    bridges:
+      prov: provisioning          # Name to use for the prov host provisioning bridge
+      bm: baremetal               # Name to use for the prov host baremetal bridge
+  dns:
+    cluster: 192.168.111.3        # IP of clustter DNS (Should be VIP if external)
+    external1: 10.11.5.19         # 1st external, upstream DNS (required)
+#    external2: 10.11.5.19        # 2nd external, upstream DNS (optional)
+#    external3: 10.11.5.19        # 3rd external, upstream DNS (optional)
 
-```bash
-   export PROV_INTF=eno2
-   export PROV_BRIDGE=provisioning
-   export BM_INTF=ens1f0
-   export BM_BRIDGE=baremetal
-   export EXT_INTF=eno1
-   export PROV_IP_CIDR="172.22.0.0/24"
-   export BM_IP_CIDR="192.168.111.0/24"
-   export CLUSTER_DNS="192.168.111.3"
-   export CLUSTER_DEFAULT_GW="$BM_INTF_IP"
-   export EXT_DNS1="10.11.5.19"
+  routes:
+    default: 192.168.111.6        # Default GW for cluster hosts
+    external: 10.19.110.254       # 
 ```
 
 #### Populate cluster/install-config.yaml

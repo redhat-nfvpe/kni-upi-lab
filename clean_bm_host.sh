@@ -3,20 +3,11 @@
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
 ###------------------------------------------------###
+# shellcheck disable=SC1091
+source scripts/parse_site_config.sh
 
-source cluster/prep_bm_host.src
-
-printf "\nChecking parameters...\n\n"
-
-for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE; do
-    if [[ -z "${!i}" ]]; then
-        echo "You must set PROV_INTF, PROV_BRIDGE, BM_INTF and BM_BRIDGE as environment variables!"
-        echo "Edit prep_bm_host.src to set these values."
-        exit 1
-    else
-        echo $i": "${!i}
-    fi
-done
+parse_site_config "./cluster/site-config.yaml" || exit 1
+map_site_config "true" || exit 1
 
 ###------------------------------###
 ### Source helper scripts first! ###
