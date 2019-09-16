@@ -2,6 +2,28 @@
 
 #set -e
 
+###--------------###
+### Install Epel ###
+###--------------###
+
+printf "\nInstalling epel-release via yum...\n\n"
+
+sudo yum install -y epel-release
+
+###------------------------------###
+### Install dependencies via yum ###
+###------------------------------###
+
+printf "\nInstalling dependencies via yum...\n\n"
+
+sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils python-pip jq nmap libvirt
+
+###--------------------###
+### Install Yq via pip ###
+###--------------------###
+
+sudo pip install yq
+
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
 ###------------------------------------------------###
@@ -41,22 +63,6 @@ EOF
 
 sudo yum install -y qemu-kvm
 sudo yum update -y qemu-kvm
-
-###--------------###
-### Install Epel ###
-###--------------###
-
-printf "\nInstalling epel-release via yum...\n\n"
-
-sudo yum install -y epel-release
-
-###------------------------------###
-### Install dependencies via yum ###
-###------------------------------###
-
-printf "\nInstalling dependencies via yum...\n\n"
-
-sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils python-pip jq nmap libvirt
 
 ###---------------------------###
 ### Enable and start libvirtd ###
@@ -224,12 +230,6 @@ EOF
     chmod 755 iptables.sh
     ./iptables.sh
 ) || exit 1
-
-###--------------------###
-### Install Yq via pip ###
-###--------------------###
-
-sudo pip install yq
 
 ###----------------###
 ### Install Golang ###
