@@ -221,18 +221,20 @@ db)
     printf "Generated %s...\n" "$ofile"
     ;;
 start)
-    podman_exists "$CONTAINER_NAME" &&
-        (podman_rm "$CONTAINER_NAME" ||
-            printf "Could not remove %s!\n" "$CONTAINER_NAME")
+    if [[ $PROVIDE_DNS =~ true ]]; then
+        podman_exists "$CONTAINER_NAME" &&
+            (podman_rm "$CONTAINER_NAME" ||
+                printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
-    if ! cid=$(sudo podman run -d --expose=53/udp --name "$CONTAINER_NAME" \
-        -p "$CLUSTER_DNS:53:53" -p "$CLUSTER_DNS:53:53/udp" \
-        -v "$PROJECT_DIR/coredns:/etc/coredns:z" coredns/coredns:latest \
-        -conf /etc/coredns/Corefile); then
-        printf "Could not start coredns container!\n"
-        exit 1
+        if ! cid=$(sudo podman run -d --expose=53/udp --name "$CONTAINER_NAME" \
+            -p "$CLUSTER_DNS:53:53" -p "$CLUSTER_DNS:53:53/udp" \
+            -v "$PROJECT_DIR/coredns:/etc/coredns:z" coredns/coredns:latest \
+            -conf /etc/coredns/Corefile); then
+            printf "Could not start coredns container!\n"
+            exit 1
+        fi
+        podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     fi
-    podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     ;;
 stop)
     podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1

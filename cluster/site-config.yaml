@@ -5,27 +5,34 @@ metadata:
 config:
   releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.1
 infrastructure:
-  networks:
+  network:
     # The provisioning network's CIDR
-    provIpCidr: 172.22.0.0/24
+    provisioningIpCidr: 172.22.0.0/24
     # The baremetal networks's CIDR
-    bmIpCidr: 192.168.111.0/24
+    baremetalIpCidr: 192.168.111.0/24
+    # baremetal network default gateway, set to proper IP if /provHost/services/baremetalGateway == false
+    baremetalGWIP: 192.168.111.4
+    dns:
+      # cluster DNS, change to proper IP address if provHost/services/clusterDNS == false
+      cluster: 192.168.111.3
+      external1: 10.11.5.19 
+#     external2: 10.11.5.19 
+#     external3: 10.11.5.19 
+
   provHost:
     interfaces:
-      prov: eno2
-      provIpAddress: 172.22.0.10
-      bm: ens1f0
-      bmIpAddress: 192.168.111.6
-      ext: eno1
+      provisioning: eno2
+      provisioningIpAddress: 172.22.0.10
+      baremetal: ens1f0
+      baremetalIpAddress: 192.168.111.6
+      external: eno1
     bridges:
-      prov: provisioning
-      bm: baremetal
-  dns:
-    cluster: 192.168.111.3
-    external1: 10.11.5.19 
-#    external2: 10.11.5.19 
-#    external3: 10.11.5.19 
-
-  routes: 
-    default: 192.168.111.6
-    external: 10.19.110.254
+      provisioning: provisioning
+      baremetal: baremetal
+    services:
+      # Does the provsioning host provide DHCP services for the baremetal network?
+      baremetalDHCP: true
+      # Does the provisioning host provide DNS services for the cluster?
+      clusterDNS: true
+      # Does the provisioning host provide a default gateway for the baremetal network?
+      baremetalGateway: true
