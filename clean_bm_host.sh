@@ -157,6 +157,10 @@ fi
 
 if [[ -f "~/.terraform.d" ]]; then
     sudo rm -rf ~/.terraform.d
+    
+    if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
+        rm -rf /tmp/terraform-provider-matchbox
+    fi
 fi
 
 ###------------------------------------------------------------------------------###
