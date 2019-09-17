@@ -26,25 +26,25 @@ source "scripts/utils.sh"
 
 printf "\nRemoving interface and bridges, and deleting network config...\n\n"
 
-sudo ifdown $PROV_INTF
-sudo ifdown $PROV_BRIDGE
-sudo ifdown $BM_INTF
-sudo ifdown $BM_BRIDGE
+sudo ifdown "$PROV_INTF"
+sudo ifdown "$PROV_BRIDGE"
+sudo ifdown "$BM_INTF"
+sudo ifdown "$BM_BRIDGE"
 
 if [[ -f "/etc/sysconfig/network-scripts/ifcfg-$PROV_INTF" ]]; then
-    sudo rm /etc/sysconfig/network-scripts/ifcfg-$PROV_INTF
+    sudo rm "/etc/sysconfig/network-scripts/ifcfg-$PROV_INTF"
 fi
 
 if [[ -f "/etc/sysconfig/network-scripts/ifcfg-$PROV_BRIDGE" ]]; then
-    sudo rm /etc/sysconfig/network-scripts/ifcfg-$PROV_BRIDGE
+    sudo rm "/etc/sysconfig/network-scripts/ifcfg-$PROV_BRIDGE"
 fi
 
 if [[ -f "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" ]]; then
-    sudo rm /etc/sysconfig/network-scripts/ifcfg-$BM_INTF
+    sudo rm "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF"
 fi
 
 if [[ -f "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE" ]]; then
-    sudo rm /etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE
+    sudo rm "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE"
 fi
 
 ###------------------------------------###
@@ -77,12 +77,10 @@ printf "\nRemoving baremetal dnsmasq container...\n\n"
 
 printf "\nRemoving matchbox container and assets...\n\n"
 
-MATCHBOX_CONTAINER=`podman ps -a | grep matchbox`
-
 ./scripts/gen_matchbox.sh remove
 
 if [[ -d "$MATCHBOX_VAR_LIB/assets" && "$1" == "all" ]]; then
-    sudo rm -rf $MATCHBOX_VAR_LIB/assets
+    sudo rm -rf "$MATCHBOX_VAR_LIB/assets"
 fi
 
 ###--------------------------###
@@ -155,7 +153,7 @@ if [[ -f "/usr/bin/terraform" && "$1" == "all" ]]; then
     sudo rm -f /usr/bin/terraform
 fi
 
-if [[ -f "~/.terraform.d" ]]; then
+if [[ -f ~/.terraform.d ]]; then
     sudo rm -rf ~/.terraform.d
     
     if [[ -d "/tmp/terraform-provider-matchbox" ]]; then

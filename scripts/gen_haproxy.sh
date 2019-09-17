@@ -221,16 +221,13 @@ build_haproxy() {
 VERBOSE="false"
 export VERBOSE
 
-while getopts ":ho:s:m:v" opt; do
+while getopts ":ho:m:v" opt; do
     case ${opt} in
     o)
         out_dir=$OPTARG
         ;;
     v)
         VERBOSE="true"
-        ;;
-    s)
-        prep_host_setup_src=$OPTARG
         ;;
     m)
         manifest_dir=$OPTARG

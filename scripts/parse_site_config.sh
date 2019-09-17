@@ -20,19 +20,22 @@ parse_site_config() {
 }
 
 declare -g -A SITE_CONFIG_MAP=(
-    [PROV_INTF]="infrastructure.provHost.interfaces.prov"
-    [PROV_BRIDGE]="infrastructure.provHost.bridges.prov"
-    [BM_INTF]="infrastructure.provHost.interfaces.bm"
-    [BM_BRIDGE]="infrastructure.provHost.bridges.bm"
-    [EXT_INTF]="infrastructure.provHost.interfaces.ext"
-    [PROV_IP_CIDR]="infrastructure.networks.provIpCidr"
-    [BM_IP_CIDR]="infrastructure.networks.bmIpCidr"
-    [BM_INTF_IP]="infrastructure.provHost.interfaces.bmIpAddress"
-    [CLUSTER_DNS]="infrastructure.dns.cluster"
-    [CLUSTER_DEFAULT_GW]="infrastructure.routes.default"
-    [EXT_DNS1]="infrastructure.dns.external1"
-    [EXT_DNS2]="infrastructure.dns.external2"
-    [EXT_DNS3]="infrastructure.dns.external3"
+    [PROV_INTF]="infrastructure.provHost.interfaces.provisioning"
+    [PROV_BRIDGE]="infrastructure.provHost.bridges.provisioning"
+    [BM_INTF]="infrastructure.provHost.interfaces.baremetal"
+    [BM_BRIDGE]="infrastructure.provHost.bridges.baremetal"
+    [EXT_INTF]="infrastructure.provHost.interfaces.external"
+    [PROV_IP_CIDR]="infrastructure.network.provisioningIpCidr"
+    [BM_IP_CIDR]="infrastructure.network.baremetalIpCidr"
+    [BM_INTF_IP]="infrastructure.provHost.interfaces.baremetalIpAddress"
+    [CLUSTER_DNS]="infrastructure.network.dns.cluster"
+    [CLUSTER_DEFAULT_GW]="infrastructure.network.baremetalGWIP"
+    [EXT_DNS1]="infrastructure.network.dns.external1"
+    [EXT_DNS2]="infrastructure.network.dns.external2"
+    [EXT_DNS3]="infrastructure.network.dns.external3"
+    [PROVIDE_DNS]="infrastructure.provHost.services.clusterDNS"
+    [PROVIDE_DHCP]="infrastructure.provHost.services.baremetalDHCP"
+    [PROVIDE_GW]="infrastructure.provHost.services.baremetalGateway"
 )
 
 map_site_config() {

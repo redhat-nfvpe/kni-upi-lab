@@ -153,7 +153,7 @@ ONBOOT=yes
 BRIDGE=$BM_BRIDGE
 EOF
 
-if [[ ! $BM_INTF_IP == "$CLUSTER_DNS" ]]; then
+if [[ $PROVIDE_DNS =~ true ]]; then
     cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:1"
 DEVICE=$BM_BRIDGE:1
 Type=Ethernet
@@ -161,6 +161,18 @@ ONBOOT=yes
 NM_CONTROLLED=no
 BOOTPROTO=none
 IPADDR=$CLUSTER_DNS
+PREFIX=24
+EOF
+fi
+
+if [[ $PROVIDE_GW =~ true ]]; then
+    cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:2"
+DEVICE=$BM_BRIDGE:2
+Type=Ethernet
+ONBOOT=yes
+NM_CONTROLLED=no
+BOOTPROTO=none
+IPADDR=$CLUSTER_DEFAULT_GW
 PREFIX=24
 EOF
 fi
