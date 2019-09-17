@@ -4,7 +4,7 @@ metadata:
   name: notImportantHere
 config:
   releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.1
-infrastructure:
+provisioningInfrastructure:
   network:
     # The provisioning network's CIDR
     provisioningIpCidr: 172.22.0.0/24
