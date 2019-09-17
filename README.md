@@ -49,29 +49,41 @@ The site-config.yaml file describes the infrastructure environment for the clust
 Fill in the fields to fit your environment.
 
 ```yaml
- networks:
-    provIpCidr: 172.22.0.0/24  # Provisionin network CIDR
-    bmIpCidr: 192.168.111.0/24       # Baremetal network CIDR
+infrastructure:
+  network:
+    provisioningIpCidr: 172.22.0.0/24  # The provisioning network's CIDR
+    baremetalIpCidr: 192.168.111.0/24  # The baremetal networks's CIDR
+    # baremetal network default gateway, set to proper IP if provHost/services/baremetalGateway == false
+    baremetalGWIP: 192.168.111.4
+    dns:
+      # cluster DNS, change to proper IP address if provHost/services/clusterDNS == false
+      cluster: 192.168.111.3
+      external1: 10.11.5.19 
+#     external2: 10.11.5.19 
+#     external3: 10.11.5.19 
+
   provHost:
     interfaces:
-      prov: eno2                  # Prov host provisioning network intf
-      provIpAddress: 172.22.0.10  # Prov host provisioning network intf IP address
-      bm: ens1f0                  # Prov host baremetal network intf
-      bmIpAddress: 192.168.111.6  # Prov host baremetal network intf IP address
-      ext: eno1                   # Prov host external (internet) interface
+      provisioning: eno2                  # Prov host provisioning network intf
+      provisioningIpAddress: 172.22.0.10  # Prov host provisioning network intf IP address
+      baremetal: ens1f0                   # Prov host baremetal network intf
+      baremetalIpAddress: 192.168.111.6   # Prov host baremetal network intf IP address
+      external: eno1                      # Prov host external (internet) interface
     bridges:
-      prov: provisioning          # Name to use for the prov host provisioning bridge
-      bm: baremetal               # Name to use for the prov host baremetal bridge
-  dns:
-    cluster: 192.168.111.3        # IP of clustter DNS (Should be VIP if external)
-    external1: 10.11.5.19         # 1st external, upstream DNS (required)
-#    external2: 10.11.5.19        # 2nd external, upstream DNS (optional)
-#    external3: 10.11.5.19        # 3rd external, upstream DNS (optional)
-
-  routes:
-    default: 192.168.111.6        # Default GW for cluster hosts
-    external: 10.19.110.254       # 
+      provisioning: provisioning          # Name to use for the prov host provisioning bridge
+      baremetal: baremetal                # Name to use for the prov host baremetal bridge
+    services:
+      # Does the provsioning host provide DHCP services for the baremetal network?
+      baremetalDHCP: true
+      # Does the provisioning host provide DNS services for the cluster?
+      clusterDNS: true
+      # Does the provisioning host provide a default gateway for the baremetal network?
+      baremetalGateway: true
 ```
+
+#### Run prep_bm_host.sh script
+
+The prep_bm_host.sh is located in the repo directory and prepares the host for provisioning.
 
 #### Populate cluster/install-config.yaml
 
