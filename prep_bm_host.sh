@@ -363,7 +363,7 @@ printf "\nInstalling OpenShift binaries...\n\n"
 
         git clone https://github.com/poseidon/terraform-provider-matchbox.git
         cd terraform-provider-matchbox
-        go build
+        go build -mod=vendor
         mkdir -p ~/.terraform.d/plugins
         cp terraform-provider-matchbox ~/.terraform.d/plugins/.
     fi
