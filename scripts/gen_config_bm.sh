@@ -50,7 +50,7 @@ gen_hostfile_bm() {
         printf "%s,%s,%s\n" "$(get_host_var "master-0" "sdnMacAddress")" "$(get_master_bm_ip 0)" "$cid-master-0.$cdomain"
 
     } >"$hostsfile"
-    
+
     master1_mac=$(get_host_var "master-1" "sdnMacAddress")
     master2_mac=$(get_host_var "master-2" "sdnMacAddress")
 
@@ -73,7 +73,7 @@ gen_hostfile_bm() {
         } >>"$hostsfile"
     fi
 
-    IFS=' ' read -r -a workers <<< "${HOSTS_FINAL_VALS[worker_hosts]}"
+    IFS=' ' read -r -a workers <<<"${HOSTS_FINAL_VALS[worker_hosts]}"
     for worker in "${workers[@]}"; do
         {
             index=${worker##*-}
@@ -205,21 +205,23 @@ bm | config)
     gen_config "$out_dir"
     ;;
 start)
-    podman_exists "$CONTAINER_NAME" &&
-        (podman_rm "$CONTAINER_NAME" ||
-            printf "Could not remove %s!\n" "$CONTAINER_NAME")
+    if [[ $PROVIDE_DHCP =~ true ]]; then
+        podman_exists "$CONTAINER_NAME" &&
+            (podman_rm "$CONTAINER_NAME" ||
+                printf "Could not remove %s!\n" "$CONTAINER_NAME")
 
-    if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host \
-        -v "$PROJECT_DIR/dnsmasq/bm/var/run:/var/run/dnsmasq:Z" \
-        -v "$PROJECT_DIR/dnsmasq/bm/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
-        --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 \
-        --expose=69/udp --cap-add=NET_ADMIN "$CONTAINER_IMAGE" \
-        --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q); then
-        printf "Could not start %s container!\n" "$CONTAINER_NAME"
-        exit 1
+        if ! cid=$(sudo podman run -d --name "$CONTAINER_NAME" --net=host \
+            -v "$PROJECT_DIR/dnsmasq/bm/var/run:/var/run/dnsmasq:Z" \
+            -v "$PROJECT_DIR/dnsmasq/bm/etc/dnsmasq.d:/etc/dnsmasq.d:Z" \
+            --expose=53 --expose=53/udp --expose=67 --expose=67/udp --expose=69 \
+            --expose=69/udp --cap-add=NET_ADMIN "$CONTAINER_IMAGE" \
+            --conf-file=/etc/dnsmasq.d/dnsmasq.conf -u root -d -q); then
+            printf "Could not start %s container!\n" "$CONTAINER_NAME"
+            exit 1
+        fi
+
+        podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     fi
-
-    podman_isrunning_logs "$CONTAINER_NAME" && printf "Started %s as %s...\n" "$CONTAINER_NAME" "$cid"
     ;;
 stop)
     podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
