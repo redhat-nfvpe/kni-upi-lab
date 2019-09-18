@@ -304,6 +304,7 @@ printf "\nSetting up tftpboot...\n\n"
 
 if [[ ! -d "/var/lib/tftpboot" ]]; then
     sudo mkdir -p /var/lib/tftpboot
+    sudo restorecon /var/lib/tftpboot
     (
         cd /var/lib/tftpboot
         sudo curl -O http://boot.ipxe.org/ipxe.efi
