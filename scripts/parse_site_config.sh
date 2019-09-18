@@ -20,22 +20,22 @@ parse_site_config() {
 }
 
 declare -g -A SITE_CONFIG_MAP=(
-    [PROV_INTF]="infrastructure.provHost.interfaces.provisioning"
-    [PROV_BRIDGE]="infrastructure.provHost.bridges.provisioning"
-    [BM_INTF]="infrastructure.provHost.interfaces.baremetal"
-    [BM_BRIDGE]="infrastructure.provHost.bridges.baremetal"
-    [EXT_INTF]="infrastructure.provHost.interfaces.external"
-    [PROV_IP_CIDR]="infrastructure.network.provisioningIpCidr"
-    [BM_IP_CIDR]="infrastructure.network.baremetalIpCidr"
-    [BM_INTF_IP]="infrastructure.provHost.interfaces.baremetalIpAddress"
-    [CLUSTER_DNS]="infrastructure.network.dns.cluster"
-    [CLUSTER_DEFAULT_GW]="infrastructure.network.baremetalGWIP"
-    [EXT_DNS1]="infrastructure.network.dns.external1"
-    [EXT_DNS2]="infrastructure.network.dns.external2"
-    [EXT_DNS3]="infrastructure.network.dns.external3"
-    [PROVIDE_DNS]="infrastructure.provHost.services.clusterDNS"
-    [PROVIDE_DHCP]="infrastructure.provHost.services.baremetalDHCP"
-    [PROVIDE_GW]="infrastructure.provHost.services.baremetalGateway"
+    [PROV_INTF]="provisioningInfrastructure.provHost.interfaces.provisioning"
+    [PROV_BRIDGE]="provisioningInfrastructure.provHost.bridges.provisioning"
+    [BM_INTF]="provisioningInfrastructure.provHost.interfaces.baremetal"
+    [BM_BRIDGE]="provisioningInfrastructure.provHost.bridges.baremetal"
+    [EXT_INTF]="provisioningInfrastructure.provHost.interfaces.external"
+    [PROV_IP_CIDR]="provisioningInfrastructure.network.provisioningIpCidr"
+    [BM_IP_CIDR]="provisioningInfrastructure.network.baremetalIpCidr"
+    [BM_INTF_IP]="provisioningInfrastructure.provHost.interfaces.baremetalIpAddress"
+    [CLUSTER_DNS]="provisioningInfrastructure.network.dns.cluster"
+    [CLUSTER_DEFAULT_GW]="provisioningInfrastructure.network.baremetalGWIP"
+    [EXT_DNS1]="provisioningInfrastructure.network.dns.external1"
+    [EXT_DNS2]="provisioningInfrastructure.network.dns.external2"
+    [EXT_DNS3]="provisioningInfrastructure.network.dns.external3"
+    [PROVIDE_DNS]="provisioningInfrastructure.provHost.services.clusterDNS"
+    [PROVIDE_DHCP]="provisioningInfrastructure.provHost.services.baremetalDHCP"
+    [PROVIDE_GW]="provisioningInfrastructure.provHost.services.baremetalGateway"
 )
 
 map_site_config() {
