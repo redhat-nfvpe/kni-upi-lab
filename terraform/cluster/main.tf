@@ -40,11 +40,7 @@ resource "matchbox_group" "default" {
 module "masters" {
   source = "./masters"
 
-  pxe_kernel_args = "${concat([
-    (var.provisioning_interface != "" ? "ip=${var.provisioning_interface}:dhcp" : " "),
-    (var.baremetal_interface != "" ? "ip=${var.baremetal_interface}:dhcp" : " "),
-  ], local.kernel_args)}"
-
+  pxe_kernel_args = "${local.kernel_args}"
 
   master_count            = "${var.master_count}"
   master_nodes            = "${var.master_nodes}"
