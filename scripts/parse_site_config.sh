@@ -20,6 +20,8 @@ parse_site_config() {
 }
 
 declare -g -A SITE_CONFIG_MAP=(
+    [HOST_PROV_INTF]="provisioningInfrastructure.hosts.defaultBootInterface"
+    [HOST_BM_INTF]="provisioningInfrastructure.hosts.defaultSdnInterface"
     [PROV_INTF]="provisioningInfrastructure.provHost.interfaces.provisioning"
     [PROV_BRIDGE]="provisioningInfrastructure.provHost.bridges.provisioning"
     [BM_INTF]="provisioningInfrastructure.provHost.interfaces.baremetal"
@@ -47,7 +49,7 @@ map_site_config() {
     printf "\nChecking parameters...\n\n"
 
     error=false
-    for i in PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
+    for i in HOST_PROV_INTF HOST_BM_INTF PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
         if [[ -z "${!i}" ]]; then
             printf "Error: %s is unset in %s, must be set\n\n" "${SITE_CONFIG_MAP[$i]}" "./cluster/site-config.yaml"
             error=true
@@ -64,4 +66,19 @@ print_site_config() {
     for var in "${!SITE_CONFIG_MAP[@]}"; do
         printf "[%s]=\"%s\"\n" "$var" "${SITE_CONFIG[${SITE_CONFIG_MAP[$var]}]}"
     done
+}
+
+store_site_config() {
+
+    mapfile -t sorted < <(printf '%s\n' "${!SITE_CONFIG[@]}" | sort)
+
+    ofile="$BUILD_DIR/site_vals.sh"
+    {
+        printf "#!/bin/bash\n\n"
+
+        for v in "${sorted[@]}"; do
+             printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${SITE_CONFIG[$v]}"
+        done
+
+    } >"$ofile"
 }
