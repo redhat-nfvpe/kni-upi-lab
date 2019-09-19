@@ -46,8 +46,6 @@ map_site_config() {
         read -r "${var?}" <<<"${SITE_CONFIG[${SITE_CONFIG_MAP[$var]}]}"
     done
 
-    printf "\nChecking parameters...\n\n"
-
     error=false
     for i in HOST_PROV_INTF HOST_BM_INTF PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
         if [[ -z "${!i}" ]]; then

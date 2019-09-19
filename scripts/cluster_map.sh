@@ -97,8 +97,8 @@ declare -A HOSTS_MAP=(
     [\\1.bootMACAddress]="%install-config.platform.(hosts.[0-9]+).bootMACAddress"
     [\\1.sdnIPAddress]="|%install-config.platform.(hosts.[0-9]+).sdnIPAddress"
     [\\1.sdnMacAddress]="%install-config.platform.(hosts.[0-9]+).sdnMacAddress"
-    [\\1.provisioning_interface]="%install-config.platform.(hosts.[0-9]+).bootInterface"
-    [\\1.baremetal_interface]="%install-config.platform.(hosts.[0-9]+).sdnInterface"
+    [\\1.provisioning_interface]="|%install-config.platform.(hosts.[0-9]+).bootInterface"
+    [\\1.baremetal_interface]="|%install-config.platform.(hosts.[0-9]+).sdnInterface"
 
     [\\1.osProfile.install_dev]="|%install-config.platform.(hosts.[0-9]+).osProfile.install_dev"    
     [\\1.osProfile.pxe]="|%install-config.platform.(hosts.[0-9]+).osProfile.pxe"    

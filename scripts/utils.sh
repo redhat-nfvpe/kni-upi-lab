@@ -583,13 +583,13 @@ podman_exists() {
 podman_stop() {
     local name="$1"
 
-    sudo podman stop "$name" >/dev/null
+    sudo podman stop "$name" 2>/dev/null
 }
 
 podman_rm() {
     local name="$1"
 
-    sudo podman stop "$name" >/dev/null &&
+    sudo podman stop "$name" 2>/dev/null &&
         sudo podman rm "$name" >/dev/null
 }
 
