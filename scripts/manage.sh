@@ -207,6 +207,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 map_cluster_vars
 map_worker_vars
+map_hosts_vars
 
 case "$COMMAND" in
 # Parse options to the install sub command
