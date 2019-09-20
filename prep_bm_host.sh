@@ -189,58 +189,8 @@ ifup "$BM_INTF"
 
 printf "\nConfiguring iptables to allow for external traffic...\n\n"
 
-cat <<EOF >scripts/iptables.sh
-#!/bin/bash
-
-ins_del_rule()
-{
-    operation=\$1
-    table=\$2
-    rule=\$3
-   
-    if [ "\$operation" == "INSERT" ]; then
-        if ! sudo iptables -t "\$table" -C \$rule > /dev/null 2>&1; then
-            sudo iptables -t "\$table" -I \$rule
-        fi
-    elif [ "\$operation" == "DELETE" ]; then
-        sudo iptables -t "\$table" -D \$rule
-    else
-        echo "\${FUNCNAME[0]}: Invalid operation: \$operation"
-        exit 1
-    fi
-}
-
-    #allow DNS/DHCP traffic to dnsmasq and coredns
-    ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 67 -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 53 -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 67 -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 53 -j ACCEPT"
-   
-    #enable routing from provisioning and cluster network to external
-    ins_del_rule "INSERT" "nat" "POSTROUTING -o $EXT_INTF -j MASQUERADE"
-    ins_del_rule "INSERT" "filter" "FORWARD -i $PROV_BRIDGE -o $EXT_INTF -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "FORWARD -o $PROV_BRIDGE -i $EXT_INTF -m state --state RELATED,ESTABLISHED -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "FORWARD -i $BM_BRIDGE -o $EXT_INTF -j ACCEPT"
-    ins_del_rule "INSERT" "filter" "FORWARD -o $BM_BRIDGE -i $EXT_INTF -m state --state RELATED,ESTABLISHED -j ACCEPT"
-
-    #remove certain problematic REJECT rules
-    REJECT_RULE=\`iptables -S | grep "INPUT -j REJECT --reject-with icmp-host-prohibited"\`
-
-    if [[ ! -z "\$REJECT_RULE" ]]; then
-        iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
-    fi
-
-    REJECT_RULE2=\`iptables -S | grep "FORWARD -j REJECT --reject-with icmp-host-prohibited"\`
-
-    if [[ ! -z "\$REJECT_RULE2" ]]; then
-        iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
-    fi
-EOF
-
 (
-    cd scripts
-    chmod 755 iptables.sh
-    ./iptables.sh
+    ./scripts/gen_iptables.sh
 ) || exit 1
 
 ###----------------###
