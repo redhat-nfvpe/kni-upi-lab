@@ -23,27 +23,37 @@ EOM
     exit 0
 }
 
-gen_prio_role_intf_name_manifest() {
-    local prio="$1"
-    local role="$2"
-    local intf="$3"
-    local name="$4"
+gen_intf_dns_priority_manifest() {
+    local role="$1"
+    local intf="$2"
 
     mkdir -p "$BUILD_DIR/openshift-patches"
 
-    template="$TEMPLATES_DIR/prio-role-intf-$name.yaml.tpl"
+    read -r -d '' content <<EOF
+[main]
+plugins=keyfile
+
+[connection-${intf}]
+match-device=interface-name:${intf}
+ipv4.dns-priority=-1
+EOF
+
+    mode="0644"
+    path="/etc/NetworkManager/conf.d/10-${role}-${intf}-dns-priority.conf"
+    metadata_name="10-${role}-${intf}-dns-priority"
+
+    content=$(echo "$content" | base64 -w0)
+
+    export metadata_name path mode content role
+
+    template="$TEMPLATES_DIR/dns-priority.yaml.tpl"
     if [ ! -f "$template" ]; then
         printf "Template \"%s\" does not exist!\n" "$template"
         return 1
     fi
 
-    gen_manifest="$BUILD_DIR/openshift-patches/${prio}-${role}-${intf}-${name}.yaml"
-
-    export prio intf role 
-    if ! envsubst <"${template}" >"${gen_manifest}"; then 
-        printf "Error processing template \"%s\"!\n" "$template"
-        return 1
-    fi
+    gen_manifest="$BUILD_DIR/openshift-patches/$metadata_name.yaml"
+    envsubst <"${template}" >"${gen_manifest}"
 }
 
 gen_ifcfg_manifest() {
@@ -149,8 +159,8 @@ gen_ignition() {
         exit 1
     fi
 
-    gen_prio_role_intf_name_manifest 10 "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" "dns-priority" || exit 1
-    gen_prio_role_intf_name_manifest 10 "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" "dns-priority" || exit 1
+    gen_intf_dns_priority_manifest "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
+    gen_intf_dns_priority_manifest "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
     # gen_ifcfg_manifest
 
     patch_manifest "$out_dir"
