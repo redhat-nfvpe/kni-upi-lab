@@ -229,6 +229,16 @@ fi
 
 printf "\nSetting up NetworkManager DNS overlay...\n\n"
 
+# shellcheck disable=SC1090
+source "$PROJECT_DIR/scripts/utils.sh"
+# shellcheck disable=SC1090
+source "$PROJECT_DIR/scripts/paths.sh"
+
+manifest_dir=${manifest_dir:-$MANIFEST_DIR}
+manifest_dir=$(realpath "$manifest_dir")
+
+gen_variables "$manifest_dir"
+
 DNSCONF=/etc/NetworkManager/conf.d/openshift.conf
 DNSCHANGED=""
 if ! [ -f "${DNSCONF}" ]; then
@@ -237,7 +247,7 @@ if ! [ -f "${DNSCONF}" ]; then
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
 if ! [ -f "${DNSMASQCONF}" ]; then
-    echo server=/tt.testing/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
+    echo server=/"${CLUSTER_FINAL_VALS[cluster_domain]}"/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
 if [ -n "$DNSCHANGED" ]; then
