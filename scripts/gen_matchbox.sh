@@ -227,7 +227,7 @@ stop)
     podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
     ;;
 remove)
-    podman_rm "$CONTAINER_NAME" && printf "Removed %s\n" "$CONTAINER_NAME" || exit 1
+    status=$(podman_rm "$CONTAINER_NAME") && printf "%s %s\n" "$CONTAINER_NAME" "$status" || exit 1
     ;;
 isrunning)
     if ! podman_isrunning "$CONTAINER_NAME"; then

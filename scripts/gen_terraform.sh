@@ -223,8 +223,20 @@ gen_terraform_cluster() {
                 install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
             fi
 
+            provisioning_interface="${CLUSTER_FINAL_VALS[provisioning_interface]}"
+            if [[ -n ${HOSTS_FINAL_VALS[$host.provisioning_interface]} ]]; then
+                provisioning_interface=${HOSTS_FINAL_VALS[$host.provisioning_interface]}
+            fi
+
+            baremetal_interface="${CLUSTER_FINAL_VALS[baremetal_interface]}"
+            if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
+                baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
+            fi
+
             printf "  {\n"
             printf "    name: \"%s-%s\",\n" "${CLUSTER_FINAL_VALS[cluster_id]}" "${HOSTS_FINAL_VALS[$host.name]}"
+            printf "    baremetal_interface: \"%s\",\n" "$baremetal_interface"
+            printf "    provisioning_interface: \"%s\",\n" "$provisioning_interface"
             printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
             printf "    ipmi_host: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.address]}"
             printf "    ipmi_user: \"%s\",\n" "${HOSTS_FINAL_VALS[$host.bmc.user]}"
@@ -355,8 +367,20 @@ gen_terraform_workers() {
                 exit 1
             fi
 
+            provisioning_interface="${CLUSTER_FINAL_VALS[provisioning_interface]}"
+            if [[ -n ${HOSTS_FINAL_VALS[$host.provisioning_interface]} ]]; then
+                provisioning_interface=${HOSTS_FINAL_VALS[$host.provisioning_interface]}
+            fi
+
+            baremetal_interface="${CLUSTER_FINAL_VALS[baremetal_interface]}"
+            if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
+                baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
+            fi
+
             printf "  {\n"
             printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "$(get_host_var "$worker" "name")"
+            printf "    baremetal_interface: \"%s\",\n" "$baremetal_interface"
+            printf "    provisioning_interface: \"%s\",\n" "$provisioning_interface"
             printf "    public_ipv4: \"%s\",\n" "$public_ipv4"
             printf "    ipmi_host: \"%s\",\n" "$(get_host_var "$worker" "bmc.address")"
             printf "    ipmi_user: \"%s\",\n" "$(get_host_var "$worker" "bmc.user")"

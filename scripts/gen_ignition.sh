@@ -23,6 +23,67 @@ EOM
     exit 0
 }
 
+gen_intf_dns_priority_manifest() {
+    local role="$1"
+    local intf="$2"
+
+    mkdir -p "$BUILD_DIR/openshift-patches"
+
+    read -r -d '' content <<EOF
+[main]
+plugins=keyfile
+
+[connection-${intf}]
+match-device=interface-name:${intf}
+ipv4.dns-priority=-1
+EOF
+
+    mode="0644"
+    path="/etc/NetworkManager/conf.d/10-${role}-${intf}-dns-priority.conf"
+    metadata_name="10-${role}-${intf}-dns-priority"
+
+    content=$(echo "$content" | base64 -w0)
+
+    export metadata_name path mode content role
+
+    template="$TEMPLATES_DIR/dns-priority.yaml.tpl"
+    if [ ! -f "$template" ]; then
+        printf "Template \"%s\" does not exist!\n" "$template"
+        return 1
+    fi
+
+    gen_manifest="$BUILD_DIR/openshift-patches/$metadata_name.yaml"
+    envsubst <"${template}" >"${gen_manifest}"
+}
+
+gen_ifcfg_manifest() {
+
+    mkdir -p "$BUILD_DIR/openshift-patches"
+
+    for interface in "eno1"; do
+        interface_name="$interface"
+
+        for role in "master" "worker"; do
+            yaml_name="99-ifcfg-$interface-$role.yaml"
+
+            IFCFG_ENO1="$TEMPLATES_DIR/ifcfg-interface.tpl"
+            IFCFG_YAML="$TEMPLATES_DIR/ifcfg-interface.yaml"
+            YAML_FILE="$BUILD_DIR/openshift-patches/$yaml_name"
+
+            # Generate the file contents
+            export interface interface_name
+            content=$(envsubst <"${IFCFG_ENO1}" | base64 -w0)
+
+            mode="0644"
+            path="/etc/sysconfig/network-scripts/ifcfg-$interface"
+            metadata_name="99-ifcfg-$interface-$role"
+            export metadata_name path mode content role
+
+            envsubst <"${IFCFG_YAML}.tpl" >"${YAML_FILE}"
+        done
+    done
+}
+
 gen_ifcfg_manifest() {
 
     mkdir -p "$BUILD_DIR/openshift-patches"
@@ -97,7 +158,10 @@ gen_ignition() {
         printf "openshift-install create manifests failed!\n"
         exit 1
     fi
-    gen_ifcfg_manifest
+
+    gen_intf_dns_priority_manifest "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
+    gen_intf_dns_priority_manifest "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
+    # gen_ifcfg_manifest
 
     patch_manifest "$out_dir"
 

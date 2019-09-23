@@ -69,8 +69,8 @@ declare -A CLUSTER_MAP=(
     [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
-    [provisioning_interface]="==$PROV_INTF"
-    [baremetal_interface]="==$BM_INTF"
+    [provisioning_interface]="==$HOST_PROV_INTF"
+    [baremetal_interface]="==$HOST_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
 )
 export CLUSTER_MAP
@@ -97,6 +97,8 @@ declare -A HOSTS_MAP=(
     [\\1.bootMACAddress]="%install-config.platform.(hosts.[0-9]+).bootMACAddress"
     [\\1.sdnIPAddress]="|%install-config.platform.(hosts.[0-9]+).sdnIPAddress"
     [\\1.sdnMacAddress]="%install-config.platform.(hosts.[0-9]+).sdnMacAddress"
+    [\\1.provisioning_interface]="|%install-config.platform.(hosts.[0-9]+).bootInterface"
+    [\\1.baremetal_interface]="|%install-config.platform.(hosts.[0-9]+).sdnInterface"
 
     [\\1.osProfile.install_dev]="|%install-config.platform.(hosts.[0-9]+).osProfile.install_dev"    
     [\\1.osProfile.pxe]="|%install-config.platform.(hosts.[0-9]+).osProfile.pxe"    

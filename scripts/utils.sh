@@ -41,7 +41,7 @@ parse_manifests() {
     else
         change=true
     fi
-    
+
     if [[ $change =~ false ]]; then
         printf "Using cached manifest values...\n"
         # shellcheck disable=SC1090
@@ -86,7 +86,7 @@ parse_manifests() {
                 printf "Unable to extract .platform.hosts from %s\n" "$file"
                 exit 1
             fi
-        elif [[ $file =~ site-config.yaml ]]; then 
+        elif [[ $file =~ site-config.yaml ]]; then
             continue
         elif [[ ${manifest_vars[kind]} ]]; then
             # All the manifest types must have at least one entry
@@ -166,7 +166,7 @@ parse_manifests() {
         printf "#!/bin/bash\n\n"
 
         for v in "${sorted[@]}"; do
-             printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${MANIFEST_VALS[$v]}"
+            printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${MANIFEST_VALS[$v]}"
         done
 
     } >"$ofile"
@@ -583,14 +583,23 @@ podman_exists() {
 podman_stop() {
     local name="$1"
 
-    sudo podman stop "$name" >/dev/null
+    sudo podman stop "$name" 2>/dev/null
 }
 
 podman_rm() {
     local name="$1"
 
-    sudo podman stop "$name" >/dev/null &&
-        sudo podman rm "$name" >/dev/null
+    if ! run_status=$(set -o pipefail && sudo podman inspect -t container "$name" 2>/dev/null | jq .[0].State.Status); then
+        echo "not present"
+        return 0
+    fi
+
+    if [[ $run_status =~ running ]]; then
+        sudo podman stop "$name" >/dev/null || return 1
+    fi
+
+    sudo podman rm "$name" >/dev/null || return 1
+    echo "removed"
 }
 
 podman_isrunning() {
@@ -612,7 +621,7 @@ get_host_var() {
 
     if [ -z "${HOSTS_FINAL_VALS[$host_name]}" ]; then
         printf "Unknown host: \"%s\"\n" "$host_name"
-        
+
         return 1
     fi
 

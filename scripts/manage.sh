@@ -73,7 +73,7 @@ manage_cluster() {
 
     if [[ $cmd =~ apply ]]; then
         printf "Check the status of the deployment with the following command...\n\n"
-        printf "openshift-install --dir %s wait-for install-complete" "$OPENSHIFT_DIR"
+        printf "openshift-install --dir %s wait-for install-complete\n" "$OPENSHIFT_DIR"
     fi
 }
 
@@ -207,6 +207,7 @@ out_dir=$(realpath "$out_dir")
 parse_manifests "$manifest_dir"
 map_cluster_vars
 map_worker_vars
+map_hosts_vars
 
 case "$COMMAND" in
 # Parse options to the install sub command

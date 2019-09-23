@@ -5,6 +5,12 @@ metadata:
 config:
   releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.1
 provisioningInfrastructure:
+  hosts:
+    # Default interface to use for provisioning on the masters and workers
+    defaultBootInterface: eno2
+    # Default interface to use for baremetal on the masters and workers
+    defaultSdnInterface: ens1f0
+
   network:
     # The provisioning network's CIDR
     provisioningIpCidr: 172.22.0.0/24
