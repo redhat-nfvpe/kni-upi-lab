@@ -36,6 +36,10 @@ ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 67 -j 
 ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 53 -j ACCEPT"
 ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 67 -j ACCEPT"
 ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 53 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 6443 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p udp -i $PROV_BRIDGE --dport 67 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p udp -i $PROV_BRIDGE --dport 69 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p tcp -i $PROV_BRIDGE --dport 8080 -j ACCEPT"
 
 # enable routing from provisioning and cluster network to external
 ins_del_rule "INSERT" "nat" "POSTROUTING -o $EXT_INTF -j MASQUERADE"
