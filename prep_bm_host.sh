@@ -2,13 +2,33 @@
 
 #set -e
 
+###------------------###
+### RHEL preparation ###
+###------------------###
+
+printf "\nChecking OS...\n\n"
+
+EPEL_RELEASE="epel-release"
+
+if [[ "$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)" == "rhel" ]]; then
+    if [[ "$(subscription-manager status | grep "Overall Status" | cut -d ":" -f 2 | awk '{$1=$1};1')" != "Current" ]]; then
+        echo "RHEL OS requires an active subscription to continue!"
+        exit 1
+    fi
+
+    RHEL_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
+
+    curl -o /tmp/epel-release.rpm https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm
+    EPEL_RELEASE="/tmp/epel-release.rpm"
+fi
+
 ###--------------###
 ### Install Epel ###
 ###--------------###
 
 printf "\nInstalling epel-release via yum...\n\n"
 
-sudo yum install -y epel-release
+sudo yum install -y $EPEL_RELEASE
 
 ###------------------------------###
 ### Install dependencies via yum ###
