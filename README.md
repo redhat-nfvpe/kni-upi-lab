@@ -43,6 +43,9 @@ From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshif
 
 ### Quick Start
 
+1. Install a Centos7/RHEL provisioning host
+2. Install git
+
 #### Populate *cluster/site-config.yaml*
 
 The site-config.yaml file describes the infrastructure environment for the cluster.
@@ -80,10 +83,6 @@ infrastructure:
       # Does the provisioning host provide a default gateway for the baremetal network?
       baremetalGateway: true
 ```
-
-#### Run prep_bm_host.sh script
-
-The prep_bm_host.sh is located in the repo directory and prepares the host for provisioning.
 
 #### Populate cluster/install-config.yaml
 
@@ -148,6 +147,36 @@ Example below:
             initrd: assets/rhel8/images/pxeboot/initrd.img # (default if not specified)
             kernel: assets/rhel8/images/pxeboot/vmlinuz # (default if not specified)
 
+```
+
+#### Select version
+
+Edit common.sh file and either leave the current default values
+
+```bash
+OPENSHIFT_RHCOS_MAJOR_REL="4.1"
+export OPENSHIFT_RHCOS_MAJOR_REL
+
+OPENSHIFT_RHCOS_MINOR_REL="4.1.0"
+export OPENSHIFT_RHCOS_MINOR_REL
+```
+
+or change to latest
+
+```bash
+OPENSHIFT_RHCOS_MAJOR_REL="latest"
+export OPENSHIFT_RHCOS_MAJOR_REL
+
+OPENSHIFT_RHCOS_MINOR_REL="latest"
+export OPENSHIFT_RHCOS_MINOR_REL
+```
+
+#### Run prep_bm_host.sh script
+
+The prep_bm_host.sh is located in the repo directory and prepares the host for provisioning.
+
+```bash
+./prep_bm_host.sh
 ```
 
 #### Make Procedure
