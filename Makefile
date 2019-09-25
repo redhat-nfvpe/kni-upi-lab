@@ -13,6 +13,7 @@ build_dir = ./build
 dnsmasq_prov_conf := $(dnsmasq_dir)/prov/etc/dnsmasq.d/dnsmasq.conf
 dnsmasq_bm_conf := $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.conf $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.hostsfile
 haproxy_conf := $(haproxy_dir)/haproxy.cfg
+haproxy_build := $(haproxy_dir)/imageid
 dnsmasq_conf := $(dnsmasq_bm_conf) $(dnsmasq_prov_conf)
 coredns_conf := $(coredns_dir)/Corefile
 terraform_cluster := $(terraform_dir)/cluster/terraform.tfvars
@@ -33,7 +34,7 @@ haproxy_container := $(haproxy_dir)/imageid
 ## => General <================================================================
 
 ## = all (default)           - Generate all configuration files
-all: dns_conf haproxy-conf terraform-install matchbox matchbox-data ignition kickstart terraform-conf
+all: dns_conf haproxy-build terraform-install matchbox matchbox-data ignition kickstart terraform-conf
 	echo "All config files generated and copied into their proper locations..."
 
 ## = clean                   - Remove all config files
@@ -146,6 +147,11 @@ openshift-oc: $(openshift-oc)
 ## =
 haproxy-con-%: ./scripts/gen_haproxy.sh
 	./scripts/gen_haproxy.sh $*
+
+haproxy-build: $(haproxy_build)
+
+$(haproxy_build): $(haproxy_conf)
+	./scripts/gen_haproxy.sh build
 
 haproxy-conf: $(haproxy_conf)
 
