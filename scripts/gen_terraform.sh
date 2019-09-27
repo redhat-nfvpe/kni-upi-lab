@@ -339,6 +339,7 @@ gen_terraform_workers() {
     {
         for worker in "${workers[@]}"; do
             index=${worker##*-}
+            host="hosts.$host_index"
 
             if ! test_host_var "$worker" "name"; then
                 printf "Error: platform.hosts[%s] missing .name in install-config.yaml!\n" "$worker" 1>&2
