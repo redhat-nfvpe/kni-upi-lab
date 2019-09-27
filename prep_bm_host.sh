@@ -8,18 +8,29 @@
 
 printf "\nChecking OS...\n\n"
 
-EPEL_RELEASE="epel-release"
+EPEL_PACKAGE="epel-release"
+PIP_PACKAGE="python-pip"
+OS_NAME="$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)"
+OS_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
 
-if [[ "$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)" == "rhel" ]]; then
+if [[ "$OS_NAME" == "rhel" ]]; then
     if [[ "$(subscription-manager status | grep "Overall Status" | cut -d ":" -f 2 | awk '{$1=$1};1')" != "Current" ]]; then
         echo "RHEL OS requires an active subscription to continue!"
         exit 1
     fi
 
-    RHEL_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
+    if [[ "$OS_VERSION" == "7" || "$OS_VERSION" == "8" ]]; then
+        PIP_PACKAGE="python2-pip"
+    else
+        echo "RHEL version $OS_VERSION is not supported!"
+        exit 1
+    fi
 
-    curl -o /tmp/epel-release.rpm https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm
-    EPEL_RELEASE="/tmp/epel-release.rpm"
+    curl -o /tmp/epel-release.rpm https://dl.fedoraproject.org/pub/epel/epel-release-latest-$OS_VERSION.noarch.rpm
+    EPEL_PACKAGE="/tmp/epel-release.rpm"
+
+    # Enable other needed RPMs
+    subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
 fi
 
 ###--------------###
@@ -28,7 +39,7 @@ fi
 
 printf "\nInstalling epel-release via yum...\n\n"
 
-sudo yum install -y $EPEL_RELEASE
+sudo yum install -y $EPEL_PACKAGE
 
 ###------------------------------###
 ### Install dependencies via yum ###
@@ -36,7 +47,7 @@ sudo yum install -y $EPEL_RELEASE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils python-pip jq nmap libvirt
+sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
 
 ###--------------------###
 ### Install Yq via pip ###
@@ -73,6 +84,7 @@ source "scripts/utils.sh"
 
 printf "\nInstalling latest libvirtd via yum...\n\n"
 
+if [[ "$OS_NAME" == "centos" ]]; then
 cat <<EOF >/etc/yum.repos.d/virt.repo
 [virt]
 name=virt
@@ -80,6 +92,7 @@ baseurl=http://mirror.centos.org/centos/7/virt/x86_64/libvirt-latest/
 enabled=1
 gpgcheck=0
 EOF
+fi
 
 sudo yum install -y qemu-kvm
 sudo yum update -y qemu-kvm
