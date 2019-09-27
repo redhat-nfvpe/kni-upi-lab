@@ -25,29 +25,23 @@ EOM
 
 gen_intf_dns_priority_manifest() {
     local role="$1"
-    local intf_bm="$2"
-    local intf_prov="$3"
+    local intf="$2"
 
     mkdir -p "$BUILD_DIR/openshift-patches"
 
     read -r -d '' content <<EOF
 [main]
 plugins=keyfile
-no-auto-default=*
-ignore-carrier=*
 
-[device]
-match-device=interface-name:${intf_bm}
-managed=1
-
-[device]
-match-device=interface-name:${intf_prov}
-managed=1
+[connection-${intf}]
+match-device=interface-name:${intf}
+ipv4.dns-priority=-1
+ipv4.route-metrics=1 
 EOF
 
     mode="0644"
-    path="/etc/NetworkManager/conf.d/10-${role}-enable-interfaces.conf"
-    metadata_name="10-${role}-enable-interfaces"
+    path="/etc/NetworkManager/conf.d/10-${role}-${intf}-dns-priority.conf"
+    metadata_name="10-${role}-${intf}-dns-priority"
 
     content=$(echo "$content" | base64 -w0)
 
@@ -138,12 +132,8 @@ gen_ignition() {
         exit 1
     fi
 
-    rm -rf "$BUILD_DIR/openshift-patches"
-
-    gen_intf_dns_priority_manifest "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" \
-       "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultBootInterface]}" || exit 1
-    gen_intf_dns_priority_manifest "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" \
-       "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultBootInterface]}" || exit 1
+    gen_intf_dns_priority_manifest "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
+    gen_intf_dns_priority_manifest "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
     # gen_ifcfg_manifest
 
     patch_manifest "$out_dir"
