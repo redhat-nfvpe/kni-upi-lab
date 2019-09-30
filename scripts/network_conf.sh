@@ -54,8 +54,6 @@ get_master_bm_ip() {
 
     if ! res=$(get_host_var "$hostname" "sdnIPAddress"); then
         res=$(get_ip_offset "$BM_IP_RANGE_START" $(( id + BM_IP_MASTER_START_OFFSET )) 24)
-#        id=$((BM_IP_RANGE_START + id + BM_IP_MASTER_START_OFFSET))
-#        res="$(nthhost "$BM_IP_CIDR" "$id")"
     fi
 
     echo "$res"
@@ -70,8 +68,6 @@ get_worker_bm_ip() {
 
     if ! res=$(get_host_var "$hostname" "sdnIPAddress"); then
         res=$(get_ip_offset "$BM_IP_RANGE_START" $(( id + BM_IP_WORKER_START_OFFSET )) 24)
-        # id=$((id + BM_IP_WORKER_START_OFFSET))
-        # res="$(nthhost "$BM_IP_CIDR" "$id")"
     fi
 
     echo "$res"
