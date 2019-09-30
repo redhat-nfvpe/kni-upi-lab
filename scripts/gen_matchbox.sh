@@ -113,7 +113,7 @@ make_certs() {
 
     (
         if cd "$MATCHBOX_DIR/scripts/tls"; then
-            SAN="IP.1:$(nthhost "$PROV_IP_CIDR" 10)"
+            SAN="IP.1:$PROV_IP_MATCHBOX_IP"
             export SAN
 
             if ./cert-gen; then
