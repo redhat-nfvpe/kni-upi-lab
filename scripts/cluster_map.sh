@@ -69,8 +69,10 @@ declare -A CLUSTER_MAP=(
     [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
-    [provisioning_interface]="==$HOST_PROV_INTF"
-    [baremetal_interface]="==$HOST_BM_INTF"
+    [master_provisioning_interface]="==$MASTER_PROV_INTF"
+    [master_baremetal_interface]="==$MASTER_BM_INTF"
+    [worker_provisioning_interface]="==$WORKER_PROV_INTF"
+    [worker_baremetal_interface]="==$WORKER_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
 )
 export CLUSTER_MAP

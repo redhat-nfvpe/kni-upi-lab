@@ -2,6 +2,30 @@
 
 parse_site_config() {
     local file="$1"
+    local manifest_dir=$2
+
+    change=false
+    if [ -f "$BUILD_DIR/site_vals.sh" ]; then
+        for yaml_file in "$manifest_dir"/*.yaml; do
+            [[ "$BUILD_DIR/site_vals.sh" -ot "$yaml_file" ]] && change=true
+        done
+
+        for sh_file in "$SCRIPT_DIR"/*.sh; do
+            [[ "$BUILD_DIR/site_vals.sh" -ot "$sh_file" ]] && change=true
+        done
+    else
+        change=true
+    fi
+
+    if [[ $change =~ false ]]; then
+        printf "Using cached site values...\n"
+        # shellcheck disable=SC1090
+        source "$BUILD_DIR/site_vals.sh"
+
+        return 0
+    fi
+
+    [[ "$VERBOSE" =~ true ]] && printf "Processing vars in %s\n" "$file"
 
     # shellcheck disable=SC2016
     if ! values=$(yq 'paths(scalars) as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
@@ -22,8 +46,10 @@ parse_site_config() {
 #  Rules that start with | are optional
 
 declare -g -A SITE_CONFIG_MAP=(
-    [HOST_PROV_INTF]="provisioningInfrastructure.hosts.defaultBootInterface"
-    [HOST_BM_INTF]="provisioningInfrastructure.hosts.defaultSdnInterface"
+    [MASTER_PROV_INTF]="provisioningInfrastructure.hosts.masterBootInterface"
+    [MASTER_BM_INTF]="provisioningInfrastructure.hosts.masterSdnInterface"
+    [WORKER_PROV_INTF]="provisioningInfrastructure.hosts.workerBootInterface"
+    [WORKER_BM_INTF]="provisioningInfrastructure.hosts.workerSdnInterface"
     [PROV_IP_CIDR]="provisioningInfrastructure.network.provisioningIpCidr"
     [PROV_IP_DHCP_START]="provisioningInfrastructure.network.provisioningDHCPStart"
     [PROV_IP_DHCP_END]="provisioningInfrastructure.network.provisioningDHCPEnd"
@@ -88,7 +114,7 @@ store_site_config() {
         printf "#!/bin/bash\n\n"
 
         for v in "${sorted[@]}"; do
-            printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${SITE_CONFIG[$v]}"
+            printf "SITE_CONFIG[%s]=\'%s\'\n" "$v" "${SITE_CONFIG[$v]}"
         done
 
     } >"$ofile"

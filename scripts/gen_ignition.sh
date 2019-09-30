@@ -23,31 +23,31 @@ EOM
     exit 0
 }
 
-gen_intf_dns_priority_manifest() {
+gen_nm_disable_auto_config() {
     local role="$1"
-    local intf="$2"
 
     mkdir -p "$BUILD_DIR/openshift-patches"
 
     read -r -d '' content <<EOF
 [main]
-plugins=keyfile
-
-[connection-${intf}]
-match-device=interface-name:${intf}
-ipv4.dns-priority=-1
-ipv4.route-metrics=1 
+# Do not do automatic (DHCP/SLAAC) configuration on ethernet devices
+# with no other matching connections.
+no-auto-default=*
+# Ignore the carrier (cable plugged in) state when attempting to
+# activate static-IP connections.
+ignore-carrier=*
 EOF
+    name="nm-disable-auto-config"
 
     mode="0644"
-    path="/etc/NetworkManager/conf.d/10-${role}-${intf}-dns-priority.conf"
-    metadata_name="10-${role}-${intf}-dns-priority"
+    path="/etc/NetworkManager/conf.d/10-${role}-$name.conf"
+    metadata_name="10-${role}-$name"
 
     content=$(echo "$content" | base64 -w0)
 
     export metadata_name path mode content role
 
-    template="$TEMPLATES_DIR/dns-priority.yaml.tpl"
+    template="$TEMPLATES_DIR/$name.yaml.tpl"
     if [ ! -f "$template" ]; then
         printf "Template \"%s\" does not exist!\n" "$template"
         return 1
@@ -58,31 +58,27 @@ EOF
 }
 
 gen_ifcfg_manifest() {
+    local role="$1"
+    local interface="$2"
+    local defroute="$3"
 
     mkdir -p "$BUILD_DIR/openshift-patches"
 
-    for interface in "eno1"; do
-        interface_name="$interface"
+    template_cfg="$TEMPLATES_DIR/ifcfg-interface.tpl"
+    template_yaml="$TEMPLATES_DIR/ifcfg-interface.yaml.tpl"
 
-        for role in "master" "worker"; do
-            yaml_name="99-ifcfg-$interface-$role.yaml"
+    manifest_name="99-ifcfg-$interface-$role.yaml"
 
-            IFCFG_ENO1="$TEMPLATES_DIR/ifcfg-interface.template"
-            IFCFG_YAML="$TEMPLATES_DIR/ifcfg-interface.yaml"
-            YAML_FILE="$BUILD_DIR/openshift-patches/$yaml_name"
+    # Generate the file contents
+    export interface defroute
+    content=$(envsubst <"${template_cfg}" | base64 -w0)
 
-            # Generate the file contents
-            export interface interface_name
-            content=$(envsubst <"${IFCFG_ENO1}" | base64 -w0)
+    mode="0644"
+    path="/etc/sysconfig/network-scripts/ifcfg-$interface"
+    metadata_name="99-ifcfg-$interface-$role"
+    export metadata_name path mode content role
 
-            mode="0644"
-            path="/etc/sysconfig/network-scripts/ifcfg-$interface"
-            metadata_name="99-ifcfg-$interface-$role"
-            export metadata_name path mode content role
-
-            envsubst <"${IFCFG_YAML}.template" >"${YAML_FILE}"
-        done
-    done
+    envsubst <"${template_yaml}" >"$BUILD_DIR/openshift-patches/${manifest_name}"
 }
 
 patch_manifest() {
@@ -132,9 +128,15 @@ gen_ignition() {
         exit 1
     fi
 
-    gen_intf_dns_priority_manifest "master" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
-    gen_intf_dns_priority_manifest "worker" "${SITE_CONFIG[provisioningInfrastructure.hosts.defaultSdnInterface]}" || exit 1
-    # gen_ifcfg_manifest
+    gen_nm_disable_auto_config "master" || exit 1
+    gen_nm_disable_auto_config "worker" || exit 1
+
+#need interfaces...
+
+    gen_ifcfg_manifest "master"  "$MASTER_BM_INTF"  "yes" || exit 1
+    gen_ifcfg_manifest "master"  "$MASTER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "worker"  "$WORKER_BM_INTF"  "yes" || exit 1
+    gen_ifcfg_manifest "worker"  "$WORKER_PROV_INTF" "no" || exit 1
 
     patch_manifest "$out_dir"
 
@@ -274,10 +276,7 @@ source "$PROJECT_DIR/scripts/network_conf.sh"
 out_dir=${out_dir:-$OPENSHIFT_DIR}
 out_dir=$(realpath "$out_dir")
 
-parse_manifests "$manifest_dir"
-
-map_cluster_vars
-map_worker_vars
+gen_variables "$manifest_dir"
 
 case "$COMMAND" in
 # Parse options to the install sub command

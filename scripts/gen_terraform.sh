@@ -223,12 +223,12 @@ gen_terraform_cluster() {
                 install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
             fi
 
-            provisioning_interface="${CLUSTER_FINAL_VALS[provisioning_interface]}"
+            provisioning_interface="${CLUSTER_FINAL_VALS[master_provisioning_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.provisioning_interface]} ]]; then
                 provisioning_interface=${HOSTS_FINAL_VALS[$host.provisioning_interface]}
             fi
 
-            baremetal_interface="${CLUSTER_FINAL_VALS[baremetal_interface]}"
+            baremetal_interface="${CLUSTER_FINAL_VALS[master_baremetal_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
                 baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
             fi
@@ -368,12 +368,12 @@ gen_terraform_workers() {
                 exit 1
             fi
 
-            provisioning_interface="${CLUSTER_FINAL_VALS[provisioning_interface]}"
+            provisioning_interface="${CLUSTER_FINAL_VALS[worker_provisioning_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.provisioning_interface]} ]]; then
                 provisioning_interface=${HOSTS_FINAL_VALS[$host.provisioning_interface]}
             fi
 
-            baremetal_interface="${CLUSTER_FINAL_VALS[baremetal_interface]}"
+            baremetal_interface="${CLUSTER_FINAL_VALS[worker_baremetal_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
                 baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
             fi

@@ -7,10 +7,10 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-# shellcheck disable=SC1091
-source $PROJECT_DIR/scripts/parse_site_config.sh
+# shellcheck disable=SC1090
+source "$PROJECT_DIR/scripts/parse_site_config.sh"
 
-parse_site_config "$PROJECT_DIR/cluster/site-config.yaml" || exit 1
+parse_site_config "$PROJECT_DIR/cluster/site-config.yaml" "./cluster" || exit 1
 map_site_config "true" || exit 1
 
 ins_del_rule()
