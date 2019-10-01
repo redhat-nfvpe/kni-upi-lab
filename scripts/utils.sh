@@ -590,6 +590,13 @@ podman_stop() {
     sudo podman stop "$name" 2>/dev/null
 }
 
+podman_restart() {
+    local name="$1"
+
+    sudo podman stop "$name" >/dev/null || return 1
+    sudo podman start "$name" >/dev/null || return 1
+}
+
 podman_rm() {
     local name="$1"
 

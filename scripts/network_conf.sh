@@ -25,6 +25,7 @@ get_ip_offset() {
     local offset=$2
     local prefix=$3
 
+    # assume little-endian
     ip_as_num=$(echo "$addr" | awk -F '.' '{printf "%d", ($1 * 2^24) + ($2 * 2^16) + ($3 * 2^8) + $4}')
     sh=$((32 - prefix))
     max=$(((1 << sh) - 1))
@@ -39,6 +40,18 @@ get_ip_offset() {
     ip=$(printf "%d.%d.%d.%d\n" $((ip_as_num >> 24)) $(((ip_as_num >> 16) & 255)) $(((ip_as_num >> 8) & 255)) $((ip_as_num & 255)))
 
     echo "$ip"
+}
+
+get_bm_ip_offset() {
+    local address="$1"
+
+    width=${BM_IP_CIDR##*/}
+    octet_offset=$(( width/8 ))
+
+    IFS='.' read -r -a split <<<"$address"
+    offset=$(join_by "." "${split[@]:$octet_offset:3}")
+
+    echo "$offset"
 }
 
 get_master_bm_ip() {

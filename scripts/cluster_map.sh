@@ -6,6 +6,10 @@ source "$PROJECT_DIR/scripts/paths.sh"
 
 declare -A NO_TERRAFORM_MAP=(
     [bootstrap_sdn_mac_address]="true"
+    [master_provisioning_interface]="true"
+    [worker_provisioning_interface]="true"
+    [master_baremetal_interface]="true"
+    [worker_baremetal_interface]="true"
 )
 export NO_TERRAFORM_MAP
 
