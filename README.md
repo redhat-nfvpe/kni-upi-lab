@@ -206,7 +206,18 @@ terraform init
 terraform apply --auto-aprove
 ```
 
-# Enjoy your OpenShift cluster
+
+#### Clean up procedure if you want to reinstall.
+
+```bash
+cd terraform/cluster
+terraform destroy --auto-approve
+cd ../..
+make clean
+./clean_bm_host.sh 
+```
+
+# Enjoy your Openshift cluster
 
 ## Automation Operation
 
