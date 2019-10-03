@@ -6,31 +6,63 @@ config:
   releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.1
 provisioningInfrastructure:
   hosts:
-    # Default interface to use for provisioning on the masters and workers
-    defaultBootInterface: eno2
-    # Default interface to use for baremetal on the masters and workers
-    defaultSdnInterface: ens1f0
+    # interface to use for provisioning on the masters
+    masterBootInterface: eno2
+    # interface to use for provisioning on the workers
+    workerBootInterface: eno2
+    # interface to use for baremetal on the masters
+    masterSdnInterface: ens1f0
+    # interface to use for baremetal on the workers
+    workerSdnInterface: ens1f0
 
   network:
     # The provisioning network's CIDR
     provisioningIpCidr: 172.22.0.0/24
+    # PXE boot server IP
+    # DHCP range start (usually provHost/interfaces/provisioningIpAddress + 1)
+    provisioningDHCPStart: 172.22.0.11
+    provisioningDHCPEnd: 172.22.0.51
+    
+    excludeInterfaces:
+      - eno1 
+
     # The baremetal networks's CIDR
     baremetalIpCidr: 192.168.111.0/24
+    # Address map
+    # bootstrap: baremetalDHCPStart   i.e. 192.168.111.10
+    # master-0: baremetalDHCPStart+1  i.e. 192.168.111.11
+    # master-1: baremetalDHCPStart+2  i.e. 192.168.111.12
+    # master-2: baremetalDHCPStart+3  i.e. 192.168.111.13
+    # worker-0: baremetalDHCPStart+5  i.e. 192.168.111.15
+    # worker-N: baremetalDHCPStart+5+N
+    baremetalDHCPStart: 192.168.111.10   
+    baremetalDHCPEnd: 192.168.111.50
     # baremetal network default gateway, set to proper IP if /provHost/services/baremetalGateway == false
+    # if /provHost/services/baremetalGateway == true, baremetalGWIP with be located on provHost/interfaces/baremetal
+    # and external traffic will be routed through the provisioning host
     baremetalGWIP: 192.168.111.4
     dns:
       # cluster DNS, change to proper IP address if provHost/services/clusterDNS == false
+      # if /provHost/services/clusterDNS == true, cluster (IP) with be located on provHost/interfaces/provisioning
+      # and DNS functionality will be provided by the provisioning host
       cluster: 192.168.111.3
+      # Up to 3 external DNS servers to which non-local queries will be directed
       external1: 10.11.5.19 
 #     external2: 10.11.5.19 
 #     external3: 10.11.5.19 
 
   provHost:
     interfaces:
+      # Interface on the provisioning host that connects to the provisioning network
       provisioning: eno2
+      # Must be in provisioningIpCidr range
+      # pxe boot server will be at port 8080 on this address
       provisioningIpAddress: 172.22.0.10
+      # Interface on the provisioning host that connects to the baremetal network
       baremetal: ens1f0
+      # Must be in baremetalIpCidr range
       baremetalIpAddress: 192.168.111.6
+      # Interface on the provisioning host that connects to the internet/external network
       external: eno1
     bridges:
       provisioning: provisioning

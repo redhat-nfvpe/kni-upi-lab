@@ -6,6 +6,10 @@ source "$PROJECT_DIR/scripts/paths.sh"
 
 declare -A NO_TERRAFORM_MAP=(
     [bootstrap_sdn_mac_address]="true"
+    [master_provisioning_interface]="true"
+    [worker_provisioning_interface]="true"
+    [master_baremetal_interface]="true"
+    [worker_baremetal_interface]="true"
 )
 export NO_TERRAFORM_MAP
 
@@ -69,8 +73,10 @@ declare -A CLUSTER_MAP=(
     [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
-    [provisioning_interface]="==$HOST_PROV_INTF"
-    [baremetal_interface]="==$HOST_BM_INTF"
+    [master_provisioning_interface]="==$MASTER_PROV_INTF"
+    [master_baremetal_interface]="==$MASTER_BM_INTF"
+    [worker_provisioning_interface]="==$WORKER_PROV_INTF"
+    [worker_baremetal_interface]="==$WORKER_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
 )
 export CLUSTER_MAP

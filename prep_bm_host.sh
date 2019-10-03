@@ -62,7 +62,7 @@ sudo pip install yq
 # shellcheck disable=SC1091
 source scripts/parse_site_config.sh
 
-parse_site_config "./cluster/site-config.yaml" || exit 1
+parse_site_config "./cluster/site-config.yaml" "./cluster" || exit 1
 map_site_config "true" || exit 1
 
 ###------------------------------###
@@ -122,7 +122,7 @@ IPV4_FAILURE_FATAL=no
 NAME=$PROV_BRIDGE
 DEVICE=$PROV_BRIDGE
 ONBOOT=yes
-IPADDR=$PROV_IP_MATCHBOX_IP
+IPADDR=$PROV_INTF_IP
 NETMASK=255.255.255.0
 ZONE=public
 EOF

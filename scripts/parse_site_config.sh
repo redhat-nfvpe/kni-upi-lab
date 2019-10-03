@@ -2,6 +2,30 @@
 
 parse_site_config() {
     local file="$1"
+    local manifest_dir=$2
+
+    change=false
+    if [ -f "$BUILD_DIR/site_vals.sh" ]; then
+        for yaml_file in "$manifest_dir"/*.yaml; do
+            [[ "$BUILD_DIR/site_vals.sh" -ot "$yaml_file" ]] && change=true
+        done
+
+        for sh_file in "$SCRIPT_DIR"/*.sh; do
+            [[ "$BUILD_DIR/site_vals.sh" -ot "$sh_file" ]] && change=true
+        done
+    else
+        change=true
+    fi
+
+    if [[ $change =~ false ]]; then
+        printf "Using cached site values...\n"
+        # shellcheck disable=SC1090
+        source "$BUILD_DIR/site_vals.sh"
+
+        return 0
+    fi
+
+    [[ "$VERBOSE" =~ true ]] && printf "Processing vars in %s\n" "$file"
 
     # shellcheck disable=SC2016
     if ! values=$(yq 'paths(scalars) as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
@@ -19,22 +43,33 @@ parse_site_config() {
     done
 }
 
+#  Rules that start with | are optional
+
 declare -g -A SITE_CONFIG_MAP=(
-    [HOST_PROV_INTF]="provisioningInfrastructure.hosts.defaultBootInterface"
-    [HOST_BM_INTF]="provisioningInfrastructure.hosts.defaultSdnInterface"
-    [PROV_INTF]="provisioningInfrastructure.provHost.interfaces.provisioning"
-    [PROV_BRIDGE]="provisioningInfrastructure.provHost.bridges.provisioning"
-    [BM_INTF]="provisioningInfrastructure.provHost.interfaces.baremetal"
-    [BM_BRIDGE]="provisioningInfrastructure.provHost.bridges.baremetal"
-    [EXT_INTF]="provisioningInfrastructure.provHost.interfaces.external"
+    [MASTER_PROV_INTF]="provisioningInfrastructure.hosts.masterBootInterface"
+    [MASTER_BM_INTF]="provisioningInfrastructure.hosts.masterSdnInterface"
+    [WORKER_PROV_INTF]="provisioningInfrastructure.hosts.workerBootInterface"
+    [WORKER_BM_INTF]="provisioningInfrastructure.hosts.workerSdnInterface"
     [PROV_IP_CIDR]="provisioningInfrastructure.network.provisioningIpCidr"
+    [PROV_IP_DHCP_START]="provisioningInfrastructure.network.provisioningDHCPStart"
+    [PROV_IP_DHCP_END]="provisioningInfrastructure.network.provisioningDHCPEnd"
+
+    # Provisioning host
+    [PROV_INTF]="provisioningInfrastructure.provHost.interfaces.provisioning"
+    [PROV_INTF_IP]="provisioningInfrastructure.provHost.interfaces.provisioningIpAddress"
+    [PROV_BRIDGE]="provisioningInfrastructure.provHost.bridges.provisioning"
+    [EXT_INTF]="provisioningInfrastructure.provHost.interfaces.external"
     [BM_IP_CIDR]="provisioningInfrastructure.network.baremetalIpCidr"
+    [BM_IP_DHCP_START]="provisioningInfrastructure.network.baremetalDHCPStart"
+    [BM_IP_DHCP_END]="provisioningInfrastructure.network.baremetalDHCPEnd"
+    [BM_INTF]="provisioningInfrastructure.provHost.interfaces.baremetal"
     [BM_INTF_IP]="provisioningInfrastructure.provHost.interfaces.baremetalIpAddress"
+    [BM_BRIDGE]="provisioningInfrastructure.provHost.bridges.baremetal"
     [CLUSTER_DNS]="provisioningInfrastructure.network.dns.cluster"
     [CLUSTER_DEFAULT_GW]="provisioningInfrastructure.network.baremetalGWIP"
     [EXT_DNS1]="provisioningInfrastructure.network.dns.external1"
-    [EXT_DNS2]="provisioningInfrastructure.network.dns.external2"
-    [EXT_DNS3]="provisioningInfrastructure.network.dns.external3"
+    [EXT_DNS2]="|provisioningInfrastructure.network.dns.external2"
+    [EXT_DNS3]="|provisioningInfrastructure.network.dns.external3"
     [PROVIDE_DNS]="provisioningInfrastructure.provHost.services.clusterDNS"
     [PROVIDE_DHCP]="provisioningInfrastructure.provHost.services.baremetalDHCP"
     [PROVIDE_GW]="provisioningInfrastructure.provHost.services.baremetalGateway"
@@ -42,19 +77,23 @@ declare -g -A SITE_CONFIG_MAP=(
 
 map_site_config() {
     status="$1"
-    for var in "${!SITE_CONFIG_MAP[@]}"; do
-        read -r "${var?}" <<<"${SITE_CONFIG[${SITE_CONFIG_MAP[$var]}]}"
-    done
 
-    error=false
-    for i in HOST_PROV_INTF HOST_BM_INTF PROV_INTF PROV_BRIDGE BM_INTF BM_BRIDGE EXT_INTF PROV_IP_CIDR BM_IP_CIDR BM_INTF_IP CLUSTER_DNS CLUSTER_DEFAULT_GW EXT_DNS1; do
-        if [[ -z "${!i}" ]]; then
-            printf "Error: %s is unset in %s, must be set\n\n" "${SITE_CONFIG_MAP[$i]}" "./cluster/site-config.yaml"
-            error=true
+    local error=false
+
+    for var in "${!SITE_CONFIG_MAP[@]}"; do
+        map_rule=${SITE_CONFIG_MAP[$var]}
+
+        if [[ $map_rule =~ ^\| ]]; then
+            map_rule=${map_rule#|}
         else
-            v=${SITE_CONFIG_MAP[$i]}
-            [[ $status =~ true ]] && printf "%s: %s\n" "${v//./\/}" "${!i}"
+            if [[ -z "${SITE_CONFIG[$map_rule]}" ]]; then
+                printf "Error: %s is unset in %s, must be set\n\n" "$map_rule" "./cluster/site-config.yaml"
+                error=true
+            fi
         fi
+        read -r "${var?}" <<<"${SITE_CONFIG[${SITE_CONFIG_MAP[$var]}]}"
+
+        [[ $status =~ true ]] && printf "%s: %s\n" "${map_rule//./\/}" "${var}"
     done
 
     [[ $error =~ false ]] && return 0 || return 1
@@ -75,7 +114,7 @@ store_site_config() {
         printf "#!/bin/bash\n\n"
 
         for v in "${sorted[@]}"; do
-             printf "MANIFEST_VALS[%s]=\'%s\'\n" "$v" "${SITE_CONFIG[$v]}"
+            printf "SITE_CONFIG[%s]=\'%s\'\n" "$v" "${SITE_CONFIG[$v]}"
         done
 
     } >"$ofile"

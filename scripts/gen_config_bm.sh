@@ -21,8 +21,16 @@ usage() {
     upi project base directory.
 
     Usage:
-        $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir] 
+        $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir] command 
             Generate config files for the baremetal interface
+
+            bm (default) - Generate the config files
+
+            start        - Start the $CONTAINER_NAME container 
+            stop         - Stop the $CONTAINER_NAME container
+            remove       - Stop and remove the $CONTAINER_NAME container
+            restart      - Restart $CONTAINER_NAME to reload config files
+
 
     Options
         -m manifest_dir -- Location of manifest files that describe the deployment.
@@ -46,8 +54,8 @@ gen_hostfile_bm() {
     cid="${CLUSTER_FINAL_VALS[cluster_id]}"
     cdomain="${CLUSTER_FINAL_VALS[cluster_domain]}"
     {
-        printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[bootstrap_sdn_mac_address]}" "$BM_IP_BOOTSTRAP" "$cid-bootstrap-0.$cdomain"
-        printf "%s,%s,%s\n" "$(get_host_var "master-0" "sdnMacAddress")" "$(get_master_bm_ip 0)" "$cid-master-0.$cdomain"
+        printf "%s,%s,%s\n" "${CLUSTER_FINAL_VALS[bootstrap_sdn_mac_address]}" "$BM_IP_BOOTSTRAP" "$cid-bootstrap.$cid.$cdomain"
+        printf "%s,%s,%s\n" "$(get_host_var "master-0" "sdnMacAddress")" "$(get_master_bm_ip 0)" "$cid-master-0.$cid.$cdomain"
 
     } >"$hostsfile"
 
@@ -68,8 +76,8 @@ gen_hostfile_bm() {
 
     if [ -n "$master1_mac" ] && [ -n "$master2_mac" ] && [ "$num_masters" -eq 3 ]; then
         {
-            printf "%s,%s,%s\n" "$master1_mac" "$(get_master_bm_ip 1)" "$cid-master-1.$cdomain"
-            printf "%s,%s,%s\n" "$master2_mac" "$(get_master_bm_ip 2)" "$cid-master-2.$cdomain"
+            printf "%s,%s,%s\n" "$master1_mac" "$(get_master_bm_ip 1)" "$cid-master-1.$cid.$cdomain"
+            printf "%s,%s,%s\n" "$master2_mac" "$(get_master_bm_ip 2)" "$cid-master-2.$cid.$cdomain"
         } >>"$hostsfile"
     fi
 
@@ -77,7 +85,7 @@ gen_hostfile_bm() {
     for worker in "${workers[@]}"; do
         {
             index=${worker##*-}
-            printf "%s,%s,%s\n" "$(get_host_var "$worker" sdnMacAddress)" "$(get_worker_bm_ip "$index")" "$cid-$worker.$cdomain"
+            printf "%s,%s,%s\n" "$(get_host_var "$worker" sdnMacAddress)" "$(get_worker_bm_ip "$index")" "$cid-$worker.$cid.$cdomain"
         } >>"$hostsfile"
     done
 }
@@ -121,14 +129,15 @@ bind-interfaces
 strict-order
 except-interface=lo
 
-#domain=${CLUSTER_FINAL_VALS[cluster_domain]},$BM_IP_CIDR
+domain=${CLUSTER_FINAL_VALS[cluster_id]}.${CLUSTER_FINAL_VALS[cluster_domain]},$BM_IP_CIDR
 
 dhcp-range=$BM_IP_RANGE_START,$BM_IP_RANGE_END,30m
 #default gateway
 dhcp-option=3,$CLUSTER_DEFAULT_GW
 #dns server
 dhcp-option=6,$BM_IP_NS
-
+#search domain
+dhcp-option=24,${CLUSTER_FINAL_VALS[cluster_id]}.${CLUSTER_FINAL_VALS[cluster_domain]}
 log-queries
 log-dhcp
 
@@ -225,6 +234,9 @@ start)
     ;;
 stop)
     podman_stop "$CONTAINER_NAME" && printf "Stopped %s\n" "$CONTAINER_NAME" || exit 1
+    ;;
+restart)
+    podman_restart "$CONTAINER_NAME" && printf "Restarted %s\n" "$CONTAINER_NAME" || exit 1 
     ;;
 remove)
     status=$(podman_rm "$CONTAINER_NAME") && printf "%s %s\n" "$CONTAINER_NAME" "$status" || exit 1

@@ -14,6 +14,9 @@ export WORKERS_FINAL_VALS
 declare -A HOSTS_FINAL_VALS
 export HOSTS_FINAL_VALS
 
+declare -A SITE_CONFIG
+export SITE_CONFIG
+
 export HOSTS_JSON
 
 if [[ -z "$PROJECT_DIR" ]]; then
@@ -570,8 +573,9 @@ parse_prep_bm_host_src() {
     # shellcheck disable=SC1090
     source "$PROJECT_DIR/scripts/parse_site_config.sh"
 
-    parse_site_config "$site_file" || exit 1
+    parse_site_config "$site_file" "$manifest_dir" || exit 1
     map_site_config || exit 1
+    store_site_config || exit 1
 }
 
 podman_exists() {
@@ -584,6 +588,13 @@ podman_stop() {
     local name="$1"
 
     sudo podman stop "$name" 2>/dev/null
+}
+
+podman_restart() {
+    local name="$1"
+
+    sudo podman stop "$name" >/dev/null || return 1
+    sudo podman start "$name" >/dev/null || return 1
 }
 
 podman_rm() {

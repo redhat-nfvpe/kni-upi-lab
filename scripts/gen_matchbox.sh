@@ -30,7 +30,7 @@ usage() {
 
     Usage:
         $(basename "$0") [-h] [-v] [-m manfifest_dir] assets|certs|start|stop|remove
-            repo     - clone the %CONTAINER_NAME repo located at $MATCHBOX_REPO
+            repo     - clone the matchbox repo located at $MATCHBOX_REPO
             assets   - Download assets for $CONTAINER_NAME
             certs    - Generate certs for $CONTAINER_NAME
             start    - Start the $CONTAINER_NAME container 
@@ -113,7 +113,7 @@ make_certs() {
 
     (
         if cd "$MATCHBOX_DIR/scripts/tls"; then
-            SAN="IP.1:$(nthhost "$PROV_IP_CIDR" 10)"
+            SAN="IP.1:$PROV_IP_MATCHBOX_IP"
             export SAN
 
             if ./cert-gen; then

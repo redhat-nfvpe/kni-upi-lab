@@ -1,8 +1,6 @@
-NAME=${interface_name}
 DEVICE=${interface}
-ONBOOT=yes
-NETBOOT=no
-IPV6INIT=no
 BOOTPROTO=dhcp
+ONBOOT=yes
 TYPE=Ethernet
-PEERDNS=no
+IPV6INIT=no
+DEFROUTE=${defroute}

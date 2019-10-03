@@ -20,21 +20,53 @@ nthhost() {
     echo "${ips[$nth]}"
 }
 
+get_ip_offset() {
+    local addr=$1
+    local offset=$2
+    local prefix=$3
+
+    # assume little-endian
+    ip_as_num=$(echo "$addr" | awk -F '.' '{printf "%d", ($1 * 2^24) + ($2 * 2^16) + ($3 * 2^8) + $4}')
+    sh=$((32 - prefix))
+    max=$(((1 << sh) - 1))
+    rem=$((ip_as_num & max))
+
+    if [ $((rem + offset)) -gt $max ]; then
+        printf "Offset too large!\n"
+    fi
+
+    ip_as_num=$((ip_as_num + offset))
+
+    ip=$(printf "%d.%d.%d.%d\n" $((ip_as_num >> 24)) $(((ip_as_num >> 16) & 255)) $(((ip_as_num >> 8) & 255)) $((ip_as_num & 255)))
+
+    echo "$ip"
+}
+
+get_bm_ip_offset() {
+    local address="$1"
+
+    width=${BM_IP_CIDR##*/}
+    octet_offset=$(( width/8 ))
+
+    IFS='.' read -r -a split <<<"$address"
+    offset=$(join_by "." "${split[@]:$octet_offset:3}")
+
+    echo "$offset"
+}
+
 get_master_bm_ip() {
     id="$1"
-
     if [[ ! $id =~ 0|1|2 ]]; then
         printf "%s: Invalid master index %s" "${FUNCNAME[0]}" "$id"
         exit 1
     fi
 
-    local hostname="master-$id"   
+    local hostname="master-$id"
 
     local res
 
     if ! res=$(get_host_var "$hostname" "sdnIPAddress"); then
-        id=$((id + BM_IP_MASTER_START_OFFSET))
-        res="$(nthhost "$BM_IP_CIDR" "$id")"
+        res=$(get_ip_offset "$BM_IP_RANGE_START" $(( id + BM_IP_MASTER_START_OFFSET )) 24)
     fi
 
     echo "$res"
@@ -43,13 +75,12 @@ get_master_bm_ip() {
 get_worker_bm_ip() {
     id="$1"
 
-    local hostname="worker-$id"   
+    local hostname="worker-$id"
 
     local res
 
     if ! res=$(get_host_var "$hostname" "sdnIPAddress"); then
-        id=$((id + BM_IP_WORKER_START_OFFSET))
-        res="$(nthhost "$BM_IP_CIDR" "$id")"
+        res=$(get_ip_offset "$BM_IP_RANGE_START" $(( id + BM_IP_WORKER_START_OFFSET )) 24)
     fi
 
     echo "$res"
@@ -73,33 +104,34 @@ export BM_ETC_DIR
 BM_VAR_DIR="bm/var/run/dnsmasq"
 export BM_VAR_DIR
 
-PROV_IP_MATCHBOX_IP=$(nthhost "$PROV_IP_CIDR" 10) # 172.22.0.10
+PROV_IP_MATCHBOX_IP=${PROV_INTF_IP}
 export PROV_IP_MATCHBOX_IP
 
-PROV_IP_MATCHBOX_HTTP_URL="http://$PROV_IP_MATCHBOX_IP:8080" # 172.22.0.10
+PROV_IP_MATCHBOX_HTTP_URL="http://$PROV_IP_MATCHBOX_IP:8080"
 export PROV_IP_MATCHBOX_HTTP_URL
 
-PROV_IP_MATCHBOX_RPC="$PROV_IP_MATCHBOX_IP:8081" # 172.22.0.10
+PROV_IP_MATCHBOX_RPC="$PROV_IP_MATCHBOX_IP:8081"
 export PROV_IP_MATCHBOX_RPC
 
-PROV_IP_RANGE_START=$(nthhost "$PROV_IP_CIDR" 11) # 172.22.0.11
+PROV_IP_RANGE_START=${PROV_IP_DHCP_START}
 export PROV_IP_RANGE_START
 
-PROV_IP_RANGE_END=$(nthhost "${PROV_IP_CIDR}" 30) # 172.22.0.30
+PROV_IP_RANGE_END=${PROV_IP_DHCP_END}
 export PROV_IP_RANGE_END
 
-BM_IP_RANGE_START=$(nthhost "$BM_IP_CIDR" 10) # 192.168.111.10
+BM_IP_RANGE_START=${BM_IP_DHCP_START}
 export BM_IP_RANGE_START
-BM_IP_RANGE_END=$(nthhost "$BM_IP_CIDR" 60) # 192.168.111.60
+BM_IP_RANGE_END=${BM_IP_DHCP_END}
 export BM_IP_RANGE_END
-BM_IP_BOOTSTRAP=$(nthhost "$BM_IP_CIDR" 10) # 192.168.111.10
+
+BM_IP_BOOTSTRAP=${BM_IP_RANGE_START}
 export BM_IP_BOOTSTRAP
 
-BM_IP_NS="${CLUSTER_DNS:-$(nthhost "$BM_IP_CIDR" 3)}" # 192.168.111.3
-export BM_IP_NS
-
-BM_IP_MASTER_START_OFFSET=11
+BM_IP_MASTER_START_OFFSET=1
 export BM_IP_MASTER_START_OFFSET
 
-BM_IP_WORKER_START_OFFSET=20
+BM_IP_WORKER_START_OFFSET=5
 export BM_IP_WORKER_START_OFFSET
+
+BM_IP_NS=${CLUSTER_DNS}
+export BM_IP_NS
