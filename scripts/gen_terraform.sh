@@ -325,7 +325,9 @@ gen_terraform_workers() {
         printf "// AUTOMATICALLY GENERATED -- Do not edit\n"
 
         for key in "${sorted[@]}"; do
-            printf "%s = \"%s\"\n" "$key" "${WORKERS_FINAL_VALS[$key]}"
+            if [[ ! ${NO_TERRAFORM_MAP[$key]} ]]; then
+                printf "%s = \"%s\"\n" "$key" "${WORKERS_FINAL_VALS[$key]}"
+            fi
         done
         printf "worker_nodes = [\n"
     } >"$ofile"
@@ -377,7 +379,7 @@ gen_terraform_workers() {
             if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
                 baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
             fi
-            
+
             printf "  {\n"
             printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "$(get_host_var "$worker" "name")"
             printf "    baremetal_interface: \"%s\",\n" "$baremetal_interface"
