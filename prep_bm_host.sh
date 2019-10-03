@@ -350,7 +350,7 @@ printf "\nInstalling OpenShift binaries...\n\n"
         sudo mv terraform /usr/bin/.
     fi
 
-    if [[ ! -f "~/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
+    if [[ ! -f "$(realpath ~/.terraform.d/plugins/terraform-provider-matchbox)" ]]; then
         if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
             rm -rf /tmp/terraform-provider-matchbox
         fi
