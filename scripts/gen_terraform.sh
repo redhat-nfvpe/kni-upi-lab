@@ -368,16 +368,16 @@ gen_terraform_workers() {
                 exit 1
             fi
 
-            provisioning_interface="${CLUSTER_FINAL_VALS[worker_provisioning_interface]}"
+            provisioning_interface="${WORKERS_FINAL_VALS[worker_provisioning_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.provisioning_interface]} ]]; then
                 provisioning_interface=${HOSTS_FINAL_VALS[$host.provisioning_interface]}
             fi
 
-            baremetal_interface="${CLUSTER_FINAL_VALS[worker_baremetal_interface]}"
+            baremetal_interface="${WORKERS_FINAL_VALS[worker_baremetal_interface]}"
             if [[ -n ${HOSTS_FINAL_VALS[$host.baremetal_interface]} ]]; then
                 baremetal_interface=${HOSTS_FINAL_VALS[$host.baremetal_interface]}
             fi
-
+            
             printf "  {\n"
             printf "    name: \"%s-%s\",\n" "${WORKERS_FINAL_VALS[cluster_id]}" "$(get_host_var "$worker" "name")"
             printf "    baremetal_interface: \"%s\",\n" "$baremetal_interface"

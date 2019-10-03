@@ -75,8 +75,6 @@ declare -A CLUSTER_MAP=(
     [cluster_domain]="%install-config.baseDomain"
     [master_provisioning_interface]="==$MASTER_PROV_INTF"
     [master_baremetal_interface]="==$MASTER_BM_INTF"
-    [worker_provisioning_interface]="==$WORKER_PROV_INTF"
-    [worker_baremetal_interface]="==$WORKER_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
 )
 export CLUSTER_MAP
@@ -91,6 +89,8 @@ declare -A WORKER_MAP=(
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
     [worker_count]="%install-config.compute.0.replicas"
+    [worker_provisioning_interface]="==$WORKER_PROV_INTF"
+    [worker_baremetal_interface]="==$WORKER_BM_INTF"
 )
 export WORKER_MAP
 
