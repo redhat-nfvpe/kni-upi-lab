@@ -10,15 +10,16 @@ usage() {
         $(basename "$0") [-h] [-m manfifest_dir]  ignition|installer|oc
             Parse manifest files and perform tasks related to deployment
 
-            ignition  -- Generate ignition files into $out_dir, apply any patches
-            installer -- Install the current openshift-install binary
-            oc        -- Install the current oc binary
+            create-manifests  -- Generate manifest files
+            creaate-output    -- Generate ignition files and place into $out_dir, apply any patches
+            installer         -- Install the current openshift-install binary
+            oc                -- Install the current oc binary
 
     Options
         -m manifest_dir -- Location of manifest files that describe the deployment.
             Requires: install-config.yaml, bootstrap.yaml, master-0.yaml, [masters/workers...]
-            Defaults to $PROJECT_DIR/cluster/
-        -o out_dir -- Where to put the output [defaults to $DNSMASQ_DIR...]
+            Defaults to $MANIFEST_DIR
+        -o out_dir -- Where to put the output [defaults to $OPENSHIFT_DIR...]
 EOM
     exit 0
 }
@@ -110,12 +111,12 @@ patch_manifest() {
 
 }
 
-gen_ignition() {
+gen_manifests() {
     local out_dir="$1"
     local manifest_dir="$2"
 
     if [ ! -f "$manifest_dir/install-config.yaml" ]; then
-        printf "%s does not exists, create!" "$manifest_dir/install-config.yaml"
+        printf "%s is missing!" "$manifest_dir/install-config.yaml"
         exit 1
     fi
 
@@ -127,11 +128,14 @@ gen_ignition() {
         printf "openshift-install create manifests failed!\n"
         exit 1
     fi
+}
+
+gen_ignition() {
+    local out_dir="$1"
+    local manifest_dir="$2"
 
     gen_nm_disable_auto_config "master" || exit 1
     gen_nm_disable_auto_config "worker" || exit 1
-
-#need interfaces...
 
     gen_ifcfg_manifest "master"  "$MASTER_BM_INTF"  "yes" || exit 1
     gen_ifcfg_manifest "master"  "$MASTER_PROV_INTF" "no" || exit 1
@@ -151,10 +155,10 @@ gen_ignition() {
     if [ -z "$PATH_NM_WAIT" ]; then
         for ign in bootstrap.ign master.ign worker.ign; do
             jq '.systemd.units += [{"name": "NetworkManager-wait-online.service", 
-     "dropins": [{ 
-       "name": "timeout.conf", 
-       "contents": "[Service]\nExecStart=\nExecStart=/usr/bin/nm-online -s -q --timeout=300" 
-     }]}]' <"$out_dir/$ign" >"$out_dir/$ign.bak"
+                    "dropins": [{ 
+                        "name": "timeout.conf", 
+                        "contents": "[Service]\nExecStart=\nExecStart=/usr/bin/nm-online -s -q --timeout=300" 
+                }]}]' <"$out_dir/$ign" >"$out_dir/$ign.bak"
 
             mv "$out_dir/$ign.bak" "$out_dir/$ign"
         done
@@ -279,9 +283,16 @@ out_dir=$(realpath "$out_dir")
 gen_variables "$manifest_dir"
 
 case "$COMMAND" in
-# Parse options to the install sub command
 ignition)
-    gen_ignition "$out_dir" "$manifest_dir"
+    gen_manifests "$out_dir" "$manifest_dir"
+    gen_ignition "$out_dir"
+    ;;
+# Parse options to the install sub command
+create-output)
+    gen_ignition "$out_dir"
+    ;;
+create-manifests)
+    gen_manifests "$out_dir" "$manifest_dir"
     ;;
 installer)
     install_openshift_bin
