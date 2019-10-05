@@ -25,9 +25,6 @@ EOM
 }
 
 gen_nm_disable_auto_config() {
-    local role="$1"
-
-    mkdir -p "$BUILD_DIR/openshift-patches"
 
     read -r -d '' content <<EOF
 [main]
@@ -40,21 +37,34 @@ ignore-carrier=*
 EOF
     name="nm-disable-auto-config"
 
-    mode="0644"
-    path="/etc/NetworkManager/conf.d/10-${role}-$name.conf"
-    metadata_name="10-${role}-$name"
+    for role in master worker; do
+        path="/etc/NetworkManager/conf.d/10-${role}-$name.conf"
+        metadata_name="10-${role}-$name"
+
+        gen_machineconfig $role "0644" $path $metadata_name "$content"
+    done
+}
+
+gen_machineconfig() {
+    local role="$1"
+    local mode="$2"
+    local path="$3"
+    local metadata_name="$4"
+    local content="$5"
+
+    mkdir -p "$BUILD_DIR/openshift-patches"
 
     content=$(echo "$content" | base64 -w0)
 
-    export metadata_name path mode content role
-
-    template="$TEMPLATES_DIR/$name.yaml.tpl"
+    template="$TEMPLATES_DIR/machineconfig.yaml.tpl"
     if [ ! -f "$template" ]; then
         printf "Template \"%s\" does not exist!\n" "$template"
         return 1
     fi
+    export metadata_name path mode content role
 
     gen_manifest="$BUILD_DIR/openshift-patches/$metadata_name.yaml"
+
     envsubst <"${template}" >"${gen_manifest}"
 }
 
@@ -63,23 +73,16 @@ gen_ifcfg_manifest() {
     local interface="$2"
     local defroute="$3"
 
-    mkdir -p "$BUILD_DIR/openshift-patches"
-
     template_cfg="$TEMPLATES_DIR/ifcfg-interface.tpl"
-    template_yaml="$TEMPLATES_DIR/ifcfg-interface.yaml.tpl"
-
-    manifest_name="99-ifcfg-$interface-$role.yaml"
 
     # Generate the file contents
     export interface defroute
     content=$(envsubst <"${template_cfg}" | base64 -w0)
 
-    mode="0644"
     path="/etc/sysconfig/network-scripts/ifcfg-$interface"
     metadata_name="99-ifcfg-$interface-$role"
-    export metadata_name path mode content role
 
-    envsubst <"${template_yaml}" >"$BUILD_DIR/openshift-patches/${manifest_name}"
+    gen_machineconfig "$role" "0644" "$path" "$metadata_name" "$content"
 }
 
 patch_manifest() {
