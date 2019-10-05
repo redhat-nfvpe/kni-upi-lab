@@ -421,7 +421,8 @@ gen_terraform_workers() {
                 gen_rhel "$worker"
                 ;;
             *)
-                printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$worker"
+                printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$worker" 1>&2
+                exit 1
                 ;;
             esac
 
