@@ -36,6 +36,8 @@ platform:
             # With role == master, the osType is always rhcos
             # And with type rhcos, the following are settings are available
             pxe: bios         # pxe boot type either bios (default if not specified) or uefi
+                              # all masters must have the same pxe value.  Either defaulting to bios
+                              # or all masters with pxe: uefi
             install_dev: sda  # where to install the operating system (sda is the default)
       -  name: master-1
          role: master
@@ -80,7 +82,7 @@ platform:
          sdnMacAddress: 0c:c4:7a:19:6f:7e
          hardwareProfile: default
          osProfile:
-            type: centos
+            type: centos8
             # Don't set the following unless you know what you are doing
             # initrd: assets/centos7/images/pxeboot/initrd.img (default if not specified)
             # kernel: assets/centos7/images/pxeboot/vmlinuz" (default if not specified) 

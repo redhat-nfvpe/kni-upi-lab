@@ -297,6 +297,21 @@ gen_centos() {
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
+gen_centos8() {
+    local host="$1"
+
+    printf "    os_profile: \"centos\",\n"
+
+    initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/centos8/images/pxeboot/initrd.img"
+    printf "    initrd: \"%s\",\n" "$initrd"
+
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/centos8/images/pxeboot/vmlinuz"
+    printf "    kernel: \"%s\",\n" "$kernel"
+
+    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/centos8-worker-kickstart.cfg"
+    printf "    kickstart: \"%s\",\n" "$kickstart"
+}
+
 gen_rhel() {
     local host="$1"
 
@@ -396,8 +411,11 @@ gen_terraform_workers() {
             rhcos)
                 gen_rhcos "$worker"
                 ;;
-            centos)
+            centos7)
                 gen_centos "$worker"
+                ;;
+            centos8)
+                gen_centos8 "$worker"
                 ;;
             rhel)
                 gen_rhel "$worker"
