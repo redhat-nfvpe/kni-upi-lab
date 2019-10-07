@@ -233,7 +233,7 @@ printf "\nConfiguring iptables to allow for external traffic...\n\n"
 printf "\nInstalling Golang...\n\n"
 
 export GOROOT=/usr/local/go
-export GOPATH=$HOME/go/src
+export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 if [[ ! -d "/usr/local/go" ]]; then
@@ -249,7 +249,7 @@ if [[ ! -d "/usr/local/go" ]]; then
         if [[ -z "$GOINSTALLED" ]]; then
             {
                 echo "export GOROOT=/usr/local/go"
-                echo "export GOPATH=$HOME/go/src"
+                echo "export GOPATH=$HOME/go"
                 echo "export PATH=$GOPATH/bin:$GOROOT/bin:$PATH"
             } >>~/.bash_profile
         fi
@@ -350,7 +350,7 @@ printf "\nInstalling OpenShift binaries...\n\n"
         sudo mv terraform /usr/bin/.
     fi
 
-    if [[ ! -f "~/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
+    if [[ ! -f "$HOME/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
         if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
             rm -rf /tmp/terraform-provider-matchbox
         fi
