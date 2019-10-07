@@ -76,14 +76,17 @@ create_kickstart() {
         for scr in "$ks_script_dir"/add_*.sh; do
             [[ "$VERBOSE" =~ true ]] && printf "Processing %s\n" "$scr"
 
-            if [[ $scr =~ centos ]]; then
+            if [[ $scr =~ centos\. ]]; then
                 OS_INSTALL_ENDPOINT="${PROV_IP_MATCHBOX_HTTP_URL}/assets/centos7"
+            elif [[ $scr =~ centos8\. ]]; then
+                OS_INSTALL_ENDPOINT="${PROV_IP_MATCHBOX_HTTP_URL}/assets/centos8"
             elif [[ $scr =~ rhel8 ]]; then
                 OS_INSTALL_ENDPOINT="${PROV_IP_MATCHBOX_HTTP_URL}/assets/rhel8"
             elif [[ $scr =~ rhel7 ]]; then
                 OS_INSTALL_ENDPOINT="${PROV_IP_MATCHBOX_HTTP_URL}/assets/rhel7"
             else
                 printf "Unknown kickstart type: %s!\n" "$scr"
+                exit 1
             fi
             export OS_INSTALL_ENDPOINT
             

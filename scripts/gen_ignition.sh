@@ -77,7 +77,7 @@ gen_ifcfg_manifest() {
 
     # Generate the file contents
     export interface defroute
-    content=$(envsubst <"${template_cfg}" | base64 -w0)
+    content=$(envsubst <"${template_cfg}")
 
     path="/etc/sysconfig/network-scripts/ifcfg-$interface"
     metadata_name="99-ifcfg-$interface-$role"
