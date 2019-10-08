@@ -34,7 +34,7 @@ MANIFEST_CHECK_init() {
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.bootMACAddress]="$regex_mac_address"    
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.bmc.address]="ipmi://([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$)"
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.bmc.credentialsName]="$regex_filename"
-    MANIFEST_CHECK[install-config.opt.platform.hosts.[0-9]+.osProfile.type]="(rhel|centos|rhcos)"
+    MANIFEST_CHECK[install-config.opt.platform.hosts.[0-9]+.osProfile.type]="(rhel|centos7|centos8|rhcos)"
     MANIFEST_CHECK[install-config.opt.platform.hosts.[0-9]+.osProfile.pxe]="(bios|uefi)"
     MANIFEST_CHECK[install-config.opt.platform.hosts.[0-9]+.osProfile.pxe]="([a-zA-Z0-9]+)"
     MANIFEST_CHECK[install-config.opt.platform.hosts.[0-9]+.osProfile.initrd]="(.+)"

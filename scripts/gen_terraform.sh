@@ -300,7 +300,7 @@ gen_centos() {
 gen_centos8() {
     local host="$1"
 
-    printf "    os_profile: \"centos\",\n"
+    printf "    os_profile: \"centos8\",\n"
 
     initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/centos8/images/pxeboot/initrd.img"
     printf "    initrd: \"%s\",\n" "$initrd"
