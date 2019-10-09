@@ -14,23 +14,7 @@ subscription-manager attach --pool=$RH_POOL || true
 subscription-manager repos --enable=rhel-7-server-rpms
 subscription-manager repos --enable=rhel-7-server-extras-rpms
 subscription-manager repos --enable=rhel-7-server-rh-common-rpms
-
-# install packages
-cat > /etc/yum.repos.d/cbs.centos.org_repos_paas7-crio-113-candidate_x86_64_os.repo <<EOL
-[cbs.centos.org_repos_paas7-crio-113-candidate_x86_64_os]
-name=added from: https://cbs.centos.org/repos/paas7-crio-113-candidate/x86_64/os
-baseurl=https://cbs.centos.org/repos/paas7-crio-113-candidate/x86_64/os
-enabled=1
-gpgcheck=0
-EOL
-
-cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.0_.repo <<EOL
-[rpms.svc.ci.openshift.org_openshift-origin-v4.0_]
-name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.0/
-baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.0/
-enabled=1
-gpgcheck=0
-EOL
+subscription-manager repos --enable=rhel-7-server-ose-4.1-rpms
 
 yum update -y
 
