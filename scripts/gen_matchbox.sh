@@ -67,10 +67,10 @@ download_assets() {
 
     (
         if cd "$MATCHBOX_VAR_LIB/assets"; then
-            for asset in "${!RHCOS_SHA256_MAP[@]}"; do
+            for asset in "${!RHCOS_IMAGES[@]}"; do
                 echo "ASSET: $asset"
                 if [ -f "$asset" ] && sum=$(sha256sum "$asset" | awk '{print $1}'); then
-                    if [[ "${RHCOS_SHA256_MAP[$asset]}" == "$sum" ]]; then
+                    if [[ "${RHCOS_IMAGES[$asset]}" == "$sum" ]]; then
                         printf "%s already present with correct sha256sum..skipping...\n" "$asset"
                         continue
                     fi
