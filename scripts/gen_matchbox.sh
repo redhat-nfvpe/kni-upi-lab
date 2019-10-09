@@ -2,7 +2,6 @@
 
 # shellcheck disable=SC1091
 source "common.sh"
-source "images_and_binaries.sh"
 
 MATCHBOX_REPO="https://github.com/poseidon/matchbox.git"
 
@@ -62,13 +61,12 @@ start_matchbox() {
 }
 
 download_assets() {
-
+    source "images_and_binaries.sh"
     make_dirs
 
     (
         if cd "$MATCHBOX_VAR_LIB/assets"; then
             for asset in "${!RHCOS_IMAGES[@]}"; do
-                echo "ASSET: $asset"
                 if [ -f "$asset" ] && sum=$(sha256sum "$asset" | awk '{print $1}'); then
                     if [[ "${RHCOS_IMAGES[$asset]}" == "$sum" ]]; then
                         printf "%s already present with correct sha256sum..skipping...\n" "$asset"

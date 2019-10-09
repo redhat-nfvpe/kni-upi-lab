@@ -2,33 +2,68 @@
 
 # RHCOS images
 
-JSON="$(curl -sS https://raw.githubusercontent.com/openshift/installer/release-$OPENSHIFT_RHCOS_MAJOR_REL/data/data/rhcos.json)"
+BUILDS_JSON="$(curl -sS https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/builds.json)"
 
-RHCOS_IMAGES_BASE_URI="$(echo "$JSON" | jq -r '.baseURI')"
+if [[ -z "$OPENSHIFT_RHCOS_MINOR_REL" ]]; then
+    # If a minor release wasn't set, get latest
+    LATEST=$(jq -r '.builds[0] | if type=="object" then .id else . end' <<<"$BUILDS_JSON")
+    #LATEST="${LATEST//\"/}"
+    OPENSHIFT_RHCOS_MINOR_REL="$LATEST"
+fi
 
 # TODO: remove debug
-echo "$RHCOS_IMAGES_BASE_URI"
+echo "OPENSHIFT_RHCOS_MAJOR_REL: $OPENSHIFT_RHCOS_MAJOR_REL"
+echo "OPENSHIFT_RHCOS_MINOR_REL: $OPENSHIFT_RHCOS_MINOR_REL"
+
+export OPENSHIFT_RHCOS_MINOR_REL
+
+META_JSON=""
+EXTRA_FILENAME=""
+
+if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]]; then
+    EXTRA_FILENAME="x86_64/"
+fi
+
+RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/$OPENSHIFT_RHCOS_MINOR_REL/$EXTRA_FILENAME"
+
+# TODO: remove debug
+echo "RHCOS_IMAGES_BASE_URI: $RHCOS_IMAGES_BASE_URI"
 
 export RHCOS_IMAGES_BASE_URI
+
+META_JSON="$(curl -sS "$RHCOS_IMAGES_BASE_URI"meta.json)"
 
 # Map of image name to sha256
 declare -A RHCOS_IMAGES
 
-RHCOS_IMAGES["$(echo "$JSON" | jq -r '.images.initramfs.path')"]="$(echo "$JSON" | jq -r '.images.initramfs.sha256')"
-RHCOS_IMAGES["$(echo "$JSON" | jq -r '.images.kernel.path')"]="$(echo "$JSON" | jq -r '.images.kernel.sha256')"
+# Map of boot type to image
+declare -A RHCOS_METAL_IMAGES
 
-if [[ $OPENSHIFT_RHCOS_MAJOR_REL == "4.3" ]]; then
-    # HACK: 4.3 currently has a different JSON structure than the rest
-    RHCOS_IMAGES["$(echo "$JSON" | jq -r '.images.metal.path')"]="$(echo "$JSON" | jq -r '.images.metal.sha256')"
+RHCOS_IMAGES["$(echo "$META_JSON" | jq -r '.images.initramfs.path')"]="$(echo "$META_JSON" | jq -r '.images.initramfs.sha256')"
+RHCOS_IMAGES["$(echo "$META_JSON" | jq -r '.images.kernel.path')"]="$(echo "$META_JSON" | jq -r '.images.kernel.sha256')"
+
+if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]]; then
+    # HACK: 4.3 currently has a different META_JSON structure than the rest
+    FILENAME="$(echo "$META_JSON" | jq -r '.images.metal.path')"
+    RHCOS_IMAGES["$FILENAME"]="$(echo "$META_JSON" | jq -r '.images.metal.sha256')"
+    RHCOS_METAL_IMAGES["bios"]="$FILENAME"
+    RHCOS_METAL_IMAGES["uefi"]="$FILENAME"
 else
-    RHCOS_IMAGES["$(echo "$JSON" | jq -r '.images["metal-bios"].path')"]="$(echo "$JSON" | jq -r '.images["metal-bios"].sha256')"
-    RHCOS_IMAGES["$(echo "$JSON" | jq -r '.images["metal-uefi"].path')"]="$(echo "$JSON" | jq -r '.images["metal-uefi"].sha256')"
+    FILENAME="$(echo "$META_JSON" | jq -r '.images["metal-bios"].path')"
+    RHCOS_IMAGES["$FILENAME"]="$(echo "$META_JSON" | jq -r '.images["metal-bios"].sha256')"
+    RHCOS_METAL_IMAGES["bios"]="$FILENAME"
+
+    FILENAME="$(echo "$META_JSON" | jq -r '.images["metal-uefi"].path')"
+    RHCOS_IMAGES["$FILENAME"]="$(echo "$META_JSON" | jq -r '.images["metal-uefi"].sha256')"
+    RHCOS_METAL_IMAGES["uefi"]="$FILENAME"
 fi
 
 # TODO: remove debug
 for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
+for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
 
 export RHCOS_IMAGES
+export RHCOS_METAL_IMAGES
 
 # OCP binaries
 
@@ -51,7 +86,7 @@ OCP_INSTALL_BINARY_URL=""
 
 FIELD_SELECTOR=8
 
-if [[ $OPENSHIFT_RHCOS_MAJOR_REL == "4.3" ]]; then
+if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]]; then
     # HACK: 4.3 has a different HTML structure than the rest
     FIELD_SELECTOR=2
 fi
@@ -60,8 +95,8 @@ OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "
 OCP_INSTALL_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep install-linux | cut -d '"' -f $FIELD_SELECTOR)"
 
 # TODO: remove debug
-echo $OCP_CLIENT_BINARY_URL
-echo $OCP_INSTALL_BINARY_URL
+echo "OCP_CLIENT_BINARY_URL: $OCP_CLIENT_BINARY_URL"
+echo "OCP_INSTALL_BINARY_URL: $OCP_INSTALL_BINARY_URL"
 
 export OCP_CLIENT_BINARY_URL
 export OCP_INSTALL_BINARY_URL

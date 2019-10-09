@@ -98,9 +98,9 @@ get_asset_raw() {
     local raw
 
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $pxe =~ "bios" ]]; then
+        if [[ $pxe =~ "bios" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["bios"]} ]]; then
             raw="${file##*/}"
-        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $pxe =~ "uefi" ]]; then
+        elif [[ $pxe =~ "uefi" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["uefi"]} ]]; then
             raw="${file##*/}"
         fi
     done
@@ -111,7 +111,7 @@ get_asset_raw() {
 get_asset_initramfs() {
     local initramfs
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos.*installer-initramfs.img ]]; then
+        if [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.*.img ]]; then
             initramfs="${file##*/}"
         fi
     done
@@ -123,7 +123,7 @@ get_asset_kernel() {
     local kernel
 
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos.*installer-kernel ]]; then
+        if [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-kernel ]]; then
             kernel="${file##*/}"
         fi
     done
@@ -252,6 +252,9 @@ gen_terraform_cluster() {
 }
 
 gen_rhcos() {
+    # shellcheck disable=SC1091
+    source "images_and_binaries.sh"
+
     local host="$1"
 
     local initramfs
@@ -262,13 +265,13 @@ gen_rhcos() {
     pxe=$(get_host_var "$host" pxe) || pxe="bios"
 
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos.*metal-bios.raw.gz ]] && [[ $pxe =~ "bios" ]]; then
+        if [[ $pxe =~ "bios" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["bios"]} ]]; then
             raw="${file##*/}"
-        elif [[ $file =~ rhcos.*metal-uefi.raw.gz ]] && [[ $pxe =~ "uefi" ]]; then
+        elif [[ $pxe =~ "uefi" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["uefi"]} ]]; then
             raw="${file##*/}"
-        elif [[ $file =~ rhcos.*installer-initramfs.img ]]; then
+        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.img ]]; then
             initramfs="${file##*/}"
-        elif [[ $file =~ rhcos.*installer-kernel ]]; then
+        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-kernel ]]; then
             kernel="${file##*/}"
         fi
     done
@@ -506,6 +509,7 @@ shift $((OPTIND - 1))
 
 # shellcheck disable=SC1091
 source "common.sh"
+source "images_and_binaries.sh"
 
 # shellcheck disable=SC1091
 source "scripts/manifest_check.sh"
