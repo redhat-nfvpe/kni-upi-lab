@@ -12,8 +12,8 @@ if [[ -z "$OPENSHIFT_RHCOS_MINOR_REL" ]]; then
 fi
 
 # TODO: remove debug
-echo "OPENSHIFT_RHCOS_MAJOR_REL: $OPENSHIFT_RHCOS_MAJOR_REL"
-echo "OPENSHIFT_RHCOS_MINOR_REL: $OPENSHIFT_RHCOS_MINOR_REL"
+#echo "OPENSHIFT_RHCOS_MAJOR_REL: $OPENSHIFT_RHCOS_MAJOR_REL"
+#echo "OPENSHIFT_RHCOS_MINOR_REL: $OPENSHIFT_RHCOS_MINOR_REL"
 
 export OPENSHIFT_RHCOS_MINOR_REL
 
@@ -27,7 +27,7 @@ fi
 RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/$OPENSHIFT_RHCOS_MINOR_REL/$EXTRA_FILENAME"
 
 # TODO: remove debug
-echo "RHCOS_IMAGES_BASE_URI: $RHCOS_IMAGES_BASE_URI"
+#echo "RHCOS_IMAGES_BASE_URI: $RHCOS_IMAGES_BASE_URI"
 
 export RHCOS_IMAGES_BASE_URI
 
@@ -59,8 +59,8 @@ else
 fi
 
 # TODO: remove debug
-for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
-for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
+#for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
+#for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
 
 export RHCOS_IMAGES
 export RHCOS_METAL_IMAGES
@@ -77,7 +77,7 @@ declare -A OCP_BINARIES=(
 )
 
 # TODO: remove debug
-for K in "${!OCP_BINARIES[@]}"; do echo "$K" --- "${OCP_BINARIES[$K]}"; done
+#for K in "${!OCP_BINARIES[@]}"; do echo "$K" --- "${OCP_BINARIES[$K]}"; done
 
 export OCP_BINARIES
 
@@ -95,8 +95,8 @@ OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "
 OCP_INSTALL_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep install-linux | cut -d '"' -f $FIELD_SELECTOR)"
 
 # TODO: remove debug
-echo "OCP_CLIENT_BINARY_URL: $OCP_CLIENT_BINARY_URL"
-echo "OCP_INSTALL_BINARY_URL: $OCP_INSTALL_BINARY_URL"
+#echo "OCP_CLIENT_BINARY_URL: $OCP_CLIENT_BINARY_URL"
+#echo "OCP_INSTALL_BINARY_URL: $OCP_INSTALL_BINARY_URL"
 
 export OCP_CLIENT_BINARY_URL
 export OCP_INSTALL_BINARY_URL

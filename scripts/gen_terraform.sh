@@ -269,7 +269,7 @@ gen_rhcos() {
             raw="${file##*/}"
         elif [[ $pxe =~ "uefi" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["uefi"]} ]]; then
             raw="${file##*/}"
-        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.img ]]; then
+        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.*.img ]]; then
             initramfs="${file##*/}"
         elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-kernel ]]; then
             kernel="${file##*/}"
