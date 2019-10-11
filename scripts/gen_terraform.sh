@@ -252,9 +252,6 @@ gen_terraform_cluster() {
 }
 
 gen_rhcos() {
-    # shellcheck disable=SC1091
-    source "images_and_binaries.sh"
-
     local host="$1"
 
     local initramfs
