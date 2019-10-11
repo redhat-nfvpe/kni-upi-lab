@@ -18,13 +18,14 @@ fi
 export OPENSHIFT_RHCOS_MINOR_REL
 
 META_JSON=""
-EXTRA_FILENAME=""
+EXTRA_PATH=""
 
+# HACK: 4.3+ includes architecture in the path
 if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]]; then
-    EXTRA_FILENAME="x86_64/"
+    EXTRA_PATH="x86_64/"
 fi
 
-RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/$OPENSHIFT_RHCOS_MINOR_REL/$EXTRA_FILENAME"
+RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/$OPENSHIFT_RHCOS_MINOR_REL/$EXTRA_PATH"
 
 # TODO: remove debug
 #echo "RHCOS_IMAGES_BASE_URI: $RHCOS_IMAGES_BASE_URI"
@@ -36,7 +37,7 @@ META_JSON="$(curl -sS "$RHCOS_IMAGES_BASE_URI"meta.json)"
 # Map of image name to sha256
 declare -A RHCOS_IMAGES
 
-# Map of boot type to image
+# Map of boot type to raw metal image
 declare -A RHCOS_METAL_IMAGES
 
 RHCOS_IMAGES["$(echo "$META_JSON" | jq -r '.images.initramfs.path')"]="$(echo "$META_JSON" | jq -r '.images.initramfs.sha256')"
@@ -66,6 +67,7 @@ export RHCOS_IMAGES
 export RHCOS_METAL_IMAGES
 
 # OCP binaries
+# TODO: Is there a uniform base URL to use here like there is for images?
 
 # 4.3 is special case, and requires getting the latest version ID from an index page
 LATEST_4_3="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | grep "4\.3\." | tail -1 | cut -d '"' -f 2)"
