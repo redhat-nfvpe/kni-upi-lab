@@ -72,6 +72,8 @@ map_site_config "true" || exit 1
 # shellcheck disable=SC1091
 source "common.sh"
 # shellcheck disable=SC1091
+source "images_and_binaries.sh"
+# shellcheck disable=SC1091
 source "scripts/paths.sh"
 # shellcheck disable=SC1091
 source "scripts/network_conf.sh"
@@ -315,26 +317,14 @@ printf "\nInstalling OpenShift binaries...\n\n"
     cd /tmp
 
     if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-        if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-        else
-            LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_INSTALLER"
-            tar xvf "$LATEST_OCP_INSTALLER"
-        fi
+        curl -O "$OCP_INSTALL_BINARY_URL"
+        tar xvf ${OCP_INSTALL_BINARY_URL##*/}
         sudo mv openshift-install /usr/local/bin/
     fi
 
     if [[ ! -f "/usr/local/bin/oc" ]]; then
-        if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-        else
-            LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
-            curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_CLIENT"
-            tar xvf "$LATEST_OCP_CLIENT"
-        fi
+        curl -O "$OCP_CLIENT_BINARY_URL"
+        tar xvf ${OCP_CLIENT_BINARY_URL##*/}
         sudo mv oc /usr/local/bin/
     fi
 

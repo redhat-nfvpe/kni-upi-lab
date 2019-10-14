@@ -3,18 +3,6 @@
 # shellcheck disable=SC1091
 source "common.sh"
 
-declare -a OPENSHIFT_RHCOS_ASSETS=(
-    's/^([^ ]+)\s+(rhcos-(.*)-installer-initramfs.img)/\1 \2 \3/p'
-    's/^([^ ]+)\s+(rhcos-(.*)-installer-kernel)/\1 \2 \3/p'
-    's/^([^ ]+)\s+(rhcos-(.*)-metal-bios.raw.gz)/\1 \2 \3/p'
-    's/^([^ ]+)\s+(rhcos-(.*)-metal-uefi.raw.gz)/\1 \2 \3/p'
-)
-
-SHA256_FILE="sha256sum.txt"
-SHA256_URL="$OPENSHIFT_RHCOS_URL/$SHA256_FILE"
-
-export OPENSHIFT_RHCOS_ASSET_MAP
-
 MATCHBOX_REPO="https://github.com/poseidon/matchbox.git"
 
 CONTAINER_NAME="kni-matchbox"
@@ -73,34 +61,20 @@ start_matchbox() {
 }
 
 download_assets() {
-
+    source "images_and_binaries.sh"
     make_dirs
 
     (
         if cd "$MATCHBOX_VAR_LIB/assets"; then
-            if ! curl -sS -O "$SHA256_URL"; then
-                printf "Unable to fetch: %s" "$SHA256_URL"
-            fi
-
-            if ! sha_file=$(cat "$SHA256_FILE"); then
-                printf "Missing file: %s!\n" "$SHA256_FILE"
-                exit 1
-            fi
-
-            for asset_regex in "${OPENSHIFT_RHCOS_ASSETS[@]}"; do
-                if ! read -r chksum file version <<<"$(echo "$sha_file" | sed -nre "$asset_regex")" &&
-                    [ -n "$chksum" ] && [ -n "$file" ] && [ -n "$version" ]; then
-                    printf "Parse of %s failed!" "$SHA256_FILE"
-                    return 1
-                fi
-                if [ -f "$file" ] && sum=$(sha256sum "$file" | awk '{print $1}'); then
-                    if [[ "$chksum" == "$sum" ]]; then
-                        printf "%s already present with correct sha256sum..skipping...\n" "$file"
+            for asset in "${!RHCOS_IMAGES[@]}"; do
+                if [ -f "$asset" ] && sum=$(sha256sum "$asset" | awk '{print $1}'); then
+                    if [[ "${RHCOS_IMAGES[$asset]}" == "$sum" ]]; then
+                        printf "%s already present with correct sha256sum..skipping...\n" "$asset"
                         continue
                     fi
                 fi
-                printf "Fetching %s...\n" "$OPENSHIFT_RHCOS_URL/$file"
-                curl -O "$OPENSHIFT_RHCOS_URL/$file"
+                printf "Fetching %s...\n" "$RHCOS_IMAGES_BASE_URI/$asset"
+                curl -O "$RHCOS_IMAGES_BASE_URI/$asset"
             done
         else
             printf "Failed to download assets..."
