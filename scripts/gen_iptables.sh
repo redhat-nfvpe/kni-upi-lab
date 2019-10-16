@@ -52,11 +52,11 @@ ins_del_rule "INSERT" "filter" "FORWARD -o $BM_BRIDGE -i $EXT_INTF -m state --st
 REJECT_RULE=$(iptables -S | grep "INPUT -j REJECT --reject-with icmp-host-prohibited")
 
 if [[ -n "$REJECT_RULE" ]]; then
-    iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
+    sudo iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 fi
 
 REJECT_RULE2=$(iptables -S | grep "FORWARD -j REJECT --reject-with icmp-host-prohibited")
 
 if [[ -n "$REJECT_RULE2" ]]; then
-    iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+    sudo iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 fi
