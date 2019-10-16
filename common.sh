@@ -1,9 +1,13 @@
 #!/bin/bash
 
-OPENSHIFT_RHCOS_MAJOR_REL="4.2"
+# NOTE: only change the next line locally -- do not commit/push to the remote repo!
+OPENSHIFT_RHCOS_MAJOR_REL=""
 OPENSHIFT_RHCOS_MINOR_REL=""
 
-if [[ -z $OPENSHIFT_RHCOS_MAJOR_REL || $OPENSHIFT_RHCOS_MAJOR_REL == "latest" || (! $OPENSHIFT_RHCOS_MAJOR_REL =~ (4.1|4.2|4.3)) ]]; then
+if [[ -z $OPENSHIFT_RHCOS_MAJOR_REL || (! $OPENSHIFT_RHCOS_MAJOR_REL =~ (4.1|4.2|4.3|latest)) ]]; then
+    OPENSHIFT_RHCOS_MAJOR_REL="4.2"
+    OPENSHIFT_RHCOS_MINOR_REL=""
+elif [[ $OPENSHIFT_RHCOS_MAJOR_REL == "latest" ]]; then
     OPENSHIFT_RHCOS_MAJOR_REL="4.3"
     OPENSHIFT_RHCOS_MINOR_REL=""
 fi
