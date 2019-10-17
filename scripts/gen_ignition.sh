@@ -125,7 +125,9 @@ gen_manifests() {
 
     rm -rf "$out_dir"
     mkdir -p "$out_dir"
-    cp "$manifest_dir/install-config.yaml" "$out_dir"
+
+    "$SCRIPT_DIR/gen_secrets.sh" < "$manifest_dir/install-config.yaml" > "$out_dir/install-config.yaml" 
+    #cp "$manifest_dir/install-config.yaml" "$out_dir"
 
     if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
         printf "openshift-install create manifests failed!\n"
