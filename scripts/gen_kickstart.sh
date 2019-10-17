@@ -43,11 +43,6 @@ create_settings_env() {
         printf "export RH_PASSWORD=\"\"\n"
         printf "export RH_POOL=\"\"\n"
         printf "export OS_INSTALL_ENDPOINT=\"%s\"\n" "$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8"
-        printf "# i.e. 1:4-10-12\n"
-        printf "export RT_TUNED_ISOLATE_CORES=\"\"\n"
-        printf "export RT_TUNED_HUGEPAGE_SIZE_DEFAULT=\"2G\"\n"
-        printf "export RT_TUNED_HUGEPAGE_SIZE=\"2G\"\n"
-        printf "export RT_TUNED_HUGEPAGE_NUM=\"2\"\n"
 
     } >"$ofile"
 }
