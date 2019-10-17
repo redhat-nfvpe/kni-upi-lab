@@ -30,7 +30,7 @@ if [[ "$OS_NAME" == "rhel" ]]; then
     EPEL_PACKAGE="/tmp/epel-release.rpm"
 
     # Enable other needed RPMs
-    subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
+    sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
 fi
 
 ###--------------###
@@ -87,7 +87,7 @@ source "scripts/utils.sh"
 printf "\nInstalling latest libvirtd via yum...\n\n"
 
 if [[ "$OS_NAME" == "centos" ]]; then
-cat <<EOF >/etc/yum.repos.d/virt.repo
+sudo tee /etc/yum.repos.d/virt.repo > /dev/null << EOF
 [virt]
 name=virt
 baseurl=http://mirror.centos.org/centos/7/virt/x86_64/libvirt-latest/
@@ -114,7 +114,7 @@ sudo systemctl start libvirtd
 
 printf "\nConfiguring provisioning interface (%s) and bridge (%s)...\n\n" "$PROV_INTF" "$PROV_BRIDGE"
 
-cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$PROV_BRIDGE"
+sudo tee "/etc/sysconfig/network-scripts/ifcfg-$PROV_BRIDGE" > /dev/null << EOF
 TYPE=Bridge
 PROXY_METHOD=none
 BROWSER_ONLY=no
@@ -129,7 +129,7 @@ NETMASK=255.255.255.0
 ZONE=public
 EOF
 
-cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$PROV_INTF"
+sudo tee "/etc/sysconfig/network-scripts/ifcfg-$PROV_INTF" > /dev/null << EOF
 TYPE=Ethernet
 PROXY_METHOD=none
 BROWSER_ONLY=no
@@ -154,7 +154,7 @@ ifup "$PROV_INTF"
 
 printf "\nConfiguring baremetal interface (%s) and bridge (%s)...\n\n" "$BM_INTF" "$BM_BRIDGE"
 
-cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE"
+sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE" > /dev/null << EOF
 TYPE=Bridge
 NM_CONTROLLED=no
 PROXY_METHOD=none
@@ -174,7 +174,7 @@ NETMASK=255.255.255.0
 ONBOOT=yes
 EOF
 
-cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_INTF"
+sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" > /dev/null << EOF
 TYPE=Ethernet
 NM_CONTROLLED=no
 PROXY_METHOD=none
@@ -189,7 +189,7 @@ BRIDGE=$BM_BRIDGE
 EOF
 
 if [[ $PROVIDE_DNS =~ true ]]; then
-    cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:1"
+    sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:1" > /dev/null << EOF
 DEVICE=$BM_BRIDGE:1
 Type=Ethernet
 ONBOOT=yes
@@ -201,7 +201,7 @@ EOF
 fi
 
 if [[ $PROVIDE_GW =~ true ]]; then
-    cat <<EOF >"/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:2"
+    sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE:2" > /dev/null << EOF
 DEVICE=$BM_BRIDGE:2
 Type=Ethernet
 ONBOOT=yes
