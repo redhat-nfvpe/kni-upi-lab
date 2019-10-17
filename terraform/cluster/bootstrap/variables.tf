@@ -34,6 +34,9 @@ variable "vcpu" {
   type = "string"
 }
 
+variable "bootstrap_img" {
+  type = "string"
+}
 variable "provisioning_bridge" {
   type = "string"
 }

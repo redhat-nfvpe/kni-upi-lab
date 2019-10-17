@@ -72,6 +72,7 @@ module "bootstrap" {
   cluster_id          = "${var.cluster_id}"
   memory_gb           = "${var.bootstrap_memory_gb}"
   vcpu                = "${var.bootstrap_vcpu}"
+  bootstrap_img       = "${var.bootstrap_img}"
   provisioning_bridge = "${var.bootstrap_provisioning_bridge}"
   baremetal_bridge    = "${var.bootstrap_baremetal_bridge}"
   install_dev         = "${var.bootstrap_install_dev}"
