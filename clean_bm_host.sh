@@ -16,6 +16,10 @@ map_site_config "true" || exit 1
 # shellcheck disable=SC1091
 source "common.sh"
 # shellcheck disable=SC1091
+source "images_and_binaries.sh"
+# shellcheck disable=SC1091
+source "scripts/paths.sh"
+# shellcheck disable=SC1091
 source "scripts/network_conf.sh"
 # shellcheck disable=SC1091
 source "scripts/utils.sh"
@@ -168,7 +172,7 @@ fi
 printf "\nRemoving dependencies via yum...\n\n"
 
 if [[ "$1" == "all" ]]; then
-    sudo yum remove -y git podman unzip ipmitool dnsmasq bridge-utils epel-release python-pip jq
+    sudo yum remove -y podman unzip ipmitool dnsmasq bridge-utils epel-release python-pip jq
 fi
 
 printf "\nDONE\n"
