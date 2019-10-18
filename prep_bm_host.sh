@@ -59,6 +59,9 @@ sudo pip install yq
 ### Need interface input from user via environment ###
 ###------------------------------------------------###
 
+# First remove "build" directory
+rm -rf build
+
 # shellcheck disable=SC1091
 source scripts/parse_site_config.sh
 
