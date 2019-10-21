@@ -284,7 +284,8 @@ if ! [ -f "${DNSCONF}" ]; then
     DNSCHANGED=1
 fi
 DNSMASQCONF=/etc/NetworkManager/dnsmasq.d/openshift.conf
-if ! [ -f "${DNSMASQCONF}" ]; then
+DNSMASQCONF_CONTENT=$(grep "server=/${CLUSTER_FINAL_VALS[cluster_domain]}/$CLUSTER_DNS" ${DNSMASQCONF})
+if [ ! -f "${DNSMASQCONF}" ] || [ -z "${DNSMASQCONF_CONTENT}" ]; then
     echo server=/"${CLUSTER_FINAL_VALS[cluster_domain]}"/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
