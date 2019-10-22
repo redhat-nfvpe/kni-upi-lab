@@ -27,6 +27,7 @@ MANIFEST_CHECK_init() {
     MANIFEST_CHECK[install-config.req.pullSecret]="(.*)"
     MANIFEST_CHECK[install-config.req.sshKey]="(.*)"
 
+    MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.bootType]="^(bmc|manual|external)$"
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.role]="^(master|worker|nodeploy)$"
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.name]="^(master-[012]{1}$|worker-[012]{1}$)|^(bootstrap$)"
     MANIFEST_CHECK[install-config.req.platform.hosts.[0-9]+.sdnMacAddress]="$regex_mac_address"

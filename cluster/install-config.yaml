@@ -6,7 +6,7 @@ compute:
 controlPlane:
    name: master
    platform: {}
-   replicas: 3
+   replicas: 1
 metadata:
    name: test1
 networking:
@@ -25,11 +25,17 @@ platform:
       # Master nodes are always RHCOS
       -  name: master-0
          role: master
+         bootType: manual                   # bmc (default if not specified) | manual | external 
+                                            # bmc      -- ipmi is controlled by this automation
+                                            #             (a bmc section must be provided)
+                                            # manual   -- you will be prompted when to manual initiate a pxe boot or turn off host
+                                            # external -- you have supplied a script to access an external 
+                                            #             provisioning system 
          bmc:
             address: ipmi://10.19.110.12
             credentialsName: ha-lab-ipmi
-         bootMACAddress: 0C:C4:7A:DB:A9:93  # provisioning network mac
-         sdnMacAddress: 0c:c4:7a:19:6f:92   # baremetal network mac
+         bootMACAddress: 94:c6:91:a7:79:5f  # provisioning network mac
+         sdnMacAddress: 94:c6:91:a7:79:5f   # baremetal network mac
          # sdnIPAddress: 192.168.111.11     # Optional -- Set static IP
          hardwareProfile: default
          osProfile: 
@@ -40,7 +46,7 @@ platform:
                               # or all masters with pxe: uefi
             install_dev: sda  # where to install the operating system (sda is the default)
       -  name: master-1
-         role: master
+         role: nodeploy
          bmc:
             address: ipmi://10.19.110.10
             credentialsName: ha-lab-ipmi
@@ -49,7 +55,7 @@ platform:
          hardwareProfile: default
          # Not need to specify osProfile...
       -  name: master-2
-         role: master
+         role: nodeploy
          bmc:
             address: ipmi://10.19.110.8
             credentialsName: ha-lab-ipmi
@@ -60,6 +66,7 @@ platform:
       # Worker nodes can be either rhcos (default) || centos (7.x) || rhel (8.x)
       -  name: worker-0
          role: worker
+         bootType: manual
          bmc: 
             address: ipmi://10.19.110.10
             credentialsName: ha-lab-ipmi
@@ -102,6 +109,6 @@ platform:
             kernel: assets/rhel8/images/pxeboot/vmlinuz # (default if not specified) 
 
 
-pullSecret: 'setec-astronomy'
+pullSecret: PULL_SECRET
 sshKey: |
-   too-many-secrets
+   SSH_PUB_KEY
