@@ -6,7 +6,8 @@ OPENSHIFT_RHCOS_MINOR_REL=""
 
 if [[ -z $OPENSHIFT_RHCOS_MAJOR_REL || (! $OPENSHIFT_RHCOS_MAJOR_REL =~ (4.1|4.2|4.3|latest)) ]]; then
     OPENSHIFT_RHCOS_MAJOR_REL="4.2"
-    OPENSHIFT_RHCOS_MINOR_REL=""
+    # What follows is the last known version of 4.2 to have baremetal images
+    OPENSHIFT_RHCOS_MINOR_REL="42.80.20191010.0"
 elif [[ $OPENSHIFT_RHCOS_MAJOR_REL == "latest" ]]; then
     OPENSHIFT_RHCOS_MAJOR_REL="4.3"
     OPENSHIFT_RHCOS_MINOR_REL=""
