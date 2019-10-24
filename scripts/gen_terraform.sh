@@ -111,7 +111,7 @@ get_asset_raw() {
 get_asset_initramfs() {
     local initramfs
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.*.img ]]; then
+        if [[ $file =~ ${RHCOS_BOOT_IMAGES["ramdisk"]} ]]; then
             initramfs="${file##*/}"
         fi
     done
@@ -123,7 +123,7 @@ get_asset_kernel() {
     local kernel
 
     for file in "$MATCHBOX_DATA_DIR"/var/lib/matchbox/assets/*; do
-        if [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-kernel ]]; then
+        if [[ $file =~ ${RHCOS_BOOT_IMAGES["kernel"]} ]]; then
             kernel="${file##*/}"
         fi
     done
@@ -266,9 +266,9 @@ gen_rhcos() {
             raw="${file##*/}"
         elif [[ $pxe =~ "uefi" ]] && [[ $file =~ ${RHCOS_METAL_IMAGES["uefi"]} ]]; then
             raw="${file##*/}"
-        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-initramfs.*.img ]]; then
+        elif [[ $file =~ ${RHCOS_BOOT_IMAGES["ramdisk"]} ]]; then
             initramfs="${file##*/}"
-        elif [[ $file =~ rhcos-$OPENSHIFT_RHCOS_MINOR_REL-installer-kernel ]]; then
+        elif [[ $file =~ ${RHCOS_BOOT_IMAGES["kernel"]} ]]; then
             kernel="${file##*/}"
         fi
     done
