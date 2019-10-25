@@ -20,6 +20,7 @@ url --url=${OS_INSTALL_ENDPOINT}
 bootloader --location=mbr --append="rhgb quiet crashkernel=auto"
 zerombr
 clearpart --all --initlabel
+part /boot --fstype=ext4 --size=512
 part / --fstype ext4 --grow
 auth --passalgo=sha512 --useshadow
 selinux --disabled
