@@ -3,6 +3,8 @@ kind: Secret
 metadata:
   name:  ha-lab-ipmi
 stringdata:
+   # Username and password for IPMI access to master and worker
+   # nodes, base64-encoded
    username: QURNSU4=
    password: QURNSU4=
    
