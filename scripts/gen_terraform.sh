@@ -139,7 +139,7 @@ gen_terraform_cluster() {
     # Patches
     pxe=$(get_host_var "master-0" pxe) || pxe="bios"
     if ! raw=$(get_asset_raw "$pxe"); then
-        printf "Could not find raw image file in assets!\n"
+        printf "Could not find raw image \"%s\" file in assets!\n" "$pxe"
         exit 1
     fi
 
