@@ -109,7 +109,12 @@ if [[ -f "/etc/NetworkManager/dnsmasq.d/openshift.conf" ]]; then
     sudo rm /etc/NetworkManager/dnsmasq.d/openshift.conf
 fi
 
-sudo systemctl restart NetworkManager
+if [[ -f "/etc/dhcp/dhclient.conf" ]]; then
+    sudo rm /etc/dhcp/dhclient.conf
+    sudo systemctl restart network
+fi
+
+sudo systemctl reload NetworkManager
 
 ###-----------------###
 ### Remove tftpboot ###
