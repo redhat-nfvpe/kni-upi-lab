@@ -289,8 +289,29 @@ if [ ! -f "${DNSMASQCONF}" ] || [ -z "${DNSMASQCONF_CONTENT}" ]; then
     echo server=/"${CLUSTER_FINAL_VALS[cluster_domain]}"/"$CLUSTER_DNS" | sudo tee "${DNSMASQCONF}"
     DNSCHANGED=1
 fi
+
+DOMAIN_NAME=""
+DOMAIN_SEARCH=""
+SEARCH=""
+
+if [[ -f "/etc/dhcp/dhclient.conf" ]]; then
+    DOMAIN_NAME="$(grep "supersede domain-name \"\"" /etc/dhcp/dhclient.conf)"
+    DOMAIN_SEARCH="$(grep "supersede domain-search \"\"" /etc/dhcp/dhclient.conf)"
+    SEARCH="$(grep "supersede search \"\"" /etc/dhcp/dhclient.conf)"
+fi
+
+if [[ -z $DOMAIN_NAME ]] || [[ -z $DOMAIN_SEARCH ]] || [[ -z $SEARCH ]]; then
+    sudo tee "/etc/dhcp/dhclient.conf" > /dev/null << EOF
+supersede domain-name "";
+supersede domain-search "";
+supersede search "";
+EOF
+    sudo systemctl restart network
+    DNSCHANGED=1
+fi
+
 if [ -n "$DNSCHANGED" ]; then
-    sudo systemctl restart NetworkManager
+    sudo systemctl reload NetworkManager
 fi
 
 ###-----------------###
