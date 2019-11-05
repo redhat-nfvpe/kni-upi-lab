@@ -28,7 +28,7 @@ parse_site_config() {
     [[ "$VERBOSE" =~ true ]] && printf "Processing vars in %s\n" "$file"
 
     # shellcheck disable=SC2016
-    if ! values=$(yq 'paths(scalars) as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
+    if ! values=$(yq 'paths as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
         printf "Error during parsing...%s\n" "$file"
 
         return 1
