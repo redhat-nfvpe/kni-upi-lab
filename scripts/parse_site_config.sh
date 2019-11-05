@@ -28,7 +28,7 @@ parse_site_config() {
     [[ "$VERBOSE" =~ true ]] && printf "Processing vars in %s\n" "$file"
 
     # shellcheck disable=SC2016
-    if ! values=$(yq 'paths(scalars) as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
+    if ! values=$(yq 'paths as $p | [ ( [ $p[] | tostring ] | join(".") ) , ( getpath($p) | tojson ) ] | join(" ")' "$file"); then
         printf "Error during parsing...%s\n" "$file"
 
         return 1
@@ -39,6 +39,7 @@ parse_site_config() {
     declare -g -A SITE_CONFIG
     for line in "${lines[@]}"; do
         # create the associative array
+        echo "$line --> ${line%% *} == ${line#* }"
         SITE_CONFIG[${line%% *}]=${line#* }
     done
 }
@@ -86,6 +87,7 @@ map_site_config() {
         if [[ $map_rule =~ ^\| ]]; then
             map_rule=${map_rule#|}
         else
+            echo "$map_rule -- ${SITE_CONFIG[$map_rule]}"
             if [[ -z "${SITE_CONFIG[$map_rule]}" ]]; then
                 printf "Error: %s is unset in %s, must be set\n\n" "$map_rule" "./cluster/site-config.yaml"
                 error=true
