@@ -13,7 +13,7 @@ resource "matchbox_profile" "master" {
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_nodes[count.index]["mac_address"]}",
     (lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "ip=${var.master_nodes[count.index]["provisioning_interface"]}:dhcp" : " "),
     (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" ? "ip=${var.master_nodes[count.index]["baremetal_interface"]}:dhcp" : " "),
-    (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "coreos.no_persist_ip" : " "),
+    (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "coreos.no_persist_ip=1" : " "),
   ])
   raw_ignition = "${var.ignition_config_content}"
 }
