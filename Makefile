@@ -77,7 +77,7 @@ $(matchbox_git):
 ## =
 matchbox-data: $(matchbox-data-files)
 
-$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh 
+$(matchbox-data-files): $(manifests) ./scripts/gen_matchbox.sh common.sh
 	./scripts/gen_matchbox.sh data
 
 ## => Baremetal dnsmasq <======================================================
