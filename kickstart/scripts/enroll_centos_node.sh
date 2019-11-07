@@ -30,6 +30,25 @@ yum update -y
 
 yum -y -t install git epel-release wget kernel irqbalance microcode_ctl systemd selinux-policy-targeted setools-console dracut-network passwd openssh-server openssh-clients podman skopeo runc containernetworking-plugins cri-tools nfs-utils NetworkManager dnsmasq lvm2 iscsi-initiator-utils sg3_utils device-mapper-multipath xfsprogs e2fsprogs mdadm cryptsetup chrony logrotate sssd shadow-utils sudo coreutils less tar xz gzip bzip2 rsync tmux nmap-ncat net-tools bind-utils strace bash-completion vim-minimal nano authconfig iptables-services biosdevname container-storage-setup cloud-utils-growpart glusterfs-fuse cri-o openshift-clients openshift-hyperkube
 
+# update util-linux
+# since 4.2 we need to bring a newer version of logger, that supports journal flag
+pushd /tmp
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/util-linux-2.27-0.6.el7.x86_64.rpm
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/libblkid-2.27-0.6.el7.x86_64.rpm
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/libfdisk-2.27-0.6.el7.x86_64.rpm
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/libmount-2.27-0.6.el7.x86_64.rpm
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/libuuid-2.27-0.6.el7.x86_64.rpm
+wget https://cbs.centos.org/kojifiles/packages/util-linux/2.27/0.6.el7/x86_64/libsmartcols-2.27-0.6.el7.x86_64.rpm
+
+rpm -i --replacefiles libuuid-2.27-0.6.el7.x86_64.rpm
+rpm -i --replacefiles libblkid-2.27-0.6.el7.x86_64.rpm
+rpm -i --replacefiles libfdisk-2.27-0.6.el7.x86_64.rpm
+rpm -i --replacefiles libmount-2.27-0.6.el7.x86_64.rpm
+rpm -i --replacefiles libsmartcols-2.27-0.6.el7.x86_64.rpm
+rpm -i --replacefiles util-linux-2.27-0.6.el7.x86_64.rpm
+
+popd
+
 # enable cri-o
 systemctl enable cri-o
 
