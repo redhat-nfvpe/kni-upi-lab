@@ -39,7 +39,6 @@ parse_site_config() {
     declare -g -A SITE_CONFIG
     for line in "${lines[@]}"; do
         # create the associative array
-        echo "$line --> ${line%% *} == ${line#* }"
         SITE_CONFIG[${line%% *}]=${line#* }
     done
 }
