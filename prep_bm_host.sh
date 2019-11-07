@@ -49,13 +49,34 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
+sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils jq nmap libvirt openssl-devel zlib-devel $PIP_PACKAGE
 
 ###--------------------###
 ### Install Yq via pip ###
 ###--------------------###
 
 sudo pip install yq
+
+###-----------------------------###
+### Install python3 for redfish ###
+###-----------------------------###
+
+printf "\nInstalling python3 and redfishtool...\n\n"
+
+if [[ ! -d "/usr/local/bin/python3" ]]; then
+    (
+        sudo yum groupinstall -y "Development Tools"
+        cd "$HOME"
+        curl -O https://www.python.org/ftp/python/3.6.4/Python-3.6.4.tar.xz
+        tar -xJf Python-3.6.4.tar.xz
+        cd Python-3.6.4
+        ./configure
+        # TODO: use sudo below?
+        make
+        make install
+        pip3.6 install redfishtool
+    ) || exit 1
+fi
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
