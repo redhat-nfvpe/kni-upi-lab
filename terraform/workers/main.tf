@@ -39,9 +39,7 @@ resource "matchbox_profile" "worker" {
   args = flatten([
     "${local.kernel_args}",
     (var.worker_nodes[count.index]["os_profile"] == "rhcos" ? "coreos.inst=yes coreos.inst.install_dev=${var.worker_nodes[count.index]["install_dev"]} coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.worker_nodes[count.index]["mac_address"]} coreos.inst.image_url=${var.worker_nodes[count.index]["pxe_os_image_url"]}" : "inst.ks=${var.worker_nodes[count.index]["kickstart"]}"),
-    (lookup(var.worker_nodes[count.index], "provisioning_interface", "") != "" ? "ip=${var.worker_nodes[count.index]["provisioning_interface"]}:dhcp" : " "),
-    (lookup(var.worker_nodes[count.index], "baremetal_interface", "") != "" ? "ip=${var.worker_nodes[count.index]["baremetal_interface"]}:dhcp" : " "),
-    (lookup(var.worker_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.worker_nodes[count.index], "provisioning_interface", "") != "" ? "coreos.no_persist_ip=1" : " "),
+    (lookup(var.worker_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.worker_nodes[count.index], "provisioning_interface", "") != "" ? "ip=dhcp coreos.no_persist_ip=1" : " "),
   ])
 
   raw_ignition= "${file(var.worker_ign_file)}"

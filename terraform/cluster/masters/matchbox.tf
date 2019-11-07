@@ -11,9 +11,7 @@ resource "matchbox_profile" "master" {
     "${var.pxe_kernel_args}",
     "coreos.inst.install_dev=${var.master_nodes[count.index]["install_dev"]}",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?mac=${var.master_nodes[count.index]["mac_address"]}",
-    (lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "ip=${var.master_nodes[count.index]["provisioning_interface"]}:dhcp" : " "),
-    (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" ? "ip=${var.master_nodes[count.index]["baremetal_interface"]}:dhcp" : " "),
-    (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "coreos.no_persist_ip=1" : " "),
+    (lookup(var.master_nodes[count.index], "baremetal_interface", "") != "" || lookup(var.master_nodes[count.index], "provisioning_interface", "") != "" ? "ip=dhcp coreos.no_persist_ip=1" : " "),
   ])
   raw_ignition = "${var.ignition_config_content}"
 }
