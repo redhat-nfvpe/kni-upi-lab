@@ -8,6 +8,10 @@ variable "cluster_domain" {
   type = "string"
 }
 
+variable "nameserver" {
+  type = "string"
+  default = ""
+}
 
 # ================MATCHBOX=====================
 
