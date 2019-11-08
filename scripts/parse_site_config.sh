@@ -86,7 +86,6 @@ map_site_config() {
         if [[ $map_rule =~ ^\| ]]; then
             map_rule=${map_rule#|}
         else
-            echo "$map_rule -- ${SITE_CONFIG[$map_rule]}"
             if [[ -z "${SITE_CONFIG[$map_rule]}" ]]; then
                 printf "Error: %s is unset in %s, must be set\n\n" "$map_rule" "./cluster/site-config.yaml"
                 error=true
