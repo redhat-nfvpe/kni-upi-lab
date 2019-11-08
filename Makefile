@@ -188,7 +188,7 @@ cluster/manifest_vals.sh: $(manifests)
 ignition: $(ignitions) 
 ## =
 $(ignitions): $(manifests) ./scripts/gen_ignition.sh $(openshift-bin) $(common_scripts)
-	./scripts/gen_ignition.sh
+	./scripts/gen_ignition.sh -s
 
 ## => Kickstart Files <=========================================================
 ## = kickstart                - Create the required kickstart files

@@ -85,33 +85,30 @@ gen_ifcfg_manifest() {
     gen_machineconfig "$role" "0644" "$path" "$metadata_name" "$content"
 }
 
+cp_manifest() {
+    local dir=$1
+    local ocp_dir=$2
+
+    for patch_file in "$dir"/*; do
+        [ -f "$patch_file" ] || continue
+        printf "Adding %s to %s\n" "${patch_file#$PROJECT_DIR/}" "${ocp_dir#$PROJECT_DIR/}"
+        cp "$patch_file" "$ocp_dir"
+    done
+}
+
 patch_manifest() {
     local ocp_dir="$1"
+    local standalone="$2"
 
-    files=$(find "$PROJECT_DIR/cluster/manifest-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$PROJECT_DIR"/cluster/manifest-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "manifests"
-            cp "$patch_file" "$ocp_dir/manifests"
-        done
+    if [[ $standalone =~ true ]]; then
+      cp_manifest "$PROJECT_DIR/cluster/standalone/openshift" "$ocp_dir/openshift"
+      cp_manifest "$PROJECT_DIR/cluster/standalone/manifest" "$ocp_dir/manifest"
     fi
 
-    files=$(find "$PROJECT_DIR/cluster/openshift-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$PROJECT_DIR"/cluster/openshift-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
-            cp "$patch_file" "$ocp_dir/openshift"
-        done
-    fi
+    cp_manifest "$PROJECT_DIR/cluster/openshift-patches" "$ocp_dir/openshift"
+    cp_manifest "$PROJECT_DIR/cluster/manifest-patches" "$ocp_dir/manifests"
 
-    files=$(find "$BUILD_DIR/openshift-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$BUILD_DIR"/openshift-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
-            cp "$patch_file" "$ocp_dir/openshift"
-        done
-    fi
-
+    cp_manifest "$BUILD_DIR/openshift-patches" "$ocp_dir/openshift"
 }
 
 gen_manifests() {
@@ -135,17 +132,17 @@ gen_manifests() {
 
 gen_ignition() {
     local out_dir="$1"
-    local manifest_dir="$2"
+    local standalone="$2"
 
     gen_nm_disable_auto_config "master" || exit 1
     gen_nm_disable_auto_config "worker" || exit 1
 
-    gen_ifcfg_manifest "master"  "$MASTER_BM_INTF"  "yes" || exit 1
-    gen_ifcfg_manifest "master"  "$MASTER_PROV_INTF" "no" || exit 1
-    gen_ifcfg_manifest "worker"  "$WORKER_BM_INTF"  "yes" || exit 1
-    gen_ifcfg_manifest "worker"  "$WORKER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_BM_INTF" "yes" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_BM_INTF" "yes" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_PROV_INTF" "no" || exit 1
 
-    patch_manifest "$out_dir"
+    patch_manifest "$out_dir" "$standalone"
 
     if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
         printf "openshift-install create ignition-configs failed!\n"
@@ -222,8 +219,11 @@ install_openshift_oc() {
 VERBOSE="false"
 export VERBOSE
 
-while getopts ":hvm:o:" opt; do
+while getopts ":hvm:o:s" opt; do
     case ${opt} in
+    s)
+        standalone="true"
+        ;;
     o)
         out_dir=$OPTARG
         ;;
@@ -288,11 +288,11 @@ gen_variables "$manifest_dir"
 case "$COMMAND" in
 ignition)
     gen_manifests "$out_dir" "$manifest_dir"
-    gen_ignition "$out_dir"
+    gen_ignition "$out_dir" "$standalone"
     ;;
 # Parse options to the install sub command
 create-output)
-    gen_ignition "$out_dir"
+    gen_ignition "$out_dir" "$standalone"
     ;;
 create-manifests)
     gen_manifests "$out_dir" "$manifest_dir"
