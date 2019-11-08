@@ -86,6 +86,7 @@ declare -A WORKER_MAP=(
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
     [worker_ign_file]="==$OPENSHIFT_DIR/worker.ign"
+    [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
     [worker_count]="%install-config.compute.0.replicas"
