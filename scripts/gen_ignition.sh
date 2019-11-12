@@ -85,33 +85,30 @@ gen_ifcfg_manifest() {
     gen_machineconfig "$role" "0644" "$path" "$metadata_name" "$content"
 }
 
+cp_manifest() {
+    local dir=$1
+    local ocp_dir=$2
+
+    for patch_file in "$dir"/*; do
+        [ -f "$patch_file" ] || continue
+        printf "Adding %s to %s\n" "${patch_file#$PROJECT_DIR/}" "${ocp_dir#$PROJECT_DIR/}"
+        cp "$patch_file" "$ocp_dir"
+    done
+}
+
 patch_manifest() {
     local ocp_dir="$1"
+    local standalone="$2"
 
-    files=$(find "$PROJECT_DIR/cluster/manifest-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$PROJECT_DIR"/cluster/manifest-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "manifests"
-            cp "$patch_file" "$ocp_dir/manifests"
-        done
+    if [[ $standalone =~ true ]]; then
+        cp_manifest "$PROJECT_DIR/cluster/standalone/openshift" "$ocp_dir/openshift"
+        cp_manifest "$PROJECT_DIR/cluster/standalone/manifest" "$ocp_dir/manifest"
     fi
 
-    files=$(find "$PROJECT_DIR/cluster/openshift-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$PROJECT_DIR"/cluster/openshift-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
-            cp "$patch_file" "$ocp_dir/openshift"
-        done
-    fi
+    cp_manifest "$PROJECT_DIR/cluster/openshift-patches" "$ocp_dir/openshift"
+    cp_manifest "$PROJECT_DIR/cluster/manifest-patches" "$ocp_dir/manifests"
 
-    files=$(find "$BUILD_DIR/openshift-patches" -name "*.yaml")
-    if [ -n "$files" ]; then
-        for patch_file in "$BUILD_DIR"/openshift-patches/*.yaml; do
-            printf "Adding %s to %s\n" "${patch_file%.*}" "openshift"
-            cp "$patch_file" "$ocp_dir/openshift"
-        done
-    fi
-
+    cp_manifest "$BUILD_DIR/openshift-patches" "$ocp_dir/openshift"
 }
 
 gen_manifests() {
@@ -127,28 +124,28 @@ gen_manifests() {
     mkdir -p "$out_dir"
     cp "$manifest_dir/install-config.yaml" "$out_dir"
 
-    if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
-        printf "openshift-install create manifests failed!\n"
+    if ! "$REQUIREMENTS_DIR/openshift-install" --log-level warn --dir "$out_dir" create manifests >/dev/null; then
+        printf "%s create manifests failed!\n" "$REQUIREMENTS_DIR/openshift-install"
         exit 1
     fi
 }
 
 gen_ignition() {
     local out_dir="$1"
-    local manifest_dir="$2"
+    local standalone="$2"
 
     gen_nm_disable_auto_config "master" || exit 1
     gen_nm_disable_auto_config "worker" || exit 1
 
-    gen_ifcfg_manifest "master"  "$MASTER_BM_INTF"  "yes" || exit 1
-    gen_ifcfg_manifest "master"  "$MASTER_PROV_INTF" "no" || exit 1
-    gen_ifcfg_manifest "worker"  "$WORKER_BM_INTF"  "yes" || exit 1
-    gen_ifcfg_manifest "worker"  "$WORKER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_BM_INTF" "yes" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_BM_INTF" "yes" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_PROV_INTF" "no" || exit 1
 
-    patch_manifest "$out_dir"
+    patch_manifest "$out_dir" "$standalone"
 
-    if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
-        printf "openshift-install create ignition-configs failed!\n"
+    if ! "$REQUIREMENTS_DIR/openshift-install" --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
+        printf "%s create ignition-configs failed!\n" "$REQUIREMENTS_DIR/openshift-install"
         exit 1
     fi
 
@@ -186,16 +183,11 @@ install_openshift_bin() {
     (
         cd /tmp
 
-        if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-                tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            else
-                LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_INSTALLER"
-                tar xvf "$LATEST_OCP_INSTALLER"
-            fi
-            sudo mv openshift-install /usr/local/bin/
+        if [ ! -f "$REQUIREMENTS_DIR/openshift-install" ]; then
+            curl -O "$OCP_INSTALL_BINARY_URL"
+            tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+            mkdir -p "$REQUIREMENTS_DIR"
+            sudo mv openshift-install "$REQUIREMENTS_DIR"
         fi
 
     ) || exit 1
@@ -205,25 +197,24 @@ install_openshift_oc() {
     (
         cd /tmp
 
-        if [[ ! -f "/usr/local/bin/oc" ]]; then
-            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-                tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            else
-                LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_CLIENT"
-                tar xvf "$LATEST_OCP_CLIENT"
-            fi
-            sudo mv oc /usr/local/bin/
+        if [ ! -f "$REQUIREMENTS_DIR/oc" ]; then
+            curl -O "$OCP_CLIENT_BINARY_URL"
+            tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
+            mkdir -p "$REQUIREMENTS_DIR"
+            sudo mv oc "$REQUIREMENTS_DIR"
         fi
+
     ) || exit 1
 }
 
 VERBOSE="false"
 export VERBOSE
 
-while getopts ":hvm:o:" opt; do
+while getopts ":hvm:o:s" opt; do
     case ${opt} in
+    s)
+        standalone="true"
+        ;;
     o)
         out_dir=$OPTARG
         ;;
@@ -288,19 +279,25 @@ gen_variables "$manifest_dir"
 case "$COMMAND" in
 ignition)
     gen_manifests "$out_dir" "$manifest_dir"
-    gen_ignition "$out_dir"
+    gen_ignition "$out_dir" "$standalone"
     ;;
 # Parse options to the install sub command
 create-output)
-    gen_ignition "$out_dir"
+    gen_ignition "$out_dir" "$standalone"
     ;;
 create-manifests)
     gen_manifests "$out_dir" "$manifest_dir"
     ;;
 installer)
+    # shellcheck disable=SC1091
+    source "images_and_binaries.sh"
+
     install_openshift_bin
     ;;
 oc)
+    # shellcheck disable=SC1091
+    source "images_and_binaries.sh"
+
     install_openshift_oc
     ;;
 *)
