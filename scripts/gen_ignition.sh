@@ -101,8 +101,8 @@ patch_manifest() {
     local standalone="$2"
 
     if [[ $standalone =~ true ]]; then
-      cp_manifest "$PROJECT_DIR/cluster/standalone/openshift" "$ocp_dir/openshift"
-      cp_manifest "$PROJECT_DIR/cluster/standalone/manifest" "$ocp_dir/manifest"
+        cp_manifest "$PROJECT_DIR/cluster/standalone/openshift" "$ocp_dir/openshift"
+        cp_manifest "$PROJECT_DIR/cluster/standalone/manifest" "$ocp_dir/manifest"
     fi
 
     cp_manifest "$PROJECT_DIR/cluster/openshift-patches" "$ocp_dir/openshift"
@@ -124,8 +124,8 @@ gen_manifests() {
     mkdir -p "$out_dir"
     cp "$manifest_dir/install-config.yaml" "$out_dir"
 
-    if ! openshift-install --log-level warn --dir "$out_dir" create manifests >/dev/null; then
-        printf "openshift-install create manifests failed!\n"
+    if ! "$REQUIREMENTS_DIR/openshift-install" --log-level warn --dir "$out_dir" create manifests >/dev/null; then
+        printf "%s create manifests failed!\n" "$REQUIREMENTS_DIR/openshift-install"
         exit 1
     fi
 }
@@ -144,8 +144,8 @@ gen_ignition() {
 
     patch_manifest "$out_dir" "$standalone"
 
-    if ! openshift-install --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
-        printf "openshift-install create ignition-configs failed!\n"
+    if ! "$REQUIREMENTS_DIR/openshift-install" --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
+        printf "%s create ignition-configs failed!\n" "$REQUIREMENTS_DIR/openshift-install"
         exit 1
     fi
 
@@ -183,16 +183,11 @@ install_openshift_bin() {
     (
         cd /tmp
 
-        if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-                tar xvf "openshift-install-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            else
-                LATEST_OCP_INSTALLER=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep install-linux | cut -d '"' -f 8)
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_INSTALLER"
-                tar xvf "$LATEST_OCP_INSTALLER"
-            fi
-            sudo mv openshift-install /usr/local/bin/
+        if [ ! -f "$REQUIREMENTS_DIR/openshift-install" ]; then
+            curl -O "$OCP_INSTALL_BINARY_URL"
+            tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+            mkdir -p "$REQUIREMENTS_DIR"
+            sudo mv openshift-install "$REQUIREMENTS_DIR"
         fi
 
     ) || exit 1
@@ -202,17 +197,13 @@ install_openshift_oc() {
     (
         cd /tmp
 
-        if [[ ! -f "/usr/local/bin/oc" ]]; then
-            if [[ "$OPENSHIFT_RHCOS_MAJOR_REL" != "latest" ]]; then
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/$OPENSHIFT_OCP_MINOR_REL/openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-                tar xvf "openshift-client-linux-$OPENSHIFT_OCP_MINOR_REL.tar.gz"
-            else
-                LATEST_OCP_CLIENT=$(curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/ | grep client-linux | cut -d '"' -f 8)
-                curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/$LATEST_OCP_CLIENT"
-                tar xvf "$LATEST_OCP_CLIENT"
-            fi
-            sudo mv oc /usr/local/bin/
+        if [ ! -f "$REQUIREMENTS_DIR/oc" ]; then
+            curl -O "$OCP_CLIENT_BINARY_URL"
+            tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
+            mkdir -p "$REQUIREMENTS_DIR"
+            sudo mv oc "$REQUIREMENTS_DIR"
         fi
+
     ) || exit 1
 }
 
@@ -298,9 +289,15 @@ create-manifests)
     gen_manifests "$out_dir" "$manifest_dir"
     ;;
 installer)
+    # shellcheck disable=SC1091
+    source "images_and_binaries.sh"
+
     install_openshift_bin
     ;;
 oc)
+    # shellcheck disable=SC1091
+    source "images_and_binaries.sh"
+
     install_openshift_oc
     ;;
 *)

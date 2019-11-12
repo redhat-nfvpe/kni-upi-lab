@@ -43,3 +43,6 @@ export TEMPLATES_DIR
 
 # Create directory for debug output
 mkdir -p "$BUILD_DIR"
+
+REQUIREMENTS_DIR="$PROJECT_DIR/requirements"
+export REQUIREMENTS_DIR

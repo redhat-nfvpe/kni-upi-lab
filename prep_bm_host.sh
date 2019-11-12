@@ -320,17 +320,16 @@ printf "\nInstalling OpenShift binaries...\n\n"
 (
     cd /tmp
 
-    if [[ ! -f "/usr/local/bin/openshift-install" ]]; then
-        curl -O "$OCP_INSTALL_BINARY_URL"
-        tar xvf ${OCP_INSTALL_BINARY_URL##*/}
-        sudo mv openshift-install /usr/local/bin/
-    fi
+    # Always download and overwrite binaries to ensure 
+    # proper versions
+    #
+    curl -O "$OCP_INSTALL_BINARY_URL"
+    tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+    sudo mv openshift-install "$REQUIREMENTS_DIR"
 
-    if [[ ! -f "/usr/local/bin/oc" ]]; then
-        curl -O "$OCP_CLIENT_BINARY_URL"
-        tar xvf ${OCP_CLIENT_BINARY_URL##*/}
-        sudo mv oc /usr/local/bin/
-    fi
+    curl -O "$OCP_CLIENT_BINARY_URL"
+    tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
+    sudo mv oc "$REQUIREMENTS_DIR"
 
     ###-------------------###
     ### Prepare terraform ###

@@ -73,7 +73,7 @@ manage_cluster() {
 
     if [[ $cmd =~ apply ]]; then
         printf "Check the status of the deployment with the following command...\n\n"
-        printf "openshift-install --dir %s wait-for install-complete\n" "$OPENSHIFT_DIR"
+        printf "%s --dir %s wait-for install-complete\n" "$REQUIREMENTS_DIR/openshift-install" "$OPENSHIFT_DIR"
     fi
 }
 

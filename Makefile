@@ -9,6 +9,7 @@ matchbox_dir = ./matchbox
 matchbox_data_dir = ./matchbox-data
 matchbox_etc_dir = $(matchbox_data_dir)/etc/matchbox
 build_dir = ./build
+requirements_dir = ./requirements
 
 dnsmasq_prov_conf := $(dnsmasq_dir)/prov/etc/dnsmasq.d/dnsmasq.conf
 dnsmasq_bm_conf := $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.conf $(dnsmasq_dir)/bm/etc/dnsmasq.d/dnsmasq.hostsfile
@@ -27,8 +28,8 @@ common_scripts := ./scripts/utils.sh ./scripts/cluster_map.sh
 kickstart_cfg := $(matchbox_data_dir)/var/lib/matchbox/assets/rhel8-worker-kickstart.cfg
 
 terraform-bin := /usr/bin/terraform
-openshift-bin := /usr/local/bin/openshift-install
-openshift-oc := /usr/local/bin/oc
+openshift-bin := $(requirements_dir)/openshift-install
+openshift-oc := $(requirements_dir)/oc
 haproxy_container := $(haproxy_dir)/imageid
 
 ## => General <================================================================
@@ -46,10 +47,9 @@ clean:
 	-./scripts/gen_coredns.sh remove
 	-./scripts/gen_matchbox.sh remove
 
-
 ## = dist-clean              - Remove all config files and data files
 dist-clean: clean
-	rm -f $(matchbox_data_dir) $(matchbox_dir)
+	rm -rf $(matchbox_data_dir) $(matchbox_dir) $(requirements_dir)
 ## = help                    - Show this screen
 .PHONY : help
 help : Makefile
@@ -158,10 +158,10 @@ haproxy-conf: $(haproxy_conf)
 $(haproxy_conf): $(manifests) ./scripts/gen_haproxy.sh $(common_scripts)
 	./scripts/gen_haproxy.sh gen-config
 
-$(openshift-oc):
+$(openshift-oc): 
 	./scripts/gen_ignition.sh oc
 
-$(openshift-bin):
+$(openshift-bin): 
 	./scripts/gen_ignition.sh installer
 
 ## => terraform <==============================================================
@@ -187,7 +187,7 @@ cluster/manifest_vals.sh: $(manifests)
 ## = ignition                - Create the required ignition files
 ignition: $(ignitions) 
 ## =
-$(ignitions): $(manifests) ./scripts/gen_ignition.sh $(openshift-bin) $(common_scripts)
+$(ignitions): $(manifests) ./scripts/gen_ignition.sh $(openshift-bin) $(openshift-oc) $(common_scripts)
 	./scripts/gen_ignition.sh -s
 
 ## => Kickstart Files <=========================================================
