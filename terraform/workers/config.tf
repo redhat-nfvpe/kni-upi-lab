@@ -13,6 +13,12 @@ variable "nameserver" {
   default = ""
 }
 
+variable "enable_redfish" {
+  description = "If set to true, uses redfish instead of IPMI"
+  type = bool
+  default = false
+}
+
 # ================MATCHBOX=====================
 
 variable "matchbox_rpc_endpoint" {
