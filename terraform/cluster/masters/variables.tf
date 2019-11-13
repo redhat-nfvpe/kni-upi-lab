@@ -30,3 +30,9 @@ variable "ignition_config_content" {
 variable "master_nodes" {
   type = list(map(string))
 }
+
+variable "enable_redfish" {
+  description = "If set to true, uses redfish instead of IPMI"
+  type = bool
+  default = false
+}

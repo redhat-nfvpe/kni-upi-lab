@@ -8,6 +8,11 @@ variable "cluster_domain" {
   type = "string"
 }
 
+variable "enable_redfish" {
+  description = "If set to true, uses redfish instead of IPMI"
+  type = bool
+  default = false
+}
 
 # ================MATCHBOX=====================
 

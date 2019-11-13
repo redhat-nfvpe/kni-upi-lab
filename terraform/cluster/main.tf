@@ -51,6 +51,7 @@ module "masters" {
 
   cluster_id = "${var.cluster_id}"
 
+  enable_redfish = var.enable_redfish
 }
 
 # ==============BOOTSTRAP=================
