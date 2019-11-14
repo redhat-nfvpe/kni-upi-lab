@@ -74,9 +74,10 @@ if [[ ! -d "/usr/local/bin/python3" ]]; then
         # TODO: use sudo below?
         make
         make install
-        pip3.6 install redfishtool
     ) || exit 1
 fi
+
+pip3.6 install redfishtool
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
