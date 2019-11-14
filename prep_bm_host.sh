@@ -2,6 +2,8 @@
 
 #set -e
 
+PREP_FLAG=$1
+
 ###------------------###
 ### RHEL preparation ###
 ###------------------###
@@ -322,45 +324,48 @@ fi
 ### Prepare OpenShift binaries ###
 ###----------------------------###
 
-printf "\nInstalling OpenShift binaries...\n\n"
+if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
 
-(
-    cd /tmp
+    printf "\nInstalling OpenShift binaries...\n\n"
 
-    # Always download and overwrite binaries to ensure 
-    # proper versions
-    #
-    curl -O "$OCP_INSTALL_BINARY_URL"
-    tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
-    sudo mv openshift-install "$REQUIREMENTS_DIR"
+    (
+        cd /tmp
 
-    curl -O "$OCP_CLIENT_BINARY_URL"
-    tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
-    sudo mv oc "$REQUIREMENTS_DIR"
+        # Always download and overwrite binaries to ensure 
+        # proper versions
+        #
+        curl -O "$OCP_INSTALL_BINARY_URL"
+        tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+        sudo mv openshift-install "$REQUIREMENTS_DIR"
 
-    ###-------------------###
-    ### Prepare terraform ###
-    ###-------------------###
+        curl -O "$OCP_CLIENT_BINARY_URL"
+        tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
+        sudo mv oc "$REQUIREMENTS_DIR"
 
-    printf "\nInstalling Terraform and generating config...\n\n"
+        ###-------------------###
+        ### Prepare terraform ###
+        ###-------------------###
 
-    if [[ ! -f "/usr/bin/terraform" ]]; then
-        curl -O "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip"
-        unzip terraform_0.12.2_linux_amd64.zip
-        sudo mv terraform /usr/bin/.
-    fi
+        printf "\nInstalling Terraform and generating config...\n\n"
 
-    if [[ ! -f "$HOME/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
-        if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
-            rm -rf /tmp/terraform-provider-matchbox
+        if [[ ! -f "/usr/bin/terraform" ]]; then
+            curl -O "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip"
+            unzip terraform_0.12.2_linux_amd64.zip
+            sudo mv terraform /usr/bin/.
         fi
 
-        git clone https://github.com/poseidon/terraform-provider-matchbox.git
-        cd terraform-provider-matchbox
-        go build -mod=vendor
-        mkdir -p ~/.terraform.d/plugins
-        cp terraform-provider-matchbox ~/.terraform.d/plugins/.
-    fi
-) || exit 1
+        if [[ ! -f "$HOME/.terraform.d/plugins/terraform-provider-matchbox" ]]; then
+            if [[ -d "/tmp/terraform-provider-matchbox" ]]; then
+                rm -rf /tmp/terraform-provider-matchbox
+            fi
+
+            git clone https://github.com/poseidon/terraform-provider-matchbox.git
+            cd terraform-provider-matchbox
+            go build -mod=vendor
+            mkdir -p ~/.terraform.d/plugins
+            cp terraform-provider-matchbox ~/.terraform.d/plugins/.
+        fi
+    ) || exit 1
+fi
 
 printf "\nDONE\n"
