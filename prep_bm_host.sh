@@ -177,6 +177,12 @@ NETMASK=255.255.255.0
 ONBOOT=yes
 EOF
 
+BM_INTF_VLAN="VLAN=no"
+
+if [[ $BM_INTF =~ \.[0-9]+$ ]]; then
+    BM_INTF_VLAN="VLAN=yes"
+fi
+
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" > /dev/null << EOF
 TYPE=Ethernet
 NM_CONTROLLED=no
@@ -189,6 +195,7 @@ NAME=$BM_INTF
 DEVICE=$BM_INTF
 ONBOOT=yes
 BRIDGE=$BM_BRIDGE
+$BM_INTF_VLAN
 EOF
 
 if [[ $PROVIDE_DNS =~ true ]]; then
