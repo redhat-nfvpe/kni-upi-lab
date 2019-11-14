@@ -282,7 +282,7 @@ gen_rhcos() {
     printf "    install_dev: \"%s\",\n" "$install_dev"
 }
 
-gen_centos() {
+gen_centos7() {
     local host="$1"
 
     printf "    os_profile: \"centos\",\n"
@@ -312,7 +312,7 @@ gen_centos8() {
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
-gen_rhel() {
+gen_rhel8() {
     local host="$1"
 
     printf "    os_profile: \"rhel\",\n"
@@ -324,6 +324,21 @@ gen_rhel() {
     printf "    kernel: \"%s\",\n" "$kernel"
 
     kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
+    printf "    kickstart: \"%s\",\n" "$kickstart"
+}
+
+gen_rhel7() {
+    local host="$1"
+
+    printf "    os_profile: \"rhel\",\n"
+
+    initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/rhel7/images/pxeboot/initrd.img"
+    printf "    initrd: \"%s\",\n" "$initrd"
+
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel7/images/pxeboot/initrd.img"
+    printf "    kernel: \"%s\",\n" "$kernel"
+
+    kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel7-worker-kickstart.cfg"
     printf "    kickstart: \"%s\",\n" "$kickstart"
 }
 
@@ -412,13 +427,16 @@ gen_terraform_workers() {
                 gen_rhcos "$worker"
                 ;;
             centos7)
-                gen_centos "$worker"
+                gen_centos7 "$worker"
                 ;;
             centos8)
                 gen_centos8 "$worker"
                 ;;
-            rhel)
-                gen_rhel "$worker"
+            rhel8)
+                gen_rhel8 "$worker"
+                ;;
+            rhel7)
+                gen_rhel7 "$worker"
                 ;;
             *)
                 printf "Unknown osProfile.type=\"%s\" in platform.hosts[%s]!\n" "$type" "$worker" 1>&2
@@ -506,6 +524,7 @@ shift $((OPTIND - 1))
 
 # shellcheck disable=SC1091
 source "common.sh"
+# shellcheck disable=SC1091
 source "images_and_binaries.sh"
 
 # shellcheck disable=SC1091
