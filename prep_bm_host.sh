@@ -2,6 +2,8 @@
 
 #set -e
 
+PREP_FLAG=$1
+
 ###------------------###
 ### RHEL preparation ###
 ###------------------###
@@ -322,27 +324,34 @@ fi
 ### Prepare OpenShift binaries ###
 ###----------------------------###
 
-printf "\nInstalling OpenShift binaries...\n\n"
+if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
+
+    printf "\nInstalling OpenShift binaries...\n\n"
+
+    (
+        cd /tmp
+
+        # Always download and overwrite binaries to ensure 
+        # proper versions
+        #
+        curl -O "$OCP_INSTALL_BINARY_URL"
+        tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+        sudo mv openshift-install "$REQUIREMENTS_DIR"
+
+        curl -O "$OCP_CLIENT_BINARY_URL"
+        tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
+        sudo mv oc "$REQUIREMENTS_DIR"
+    ) || exit 1
+fi
+
+###-------------------###
+### Prepare terraform ###
+###-------------------###
+
+printf "\nInstalling Terraform and matchbox plugin...\n\n"
 
 (
     cd /tmp
-
-    # Always download and overwrite binaries to ensure 
-    # proper versions
-    #
-    curl -O "$OCP_INSTALL_BINARY_URL"
-    tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
-    sudo mv openshift-install "$REQUIREMENTS_DIR"
-
-    curl -O "$OCP_CLIENT_BINARY_URL"
-    tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
-    sudo mv oc "$REQUIREMENTS_DIR"
-
-    ###-------------------###
-    ### Prepare terraform ###
-    ###-------------------###
-
-    printf "\nInstalling Terraform and generating config...\n\n"
 
     if [[ ! -f "/usr/bin/terraform" ]]; then
         curl -O "https://releases.hashicorp.com/terraform/0.12.2/terraform_0.12.2_linux_amd64.zip"
