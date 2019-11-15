@@ -17,10 +17,10 @@ enabled=1
 gpgcheck=0
 EOL
 
-cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.1_.repo <<EOL
-[rpms.svc.ci.openshift.org_openshift-origin-v4.1_]
-name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
-baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
+cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.2_.repo <<EOL
+[rpms.svc.ci.openshift.org_openshift-origin-v4.2_]
+name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.2/
+baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.2/
 enabled=1
 gpgcheck=0
 EOL

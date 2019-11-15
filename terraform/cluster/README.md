@@ -16,8 +16,8 @@ The cluster deployment is based in the openshift-install binary, and this sample
         systemctl enable libvirtd
         systemctl start libvirtd
 
- - Download installer binary following those instructions: [https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#installation-obtaining-installer_installing-bare-metal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#installation-obtaining-installer_installing-bare-metal)
- - Download the client binary following those instructions: [https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#cli-install_installing-bare-metal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html#cli-install_installing-bare-metal)
+ - Download installer binary following those instructions: [https://docs.openshift.com/container-platform/4.2/installing/installing_bare_metal/installing-bare-metal.html#installation-obtaining-installer_installing-bare-metal](https://docs.openshift.com/container-platform/4.2/installing/installing_bare_metal/installing-bare-metal.html#installation-obtaining-installer_installing-bare-metal)
+ - Download the client binary following those instructions: [https://docs.openshift.com/container-platform/4.2/installing/installing_bare_metal/installing-bare-metal.html#cli-install_installing-bare-metal](https://docs.openshift.com/container-platform/4.2/installing/installing_bare_metal/installing-bare-metal.html#cli-install_installing-bare-metal)
  - Create a cluster working directory, for example /tmp/baremetal. Generate a sample install-config.yaml file for the initial cluster deployment. For our sample, it can be something similar to:
 
 		apiVersion: v1
@@ -42,7 +42,7 @@ Place that file on /tmp/baremetal, and execute openshift-installer pointing ther
 
 This will generate [bootstrap|master|worker].ign , that are the ignition files used for cluster generation. There is also an auth/kubeconfig file that will be used later for enrolling the worker nodes. The ignition file generation must be performed everytime you redeploy the cluster, otherwise, certificates might expire and the user shall not be able to interact with the running cluster.
 
-- Download the RHCOS images and place them in /var/lib/matchbox/assets directory. The images can be downloaded from [https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.1/latest/) . You will need to download the *-installer-initramfs.img , *-installer-kernel  and the *-[metal-bios|metal-uefi]\* ones (this one depending on your BIOS/UEFI config). These three images need to be stored in the following path:
+- Download the RHCOS images and place them in /var/lib/matchbox/assets directory. The images can be downloaded from [https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.2/latest/](https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.2/latest/) . You will need to download the *-installer-initramfs.img , *-installer-kernel  and the *-[metal-bios|metal-uefi]\* ones (this one depending on your BIOS/UEFI config). These three images need to be stored in the following path:
 
     /var/lib/matchbox/assets/
 
