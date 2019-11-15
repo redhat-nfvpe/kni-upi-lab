@@ -14,7 +14,7 @@ subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms
 subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms
 
 # install packages
-subscription-manager repos --enable=rhocp-4.1-for-rhel-8-x86_64-rpms
+subscription-manager repos --enable=rhocp-4.2-for-rhel-8-x86_64-rpms
 
 dnf update -y
 

@@ -14,7 +14,7 @@ subscription-manager attach --pool=$RH_POOL || true
 subscription-manager repos --enable=rhel-7-server-rpms
 subscription-manager repos --enable=rhel-7-server-extras-rpms
 subscription-manager repos --enable=rhel-7-server-rh-common-rpms
-subscription-manager repos --enable=rhel-7-server-ose-4.1-rpms
+subscription-manager repos --enable=rhel-7-server-ose-4.2-rpms
 
 yum update -y
 

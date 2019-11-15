@@ -57,7 +57,7 @@ worker_nodes = [
     kernel: "assets/rhcos_vmlinuz",
     os_profile: "rhcos",
     install_dev: "sda",
-    pxe_os_image_url: "http://${PROVISION_IP}:8080/assets/rhcos-4.1.0-x86_64-metal-bios.raw.gz",
+    pxe_os_image_url: "http://${PROVISION_IP}:8080/assets/rhcos-4.2.0-x86_64-metal-bios.raw.gz",
   },
 ]
 
