@@ -18,7 +18,7 @@ if [ -e /tmp/runonce ]; then
         podman pull --tls-verify=false --authfile /tmp/pull.json $RELEASE_IMAGE
         podman run -v /:/rootfs -v /var/run/dbus:/var/run/dbus -v /run/systemd:/run/systemd --privileged --rm -ti $RELEASE_IMAGE start --node-name $HOSTNAME --once-from /tmp/bootstrap.ign --skip-reboot
         reboot
-    elif [[ $VERSION_NUMBER == "4.2"* ]]; then
+    elif [[ $VERSION_NUMBER == "4.2"* ]] || [[ $VERSION_NUMBER == "4.3"* ]]; then
         # run release image
 	CLUSTER_VERSION=$(oc get clusterversion --config=/root/.kube/config --output=jsonpath='{.items[0].status.desired.image}')
 	RELEASE_IMAGE=$(podman pull --tls-verify=false --authfile /tmp/pull.json $CLUSTER_VERSION)

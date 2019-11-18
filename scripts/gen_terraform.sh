@@ -320,7 +320,7 @@ gen_rhel8() {
     initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/rhel8/images/pxeboot/initrd.img"
     printf "    initrd: \"%s\",\n" "$initrd"
 
-    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel8/images/pxeboot/initrd.img"
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel8/images/pxeboot/vmlinuz"
     printf "    kernel: \"%s\",\n" "$kernel"
 
     kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel8-worker-kickstart.cfg"
@@ -335,7 +335,7 @@ gen_rhel7() {
     initrd=$(get_host_var "$host" osProfile.initrd) || initrd="assets/rhel7/images/pxeboot/initrd.img"
     printf "    initrd: \"%s\",\n" "$initrd"
 
-    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel7/images/pxeboot/initrd.img"
+    kernel=$(get_host_var "$host" osProfile.kernel) || kernel="assets/rhel7/images/pxeboot/vmlinuz"
     printf "    kernel: \"%s\",\n" "$kernel"
 
     kickstart=$(get_host_var "$host" osProfile.kickstart) || kickstart="$PROV_IP_MATCHBOX_HTTP_URL/assets/rhel7-worker-kickstart.cfg"
