@@ -30,10 +30,28 @@ yum update -y
 
 yum -y -t install git epel-release wget kernel irqbalance microcode_ctl systemd selinux-policy-targeted setools-console dracut-network passwd openssh-server openssh-clients podman skopeo runc containernetworking-plugins cri-tools nfs-utils NetworkManager dnsmasq lvm2 iscsi-initiator-utils sg3_utils device-mapper-multipath xfsprogs e2fsprogs mdadm cryptsetup chrony logrotate sssd shadow-utils sudo coreutils less tar xz gzip bzip2 rsync tmux nmap-ncat net-tools bind-utils strace bash-completion vim-minimal nano authconfig iptables-services biosdevname container-storage-setup cloud-utils-growpart glusterfs-fuse cri-o openshift-clients openshift-hyperkube
 
+# install realtime kernel before adding util-linux
+sudo tee /etc/yum.repos.d/CentOS-rt.repo >/dev/null <<EOL
+# CentOS-rt.repo
+
+[rt]
+name=CentOS-7 - rt
+baseurl=http://mirror.centos.org/centos/\$releasever/rt/\$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+EOL
+
+# disable dracut network regeneration
+echo 'omit_dracutmodules+="ifcfg"' > /etc/dracut.conf.d/99-disable_ifcfg.conf
+
+yum remove -y tuned
+yum install -y kernel-rt rt-tests tuned-profiles-realtime
+rm /etc/tuned/realtime-variables.conf
+
 # enable copr with latest util-linux
 yum -y install yum-plugin-copr
 yum copr enable -y jsynacek/systemd-backports-for-centos-7
-yum update -y
+yum update -y util-linux
 
 # enable cri-o
 systemctl enable cri-o
