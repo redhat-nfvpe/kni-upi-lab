@@ -31,5 +31,10 @@ if [ -e /opt/runonce ]; then
         echo "Openshift version not supported, exiting"
 	exit 1
     fi
+
+    # fix for machine-config: enable persistent storage for journal
+    mkdir -p /var/log/journal || true
+    sed -i 's/#Storage=auto/Storage=persistent/' /etc/systemd/journald.conf
+
     reboot
 fi
