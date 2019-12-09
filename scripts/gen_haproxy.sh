@@ -33,6 +33,7 @@ gen_config_haproxy() {
     local out_dir="$1"
     local cfg_file="$out_dir/haproxy.cfg"
     local cluster_id="${CLUSTER_FINAL_VALS[cluster_id]}"
+    local num_workers="${HOSTS_FINAL_VALS[worker_count]}"
 
     mkdir -p "$out_dir"
 
@@ -85,7 +86,10 @@ frontend mcs
     default_backend mcs-main
     mode tcp
     option tcplog
+EOF
 
+if [ "$num_workers" -gt 0 ]; then
+    cat <<EOF >> "$cfg_file"
 frontend http
     bind *:80
     mode tcp
@@ -97,7 +101,10 @@ frontend https
     mode tcp
     default_backend https-main
     option tcplog
+EOF
+fi
 
+cat <<EOF >> "$cfg_file"
 backend kubeapi-main
     balance source
     mode tcp
