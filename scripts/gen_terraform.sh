@@ -219,8 +219,8 @@ gen_terraform_cluster() {
             fi
 
             install_dev="sda"
-            if [[ -n ${HOSTS_FINAL_VALS[$host.install_dev]} ]]; then
-                install_dev=${HOSTS_FINAL_VALS[$host.install_dev]}
+            if [[ -n ${HOSTS_FINAL_VALS[$host.osProfile.install_dev]} ]]; then
+                install_dev=${HOSTS_FINAL_VALS[$host.osProfile.install_dev]}
             fi
 
             provisioning_interface="${CLUSTER_FINAL_VALS[master_provisioning_interface]}"
@@ -278,7 +278,7 @@ gen_rhcos() {
     printf "    initrd: \"assets/%s\",\n" "$initramfs"
     printf "    kernel: \"assets/%s\",\n" "$kernel"
 
-    install_dev=$(get_host_var "$host" install_dev) || install_dev="sda"
+    install_dev=$(get_host_var "$host" osProfile.install_dev) || install_dev="sda"
     printf "    install_dev: \"%s\",\n" "$install_dev"
 }
 
