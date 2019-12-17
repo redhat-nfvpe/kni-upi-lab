@@ -14,7 +14,7 @@ subscription-manager repos --enable=rhel-8-for-x86_64-baseos-rpms
 subscription-manager repos --enable=rhel-8-for-x86_64-appstream-rpms
 
 # install packages
-subscription-manager repos --enable=rhocp-4.1-for-rhel-8-x86_64-rpms
+subscription-manager repos --enable=rhocp-4.2-for-rhel-8-x86_64-rpms
 
 dnf update -y
 
@@ -38,8 +38,8 @@ setsebool -P container_manage_cgroup on || true
 setenforce 0 || true
 
 # create temporary directory and extract contents there
-IGNITION_URL=$(cat /tmp/ignition_endpoint )
-curl -k $IGNITION_URL -o /tmp/bootstrap.ign
+IGNITION_URL=$(cat /opt/ignition_endpoint )
+curl -k $IGNITION_URL -o /opt/bootstrap.ign
 
 cat <<EOL > /etc/systemd/system/runignition.service
 [Unit]
@@ -48,7 +48,7 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/tmp/runignition.sh
+ExecStart=/opt/runignition.sh
 
 [Install]
 WantedBy=multi-user.target

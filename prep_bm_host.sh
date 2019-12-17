@@ -332,6 +332,8 @@ fi
 ### Prepare OpenShift binaries ###
 ###----------------------------###
 
+mkdir -p "$REQUIREMENTS_DIR"
+
 if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
 
     printf "\nInstalling OpenShift binaries...\n\n"

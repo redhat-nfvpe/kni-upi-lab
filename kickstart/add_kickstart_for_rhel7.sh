@@ -51,7 +51,7 @@ echo "%wheel   ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers.d/wheel
 sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
 
 # write pull secret
-cat <<EOF > /tmp/pull.json
+cat <<EOF > /opt/pull.json
 ${PULL_SECRET}
 EOF
 
@@ -62,25 +62,25 @@ ${KUBECONFIG_FILE}
 EOF
 
 # write ignition endpoint
-cat <<EOF > /tmp/ignition_endpoint
+cat <<EOF > /opt/ignition_endpoint
 ${IGNITION_ENDPOINT}
 EOF
 
 # write enroll script
-cat <<'EOF' > /tmp/enroll_rhel7_node.sh
+cat <<'EOF' > /opt/enroll_rhel7_node.sh
 ${ENROLL_NODE}
 EOF
 
 # write runignition script
-cat <<'EOF' > /tmp/runignition.sh
+cat <<'EOF' > /opt/runignition.sh
 ${PODMAN_SERVICE}
 EOF
 
-chmod a+x /tmp/runignition.sh
-touch /tmp/runonce
+chmod a+x /opt/runignition.sh
+touch /opt/runonce
 
 # execute enroll script
-bash /tmp/enroll_rhel7_node.sh
+bash /opt/enroll_rhel7_node.sh
 %end
 %packages
 @base

@@ -17,10 +17,10 @@ enabled=1
 gpgcheck=0
 EOL
 
-cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.1_.repo <<EOL
-[rpms.svc.ci.openshift.org_openshift-origin-v4.1_]
-name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
-baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.1/
+cat > /etc/yum.repos.d/rpms.svc.ci.openshift.org_openshift-origin-v4.2_.repo <<EOL
+[rpms.svc.ci.openshift.org_openshift-origin-v4.2_]
+name=added from: https://rpms.svc.ci.openshift.org/openshift-origin-v4.2/
+baseurl=https://rpms.svc.ci.openshift.org/openshift-origin-v4.2/
 enabled=1
 gpgcheck=0
 EOL
@@ -47,8 +47,8 @@ setsebool -P container_manage_cgroup on || true
 setenforce 0 || true
 
 # create temporary directory and extract contents there
-IGNITION_URL=$(cat /tmp/ignition_endpoint )
-curl -k $IGNITION_URL -o /tmp/bootstrap.ign
+IGNITION_URL=$(cat /opt/ignition_endpoint )
+curl -k $IGNITION_URL -o /opt/bootstrap.ign
 
 cat <<EOL > /etc/systemd/system/runignition.service
 [Unit]
@@ -57,7 +57,7 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/tmp/runignition.sh
+ExecStart=/opt/runignition.sh
 
 [Install]
 WantedBy=multi-user.target

@@ -20,7 +20,7 @@ The architecture requires:
   * Provisioning network -- A private, non-routed network that carries pxeboot traffic
   * Baremetal network --This network carries all OpenShift SDN traffic.
     * DHCP -- By default, DHCP is provided by an instance of DNSMASQ running on the provisioning host.  An external DHCP server can be used instead.
-    * DNS -- By default, DNS is provided by an instance of CoreDNS running on the provisioning host.  An external DNS server can be used instead (See OpenShift [UPI/baremetal](https://docs.openshift.com/container-platform/4.1/installing/installing_bare_metal/installing-bare-metal.html) documentation for DNS requirements)
+    * DNS -- By default, DNS is provided by an instance of CoreDNS running on the provisioning host.  An external DNS server can be used instead (See OpenShift [UPI/baremetal](https://docs.openshift.com/container-platform/4.2/installing/installing_bare_metal/installing-bare-metal.html) documentation for DNS requirements)
     * NTP -- An NTP server must be accessible from this network
 
 # UPI Background
@@ -154,10 +154,10 @@ Example below:
 Edit common.sh file and either leave the current default values
 
 ```bash
-OPENSHIFT_RHCOS_MAJOR_REL="4.1"
+OPENSHIFT_RHCOS_MAJOR_REL="4.2"
 export OPENSHIFT_RHCOS_MAJOR_REL
 
-OPENSHIFT_RHCOS_MINOR_REL="4.1.0"
+OPENSHIFT_RHCOS_MINOR_REL="4.2.0"
 export OPENSHIFT_RHCOS_MINOR_REL
 ```
 
