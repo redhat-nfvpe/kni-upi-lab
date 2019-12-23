@@ -108,9 +108,11 @@ deploy() {
 
     case $command in
     cluster)
+	export TF_LOG_PATH=/tmp/tflog_cluster.txt
         manage_cluster "apply"
         ;;
     workers)
+	export TF_LOG_PATH=/tmp/tflog_workers.txt
         manage_workers "apply"
         ;;
     *)
@@ -140,6 +142,7 @@ destroy() {
     esac
 }
 
+export TF_LOG=TRACE
 VERBOSE="false"
 export VERBOSE
 
