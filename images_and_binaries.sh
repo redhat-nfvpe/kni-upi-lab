@@ -81,7 +81,7 @@ export RHCOS_METAL_IMAGES
 # TODO: Is there a uniform base URL to use here like there is for images?
 
 # 4.3 is special case, and requires getting the latest version ID from an index page
-LATEST_4_3="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | grep "4\.3\." | tail -1 | cut -d '"' -f 2)"
+LATEST_4_3="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.3\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
 
 declare -A OCP_BINARIES=(
     [4.1]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.1/"
