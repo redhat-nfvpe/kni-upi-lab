@@ -342,7 +342,7 @@ if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
 
         curl -O "$OCP_CLIENT_BINARY_URL"
         tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
-        sudo mv oc "$REQUIREMENTS_DIR"
+        sudo mv oc kubectl "$REQUIREMENTS_DIR"
     ) || exit 1
 fi
 
