@@ -45,7 +45,7 @@ EOL
 echo 'omit_dracutmodules+="ifcfg"' > /etc/dracut.conf.d/99-disable_ifcfg.conf
 
 yum remove -y tuned
-yum install -y kernel-rt rt-tests tuned-profiles-realtime
+yum install -y kernel-rt rt-tests tuned-profiles-realtime kernel-rt-kvm
 rm /etc/tuned/realtime-variables.conf
 
 # enable copr with latest util-linux
