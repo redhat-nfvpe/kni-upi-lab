@@ -13,7 +13,9 @@ declare -A RHCOS_BOOT_IMAGES
 # Map of boot type to raw metal image
 declare -A RHCOS_METAL_IMAGES
 
-if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
+# 2/6/2020: 4.4 must be acquired from internal Red Hat CI registry, because it is not yet available 
+# from the official mirror
+if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
     BUILDS_JSON="$(curl -sS https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/builds.json)"
 
     if [[ -z "$OPENSHIFT_RHCOS_MINOR_REL" ]]; then
@@ -40,6 +42,8 @@ if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" =
     RHCOS_METAL_IMAGES["bios"]="$FILENAME"
     RHCOS_METAL_IMAGES["uefi"]="$FILENAME"
 else
+    # 2/6/2020: All versions before 4.4 are available from the official mirror
+
     OPENSHIFT_RHCOS_MINOR_REL="$(curl -sS https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/ | grep rhcos-$OPENSHIFT_RHCOS_MAJOR_REL | head -1 | cut -d '-' -f 2)"
 
     RHCOS_IMAGES_BASE_URI="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/"
@@ -56,6 +60,14 @@ else
     RHCOS_BOOT_IMAGES["kernel"]="$BASE_FILENAME-installer-kernel"
     RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal-bios.raw.gz"
     RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal-uefi.raw.gz"
+
+    # Override bios/uefi image file names for 4.3, as they have been consolidated
+    # into one image
+    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.1" ] && [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.2" ]; then
+        RHCOS_IMAGES["$BASE_FILENAME-metal.raw.gz"]="$(echo "$SHA256" | grep "$BASE_FILENAME-metal.raw.gz" | cut -d ' ' -f 1)"
+        RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal.raw.gz"
+        RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal.raw.gz"
+    fi
 fi
 
 # TODO: remove debug
@@ -80,14 +92,13 @@ export RHCOS_METAL_IMAGES
 # OCP binaries
 # TODO: Is there a uniform base URL to use here like there is for images?
 
-# 4.3/4.4 are special cases, and requires getting the latest version ID from an index page
-LATEST_4_3="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.3\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
+# 4.4 is a special case, and requires getting the latest version ID from an index page
 LATEST_4_4="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.4\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
 
 declare -A OCP_BINARIES=(
     [4.1]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.1/"
     [4.2]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.2/"
-    [4.3]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST_4_3"
+    [4.3]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.3/"
     [4.4]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST_4_4"
 )
 
@@ -101,8 +112,8 @@ OCP_INSTALL_BINARY_URL=""
 
 FIELD_SELECTOR=8
 
-if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
-    # HACK: 4.3/4.4 have a different HTML structure than the rest
+if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
+    # HACK: 4.4 has a different HTML structure than the rest
     FIELD_SELECTOR=2
 fi
 
