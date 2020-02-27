@@ -45,3 +45,7 @@ variable "baremetal_bridge" {
 variable "install_dev" {
   type = "string"
 }
+
+variable "bootstrap_enable_boot_index" {
+  type = "string"
+}

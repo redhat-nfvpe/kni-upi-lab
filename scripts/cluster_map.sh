@@ -70,6 +70,7 @@ declare -A CLUSTER_MAP=(
     [bootstrap_provisioning_interface]="==ens3"
     [bootstrap_baremetal_interface]="==ens4"
     [bootstrap_install_dev]="==vda"
+    [bootstrap_enable_boot_index]="==${ENABLE_BOOTSTRAP_BOOT_INDEX}"
     [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"

@@ -7,8 +7,10 @@
 </resource>
 <os>
 <type arch='x86_64' >hvm</type>
+%{ if bootstrap_enable_boot_index == "false" ~}
 <boot dev='hd'/>
 <boot dev='network'/>
+%{ endif ~}
 </os>
 <features>
 <acpi/>
@@ -32,9 +34,32 @@
 <source file='${bootstrap_img}'/>
 <backingStore/>
 <target dev='vda' bus='virtio'/>
+%{ if bootstrap_enable_boot_index == "true" ~}
+<boot order='1'/>
+%{ endif ~}
 <alias name='virtio-disk0'/>
 <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
 </disk>
+%{ if bootstrap_enable_boot_index == "true" ~}
+<interface type='bridge'>
+<mac address='52:54:00:82:68:3e'/>
+<source bridge='${baremetal_bridge}'/>
+<target dev='vnet0'/>
+<model type='rtl8139'/>
+<alias name='net0'/>
+<boot order='3'/>
+<address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+</interface>
+<interface type='bridge'>
+<mac address='${bootstrap_mac_address}'/>
+<source bridge='${provisioning_bridge}'/>
+<target dev='vnet1'/>
+<model type='rtl8139'/>
+<alias name='net1'/>
+<boot order='2'/>
+<address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+</interface>
+%{ else ~}
 <interface type='bridge'>
 <mac address='${bootstrap_mac_address}'/>
 <source bridge='${provisioning_bridge}'/>
@@ -51,6 +76,7 @@
 <alias name='net1'/>
 <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
 </interface>
+%{ endif ~}
 <serial type='pty'>
 <source path='/dev/pts/6'/>
 <target type='isa-serial' port='0'>
