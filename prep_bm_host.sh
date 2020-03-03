@@ -49,7 +49,7 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
+sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
 
 ###--------------------###
 ### Install Yq via pip ###

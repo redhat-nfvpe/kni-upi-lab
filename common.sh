@@ -20,3 +20,6 @@ export PROJECT_DIR
 
 PATCH_NM_WAIT=true
 export PATCH_NM_WAIT
+
+LOCAL_REGISTRY=false
+export LOCAL_REGISTRY
