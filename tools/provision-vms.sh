@@ -35,7 +35,7 @@ create_vbmc() {
 
 for i in $(sudo virsh list --all | grep $CLUSTER_NAME | awk '{print $2}'); do
     delete_vbmc "$i"
-    sudo virsh destroy $i
+    sudo virsh destroy $i > /dev/null 2>&1
     sudo virsh vol-delete $i.qcow2 --pool=$LIBVIRT_STORAGE_POOL
     sudo virsh undefine $i
 done
@@ -124,5 +124,18 @@ echo "
     sdnMacAddress: $MASTER_BM_MAC_PREFIX$i"
 done
 
-# for i in $(seq 1 "$NUM_WORKERS"); do
-# done
+for i in $(seq 1 "$NUM_WORKERS"); do
+echo "
+  - bmc:
+      address: ipmi://127.0.0.1:$WORKER_VBMC_PORT_START$i
+      username: admin
+      password: admin
+    bootMACAddress: $WORKER_PROV_MAC_PREFIX$i
+    hardwareProfile: default
+    name: worker-$i
+    osProfile:
+      install_dev: vda
+      pxe: bios
+    role: worker
+    sdnMacAddress: $WORKER_BM_MAC_PREFIX$i"
+done
