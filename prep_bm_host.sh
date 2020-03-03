@@ -230,6 +230,15 @@ ifup "$BM_BRIDGE"
 ifdown "$BM_INTF"
 ifup "$BM_INTF"
 
+###----------------------------------------------------------------###
+### Configure local registry to allow for disconnected deployments ###
+###----------------------------------------------------------------###
+
+if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
+(
+    ./scripts/gen_local_registry.sh
+) || exit 1
+
 ###--------------------------------------------------###
 ### Configure iptables to allow for external traffic ###
 ###--------------------------------------------------###
