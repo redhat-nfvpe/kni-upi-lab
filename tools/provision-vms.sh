@@ -30,13 +30,7 @@ create_vbmc() {
     local port="$2"
 
     vbmc add "$name" --port "$port" --username admin --password admin
-    #for k in {1..10}; do
-        # HACK: Do this over and over because if the vBMC was deleted, the
-        # delete command may have been stuck, leaving the vBMC in an alive/running
-        # state, which otherwise fools our script
-        vbmc start "$name" > /dev/null 2>&1
-        #sleep 1
-    #done 
+    vbmc start "$name" > /dev/null 2>&1
 }
 
 for i in $(sudo virsh list --all | grep $CLUSTER_NAME | awk '{print $2}'); do
