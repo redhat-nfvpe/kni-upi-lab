@@ -29,7 +29,7 @@ create_vbmc() {
     local name="$1"
     local port="$2"
 
-    vbmc add "$name" --port "$port" --username admin --password admin
+    vbmc add "$name" --port "$port" --username ADMIN --password ADMIN
     vbmc start "$name" > /dev/null 2>&1
 }
 
@@ -60,13 +60,13 @@ for i in $(seq 1 "$NUM_MASTERS"); do
 
         sleep 2
 
-        ipmi_output=$(ipmitool -I lanplus -U admin -P admin -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
+        ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
 
         if [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; then
             echo "IPMI failure detected -- trying to start $name vBMC again..."
             vbmc start "$name" > /dev/null 2>&1
             sleep 1
-            ipmi_output=$(ipmitool -I lanplus -U admin -P admin -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
+            ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
         fi
 
         echo "$name vBMC started and IPMI command succeeded!"
@@ -93,13 +93,13 @@ for i in $(seq 1 "$NUM_WORKERS"); do
 
         sleep 2
 
-        ipmi_output=$(ipmitool -I lanplus -U admin -P admin -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
+        ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
 
         if [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; then
             echo "IPMI failure detected -- trying to start $name vBMC again..."
             vbmc start "$name" > /dev/null 2>&1
             sleep 1
-            ipmi_output=$(ipmitool -I lanplus -U admin -P admin -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
+            ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
         fi
 
         echo "$name vBMC started and IPMI command succeeded!"
@@ -112,8 +112,7 @@ for i in $(seq 1 "$NUM_MASTERS"); do
 echo "
   - bmc:
       address: ipmi://127.0.0.1:$MASTER_VBMC_PORT_START$i
-      username: admin
-      password: admin
+      credentialsName: ha-lab-ipmi
     bootMACAddress: $MASTER_PROV_MAC_PREFIX$i
     hardwareProfile: default
     name: master-$i
@@ -128,8 +127,7 @@ for i in $(seq 1 "$NUM_WORKERS"); do
 echo "
   - bmc:
       address: ipmi://127.0.0.1:$WORKER_VBMC_PORT_START$i
-      username: admin
-      password: admin
+      credentialsName: ha-lab-ipmi
     bootMACAddress: $WORKER_PROV_MAC_PREFIX$i
     hardwareProfile: default
     name: worker-$i
