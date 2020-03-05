@@ -238,6 +238,7 @@ if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
 (
     ./scripts/gen_local_registry.sh
 ) || exit 1
+fi
 
 ###--------------------------------------------------###
 ### Configure iptables to allow for external traffic ###
