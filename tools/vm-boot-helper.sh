@@ -2,8 +2,6 @@
 
 CLUSTER_NAME=${1:-testing}
 
-LIBVIRT_STORAGE_POOL="default"
-
 while true; do
     cluster_present=$(sudo virsh list --all | grep $CLUSTER_NAME)
 
