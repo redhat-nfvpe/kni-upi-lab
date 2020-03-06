@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "vbmc-funcs.sh"
+
 CLUSTER_NAME=${1:-testing}
 
 NUM_MASTERS=${2:-1}
@@ -11,39 +13,19 @@ MASTER_BM_MAC_PREFIX="52:54:00:82:69:4"
 WORKER_PROV_MAC_PREFIX="52:54:00:82:68:5"
 WORKER_BM_MAC_PREFIX="52:54:00:82:69:5"
 
+MASTER_VBMC_PORT_START=624
+WORKER_VBMC_PORT_START=625
+
 LIBVIRT_STORAGE_POOL="default"
 
-MASTER_VBMC_PORT_START=623
-WORKER_VBMC_PORT_START=624
+(
+    ./clean-vms.sh
+) || exit 1
 
-delete_vbmc() {
-    local name="$1"
-
-    if vbmc show "$name" > /dev/null 2>&1; then
-        vbmc stop "$name" > /dev/null 2>&1
-        vbmc delete "$name" > /dev/null 2>&1
-    fi
-}
-
-create_vbmc() {
-    local name="$1"
-    local port="$2"
-
-    vbmc add "$name" --port "$port" --username ADMIN --password ADMIN
-    vbmc start "$name" > /dev/null 2>&1
-}
-
-for i in $(sudo virsh list --all | grep $CLUSTER_NAME | awk '{print $2}'); do
-    delete_vbmc "$i"
-    sudo virsh destroy $i > /dev/null 2>&1
-    sudo virsh vol-delete $i.qcow2 --pool=$LIBVIRT_STORAGE_POOL
-    sudo virsh undefine $i
-done
-
-for i in $(seq 1 "$NUM_MASTERS"); do
+for i in $(seq 0 $((NUM_MASTERS - 1))); do
     name="$CLUSTER_NAME-master-$i"
 
-    sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$MASTER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$MASTER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=restart --boot hd,network
+    sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$MASTER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$MASTER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=destroy --boot hd,network
 
     vm_ready=false
     for k in {1..10}; do 
@@ -73,10 +55,10 @@ for i in $(seq 1 "$NUM_MASTERS"); do
     fi
 done
 
-for i in $(seq 1 "$NUM_WORKERS"); do
+for i in $(seq 0 $((NUM_WORKERS - 1))); do
     name="$CLUSTER_NAME-worker-$i"
 
-    sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$WORKER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$WORKER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=restart --boot hd,network
+    sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$WORKER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$WORKER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=destroy --boot hd,network
 
     vm_ready=false
     for k in {1..10}; do 
@@ -108,7 +90,7 @@ done
 
 echo "Put the following in your install-config.yaml..."
 
-for i in $(seq 1 "$NUM_MASTERS"); do
+for i in $(seq 0 $((NUM_MASTERS - 1))); do
 echo "
   - bmc:
       address: ipmi://127.0.0.1:$MASTER_VBMC_PORT_START$i
@@ -123,7 +105,7 @@ echo "
     sdnMacAddress: $MASTER_BM_MAC_PREFIX$i"
 done
 
-for i in $(seq 1 "$NUM_WORKERS"); do
+for i in $(seq 0 $((NUM_MASTERS - 1))); do
 echo "
   - bmc:
       address: ipmi://127.0.0.1:$WORKER_VBMC_PORT_START$i
@@ -137,3 +119,17 @@ echo "
     role: worker
     sdnMacAddress: $WORKER_BM_MAC_PREFIX$i"
 done
+
+echo "
+Also set your controlPlane and compute replicas like so...
+
+compute:
+- name: worker
+  replicas: $NUM_WORKERS
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: $NUM_MASTERS
+
+"

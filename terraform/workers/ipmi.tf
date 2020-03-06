@@ -4,6 +4,8 @@ resource "null_resource" "ipmi_worker" {
         command = <<EOT
           ipmitool -I lanplus -H ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),0)} %{if element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)!=var.worker_nodes[count.index]["ipmi_host"]}-p ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)}%{ endif } -U ${var.worker_nodes[count.index]["ipmi_user"]} -P ${var.worker_nodes[count.index]["ipmi_pass"]} chassis bootdev pxe;
           ipmitool -I lanplus -H ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),0)} %{if element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)!=var.worker_nodes[count.index]["ipmi_host"]}-p ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)}%{ endif } -U ${var.worker_nodes[count.index]["ipmi_user"]} -P ${var.worker_nodes[count.index]["ipmi_pass"]} power cycle || ipmitool -I lanplus -H ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),0)} %{if element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)!=var.worker_nodes[count.index]["ipmi_host"]}-p ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)}%{ endif } -U ${var.worker_nodes[count.index]["ipmi_user"]} -P ${var.worker_nodes[count.index]["ipmi_pass"]} power on;
+          sleep 3;
+          ipmitool -I lanplus -H ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),0)} %{if element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)!=var.worker_nodes[count.index]["ipmi_host"]}-p ${element(split(":", var.worker_nodes[count.index]["ipmi_host"]),1)}%{ endif } -U ${var.worker_nodes[count.index]["ipmi_user"]} -P ${var.worker_nodes[count.index]["ipmi_pass"]} chassis bootdev disk;
 EOT
     }
 }
