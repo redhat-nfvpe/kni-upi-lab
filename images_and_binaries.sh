@@ -52,22 +52,30 @@ else
 
     BASE_FILENAME="rhcos-$OPENSHIFT_RHCOS_MINOR_REL-x86_64"
 
-    for i in "$BASE_FILENAME-installer-kernel" "$BASE_FILENAME-installer-initramfs.img" "$BASE_FILENAME-metal-bios.raw.gz" "$BASE_FILENAME-metal-uefi.raw.gz"; do
-        RHCOS_IMAGES["$i"]="$(echo "$SHA256" | grep "$i" | cut -d ' ' -f 1)"
-    done
-
     RHCOS_BOOT_IMAGES["ramdisk"]="$BASE_FILENAME-installer-initramfs.img"
     RHCOS_BOOT_IMAGES["kernel"]="$BASE_FILENAME-installer-kernel"
     RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal-bios.raw.gz"
     RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal-uefi.raw.gz"
 
-    # Override bios/uefi image file names for 4.3, as they have been consolidated
-    # into one image
+    # Now map file names to sha256 values
+    FILENAME_LIST=("$BASE_FILENAME-installer-kernel" "$BASE_FILENAME-installer-initramfs.img")
+    
     if [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.1" ] && [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.2" ]; then
-        RHCOS_IMAGES["$BASE_FILENAME-metal.raw.gz"]="$(echo "$SHA256" | grep "$BASE_FILENAME-metal.raw.gz" | cut -d ' ' -f 1)"
+        # Override bios/uefi image file names for 4.3, as they have been consolidated
+        # into one image
+        
+        FILENAME_LIST+=("$BASE_FILENAME-metal.raw.gz")
+        
         RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal.raw.gz"
         RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal.raw.gz"
+    else
+        FILENAME_LIST+=("$BASE_FILENAME-metal-bios.raw.gz")
+        FILENAME_LIST+=("$BASE_FILENAME-metal-uefi.raw.gz")
     fi
+
+    for i in "${FILENAME_LIST[@]}"; do
+        RHCOS_IMAGES["$i"]="$(echo "$SHA256" | grep "$i" | cut -d ' ' -f 1)"
+    done
 fi
 
 # TODO: remove debug
