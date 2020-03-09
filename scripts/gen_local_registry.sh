@@ -1,13 +1,14 @@
-
+#!/bin/bash
 # File to create a local registry to be used on disconnected deployments
 source "common.sh"
 
 REGISTRY_USERNAME=redhat
 REGISTRY_PSSWD=redhat
+REGISTRY_EMAIL=admin@redhat.com
 REGISTRY_HOSTNAME=myHostname
-REGISTRY_HOSTPORT=myPort
-AUTH=$(echo -n "$REGISTRY_USERNAME:REGISTRY_PSSWD$" | base64 -w0)
-RELEASE_VERSION="4.3.0-x86_64."
+REGISTRY_HOSTPORT=5000
+AUTH=$(echo -n "$REGISTRY_USERNAME:$REGISTRY_PSSWD" | base64 -w0)
+RELEASE_VERSION="4.3.0-x86_64"
 
 # Data for OpenSSL certs
 COUNTRY_CODE="US"
@@ -17,11 +18,11 @@ ORGANIZATION="Red Hat"
 COMMON_NAME=$REGISTRY_HOSTNAME
 
 export OCP_RELEASE=$RELEASE_VERSION
-export LOCAL_REGISTRY="$REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT" 
-export LOCAL_REPOSITORY='<repository_name>' 
-export PRODUCT_REPO='openshift-release-dev' 
-export LOCAL_SECRET_JSON='<path_to_pull_secret>' 
-export RELEASE_NAME="ocp-release" 
+export LOCAL_REGISTRY="$REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT"
+export LOCAL_REPOSITORY=$REGISTRY_HOSTNAME
+export PRODUCT_REPO='openshift-release-dev'
+export LOCAL_SECRET_JSON='cluster/pull-secret.json'
+export RELEASE_NAME="ocp-release"
 
 
 mkdir -p /opt/registry/{auth,certs,data}
@@ -57,12 +58,10 @@ then
   firewall-cmd --reload
 fi
 
-firewall-cmd --add-port=$REGISTRY_HOSTPORT/tcp --zone=internal --permanent 
-firewall-cmd --add-port=$REGISTRY_HOSTPORT/tcp --zone=public   --permanent 
-firewall-cmd --reload
-
 CRT=$(cat /opt/registry/certs/domain.crt)
 cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
+cp /opt/registry/certs/domain.crt /tmp/temp.crt
+sed -i -e 's/^/  /' /tmp/temp.crt
 update-ca-trust
 
 # Check if registry is properly running
@@ -74,12 +73,18 @@ else
     echo FAIL
 fi
 
-echo "######################################################"
-echo "    Add the following section to your pull secret"
-echo "######################################################"
-cat << EOF
- "$REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT":{"auth":"$AUTH","email":"you@example.com"}
+PS=$LOCAL_SECRET_JSON
+sed -i -e "/^pullSecret*/c\pullSecret: $(cat $PS)" cluster/install-config.yaml
+
+PS_REGISTRY=$(cat << EOF
+"$REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT":{"auth":"$AUTH","email":"you@example.com"}
 EOF
+)
+echo $PS_REGISTRY
+PS_REGISTRY={$PS_REGISTRY}
+
+cat cluster/install-config.yaml | yq -r .pullSecret > cluster/pull-secret.json.orig
+cat cluster/pull-secret.json.orig | jq -c --argjson obj $PS_REGISTRY '.auths += $obj' > cluster/pull-secret.json
 
 echo "Mirror images to the registry..."
 oc adm -a ${LOCAL_SECRET_JSON} release mirror \
@@ -90,11 +95,8 @@ oc adm -a ${LOCAL_SECRET_JSON} release mirror \
 echo "Extract the openshift-install binary from the local registry"
 oc adm -a ${LOCAL_SECRET_JSON} release extract --command=openshift-install "${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}"
 
-
-cat << EOF
-additionalTrustBundle: | 
-$(for i in $CRT;do echo "  $i";done) 
-imageContentSources: 
+MIRRORS=$(cat << EOF
+imageContentSources:
 - mirrors:
   - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY/release
   source: quay.io/openshift-release-dev/ocp-release
@@ -102,3 +104,16 @@ imageContentSources:
   - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY/release
   source: registry.svc.ci.openshift.org/ocp/release
 EOF
+)
+
+INSTALL_CONFIG_BACKUP=cluster/install-config.yaml.orig
+if [ ! -f "$INSTALL_CONFIG_BACKUP" ]; then
+    cp cluster/install-config.yaml cluster/install-config.yaml.orig
+fi
+
+if ! grep -q additionalTrustBundle cluster/install-config.yaml ; then
+    echo "additionalTrustBundle: |" >> cluster/install-config.yaml
+    cat /tmp/temp.crt >> cluster/install-config.yaml
+    printf '%s\n' "$MIRRORS" >> cluster/install-config.yaml
+fi
+rm -rf /tmp/temp.crt
