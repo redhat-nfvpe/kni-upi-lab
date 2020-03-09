@@ -73,9 +73,6 @@ else
     echo FAIL
 fi
 
-PS=$LOCAL_SECRET_JSON
-sed -i -e "/^pullSecret*/c\pullSecret: $(cat $PS)" cluster/install-config.yaml
-
 PS_REGISTRY=$(cat << EOF
 "$REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT":{"auth":"$AUTH","email":"you@example.com"}
 EOF
@@ -85,6 +82,9 @@ PS_REGISTRY={$PS_REGISTRY}
 
 cat cluster/install-config.yaml | yq -r .pullSecret > cluster/pull-secret.json.orig
 cat cluster/pull-secret.json.orig | jq -c --argjson obj $PS_REGISTRY '.auths += $obj' > cluster/pull-secret.json
+
+PS=$LOCAL_SECRET_JSON
+sed -i -e "/^pullSecret*/c\pullSecret: $(echo \'$(cat $PS)\')" cluster/install-config.yaml
 
 echo "Mirror images to the registry..."
 oc adm -a ${LOCAL_SECRET_JSON} release mirror \
