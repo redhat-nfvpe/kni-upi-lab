@@ -24,7 +24,7 @@ export PRODUCT_REPO='openshift-release-dev'
 export LOCAL_SECRET_JSON='cluster/pull-secret.json'
 export RELEASE_NAME="ocp-release"
 
-
+rm -rf /opt/registry
 mkdir -p /opt/registry/{auth,certs,data}
 
 pushd /opt/registry/certs
@@ -39,7 +39,7 @@ then
   podman stop $EXISTING_REGISTRY && podman rm $EXISTING_REGISTRY
 fi
 
-podman run --name mirror-registry -p <local_registry_host_port>:5000 \
+podman run --name mirror-registry -p $REGISTRY_HOSTPORT:5000 \
    -v /opt/registry/data:/var/lib/registry:z \
    -v /opt/registry/auth:/auth:z \
    -e "REGISTRY_AUTH=htpasswd" \
@@ -59,6 +59,7 @@ then
 fi
 
 CRT=$(cat /opt/registry/certs/domain.crt)
+rm -rf /etc/pki/ca-trust/source/anchors/domain.crt
 cp /opt/registry/certs/domain.crt /etc/pki/ca-trust/source/anchors/
 cp /opt/registry/certs/domain.crt /tmp/temp.crt
 sed -i -e 's/^/  /' /tmp/temp.crt
@@ -98,11 +99,11 @@ oc adm -a ${LOCAL_SECRET_JSON} release extract --command=openshift-install "${LO
 MIRRORS=$(cat << EOF
 imageContentSources:
 - mirrors:
-  - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY/release
+  - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY/release
-  source: registry.svc.ci.openshift.org/ocp/release
+  - $REGISTRY_HOSTNAME:$REGISTRY_HOSTPORT/$LOCAL_REPOSITORY
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 EOF
 )
 
