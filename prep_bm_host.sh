@@ -49,7 +49,7 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
+sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
 
 ###--------------------###
 ### Install Yq via pip ###
@@ -230,6 +230,16 @@ ifup "$BM_BRIDGE"
 ifdown "$BM_INTF"
 ifup "$BM_INTF"
 
+###----------------------------------------------------------------###
+### Configure local registry to allow for disconnected deployments ###
+###----------------------------------------------------------------###
+
+if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
+(
+    ./scripts/gen_local_registry.sh
+) || exit 1
+fi
+
 ###--------------------------------------------------###
 ### Configure iptables to allow for external traffic ###
 ###--------------------------------------------------###
@@ -336,9 +346,14 @@ if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
         # Always download and overwrite binaries to ensure 
         # proper versions
         #
-        curl -O "$OCP_INSTALL_BINARY_URL"
-        tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
-        sudo mv openshift-install "$REQUIREMENTS_DIR"
+
+        if [[ "$DISCONNECTED_INSTALL" =~ False|false|no ]]; then
+	(
+            curl -O "$OCP_INSTALL_BINARY_URL"
+            tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+            sudo mv openshift-install "$REQUIREMENTS_DIR"
+	) || exit 1
+	fi
 
         curl -O "$OCP_CLIENT_BINARY_URL"
         tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
