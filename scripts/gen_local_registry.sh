@@ -94,7 +94,9 @@ oc adm -a ${LOCAL_SECRET_JSON} release mirror \
    --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}
 
 echo "Extract the openshift-install binary from the local registry"
+mkdir -p $PROJECT_DIR/requirements
 oc adm -a ${LOCAL_SECRET_JSON} release extract --command=openshift-install "${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}"
+mv openshift-install requirements/
 
 MIRRORS=$(cat << EOF
 imageContentSources:

@@ -346,9 +346,14 @@ if [[ "$PREP_FLAG" != "--skip-ocp-binaries" ]]; then
         # Always download and overwrite binaries to ensure 
         # proper versions
         #
-        curl -O "$OCP_INSTALL_BINARY_URL"
-        tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
-        sudo mv openshift-install "$REQUIREMENTS_DIR"
+
+        if [[ "$DISCONNECTED_INSTALL" =~ False|false|no ]]; then
+	(
+            curl -O "$OCP_INSTALL_BINARY_URL"
+            tar xvf "${OCP_INSTALL_BINARY_URL##*/}"
+            sudo mv openshift-install "$REQUIREMENTS_DIR"
+	) || exit 1
+	fi
 
         curl -O "$OCP_CLIENT_BINARY_URL"
         tar xvf "${OCP_CLIENT_BINARY_URL##*/}"
