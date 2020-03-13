@@ -5,6 +5,8 @@ metadata:
 config:
   releaseImageOverride: registry.svc.ci.openshift.org/origin/release:4.2
 provisioningInfrastructure:
+  virtualMasters: false
+  virtualWorkers: false
   hosts:
     # interface to use for provisioning on the masters
     masterBootInterface: eno2

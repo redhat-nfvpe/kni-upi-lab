@@ -46,6 +46,8 @@ parse_site_config() {
 #  Rules that start with | are optional
 
 declare -g -A SITE_CONFIG_MAP=(
+    [VIRTUAL_MASTERS]="|provisioningInfrastructure.virtualMasters"
+    [VIRTUAL_WORKERS]="|provisioningInfrastructure.virtualWorkers"
     [MASTER_PROV_INTF]="provisioningInfrastructure.hosts.masterBootInterface"
     [MASTER_BM_INTF]="provisioningInfrastructure.hosts.masterSdnInterface"
     [WORKER_PROV_INTF]="provisioningInfrastructure.hosts.workerBootInterface"
@@ -91,7 +93,7 @@ map_site_config() {
                 error=true
             fi
         fi
-        read -r "${var?}" <<<"${SITE_CONFIG[${SITE_CONFIG_MAP[$var]}]}"
+        read -r "${var?}" <<<"${SITE_CONFIG[${map_rule}]}"
 
         [[ $status =~ true ]] && printf "%s: %s\n" "${map_rule//./\/}" "${var}"
     done
