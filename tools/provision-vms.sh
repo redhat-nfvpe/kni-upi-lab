@@ -1,11 +1,12 @@
 #!/bin/bash
 
-source "vbmc-funcs.sh"
+source "common.sh"
+source "$PROJECT_DIR/tools/vbmc-funcs.sh"
 
-CLUSTER_NAME=${1:-testing}
+CLUSTER_NAME="kni-upi-lab"
 
-NUM_MASTERS=${2:-1}
-NUM_WORKERS=${3:-1}
+NUM_MASTERS=${1:-1}
+NUM_WORKERS=${2:-1}
 
 MASTER_PROV_MAC_PREFIX="52:54:00:82:68:4"
 MASTER_BM_MAC_PREFIX="52:54:00:82:69:4"
@@ -19,8 +20,10 @@ WORKER_VBMC_PORT_START=625
 LIBVIRT_STORAGE_POOL="default"
 
 (
-    ./clean-vms.sh
+    $PROJECT_DIR/tools/clean-vms.sh
 ) || exit 1
+
+echo "Provisioning $CLUSTER_NAME virtualized nodes..."
 
 for i in $(seq 0 $((NUM_MASTERS - 1))); do
     name="$CLUSTER_NAME-master-$i"
@@ -88,48 +91,59 @@ for i in $(seq 0 $((NUM_WORKERS - 1))); do
     fi
 done
 
-echo "Put the following in your install-config.yaml..."
+#
+# Update cluster/install-config.yaml
+#
+
+PLATFORM_HOSTS=""
 
 for i in $(seq 0 $((NUM_MASTERS - 1))); do
-echo "
-  - bmc:
-      address: ipmi://127.0.0.1:$MASTER_VBMC_PORT_START$i
-      credentialsName: ha-lab-ipmi
-    bootMACAddress: $MASTER_PROV_MAC_PREFIX$i
-    hardwareProfile: default
-    name: master-$i
-    osProfile:
-      install_dev: vda
-      pxe: bios
-    role: master
-    sdnMacAddress: $MASTER_BM_MAC_PREFIX$i"
+    PLATFORM_HOSTS="$PLATFORM_HOSTS{\"bmc\": {\"address\": \"ipmi://127.0.0.1:$MASTER_VBMC_PORT_START$i\", \"credentialsName\": \"ha-lab-ipmi\"}, \"bootMACAddress\": \"$MASTER_PROV_MAC_PREFIX$i\", \"hardwareProfile\": \"default\", \"name\": \"master-$i\", \"osProfile\": {\"install_dev\": \"vda\", \"pxe\": \"bios\"}, \"role\": \"master\", \"sdnMacAddress\": \"$MASTER_BM_MAC_PREFIX$i\"},"
 done
 
-for i in $(seq 0 $((NUM_MASTERS - 1))); do
-echo "
-  - bmc:
-      address: ipmi://127.0.0.1:$WORKER_VBMC_PORT_START$i
-      credentialsName: ha-lab-ipmi
-    bootMACAddress: $WORKER_PROV_MAC_PREFIX$i
-    hardwareProfile: default
-    name: worker-$i
-    osProfile:
-      install_dev: vda
-      pxe: bios
-    role: worker
-    sdnMacAddress: $WORKER_BM_MAC_PREFIX$i"
+for i in $(seq 0 $((NUM_WORKERS - 1))); do
+    PLATFORM_HOSTS="$PLATFORM_HOSTS{\"bmc\": {\"address\": \"ipmi://127.0.0.1:$WORKER_VBMC_PORT_START$i\", \"credentialsName\": \"ha-lab-ipmi\"}, \"bootMACAddress\": \"$WORKER_PROV_MAC_PREFIX$i\", \"hardwareProfile\": \"default\", \"name\": \"worker-$i\", \"osProfile\": {\"install_dev\": \"vda\", \"pxe\": \"bios\"}, \"role\": \"worker\", \"sdnMacAddress\": \"$WORKER_BM_MAC_PREFIX$i\"},"
 done
 
-echo "
-Also set your controlPlane and compute replicas like so...
+PLATFORM_HOSTS=$(echo $PLATFORM_HOSTS | sed 's/.$//')
 
-compute:
-- name: worker
-  replicas: $NUM_WORKERS
-controlPlane:
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: $NUM_MASTERS
+TJQ=$(yq -y ".platform.hosts = [$PLATFORM_HOSTS]" < $PROJECT_DIR/cluster/install-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
 
-"
+COMPUTE="{\"name\": \"worker\", \"replicas\": $NUM_WORKERS}"
+
+TJQ=$(yq -y ".compute = [$COMPUTE]" < $PROJECT_DIR/cluster/install-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
+
+CONTROL_PLANE="{\"hyperthreading\": \"Enabled\", \"name\": \"master\", \"platform\": {}, \"replicas\": $NUM_MASTERS}"
+
+TJQ=$(yq -y ".controlPlane = $CONTROL_PLANE" < $PROJECT_DIR/cluster/install-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
+
+echo "$(realpath $PROJECT_DIR/cluster/install-config.yaml) updated with virtualization data!"
+
+#
+# Update cluster/site-config.yaml
+#
+
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+
+TJQ=$(yq -y ".provisioningInfrastructure.virtualMasters = true" < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+TJQ=$(yq -y ".provisioningInfrastructure.virtualWorkers = true" < $PROJECT_DIR/cluster/site-config.yaml) 
+[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
+
+echo "$(realpath $PROJECT_DIR/cluster/site-config.yaml) updated with virtualization data!"
+
+#
+# Start the VM boot helper script
+#
+
+$PROJECT_DIR/tools/vm-boot-helper.sh &
