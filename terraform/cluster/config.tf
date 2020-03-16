@@ -78,6 +78,10 @@ variable "bootstrap_install_dev" {
   type = "string"
 }
 
+variable "bootstrap_enable_boot_index" {
+  type = "string"
+}
+
 # ================MATCHBOX=====================
 
 variable "matchbox_rpc_endpoint" {
