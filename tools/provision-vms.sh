@@ -23,8 +23,6 @@ LIBVIRT_STORAGE_POOL="default"
     $PROJECT_DIR/tools/clean-vms.sh
 ) || exit 1
 
-echo "Provisioning $CLUSTER_NAME virtualized nodes..."
-
 for i in $(seq 0 $((NUM_MASTERS - 1))); do
     name="$CLUSTER_NAME-master-$i"
 
