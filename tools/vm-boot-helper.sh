@@ -21,7 +21,7 @@ while true; do
 
     for i in $(sudo virsh list --all | grep $CLUSTER_NAME | grep "shut off" | awk '{print $2}'); do
         echo "$CLUSTER_NAME node '$i' is offline; booting..."
-        virsh start $i
+        virsh start $i --force-boot
     done
 
     sleep 5
