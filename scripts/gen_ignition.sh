@@ -107,7 +107,7 @@ patch_manifest() {
 	# TODO remove this workaround for 4.4 deployment
 	if [[ $OPENSHIFT_RHCOS_MAJOR_REL == "4.4" ]]; then
 		printf "Overwriting 02_autoapprover_statefulset.yaml for 4.4 StatefulSet API change"
-		cp -f "$PROJECT_DIR/cluster/standalone/openshift/02_autoapprover_statefulset-4.4.yaml" \
+		cp -f "$PROJECT_DIR/cluster/standalone/openshift/4.4/02_autoapprover_statefulset-4.4.yaml" \
 			"$ocp_dir/openshift/02_autoapprover_statefulset.yaml"
 	fi
     fi
