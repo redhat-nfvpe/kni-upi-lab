@@ -21,18 +21,20 @@ if [[ "$OS_NAME" == "rhel" ]]; then
         exit 1
     fi
 
-    if [[ "$OS_VERSION" == "7" || "$OS_VERSION" == "8" ]]; then
-        PIP_PACKAGE="python2-pip"
-    else
-        echo "RHEL version $OS_VERSION is not supported!"
-        exit 1
-    fi
-
     curl -o /tmp/epel-release.rpm https://dl.fedoraproject.org/pub/epel/epel-release-latest-$OS_VERSION.noarch.rpm
     EPEL_PACKAGE="/tmp/epel-release.rpm"
 
     # Enable other needed RPMs
     sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
+fi
+
+if [[ "$OS_NAME" == "rhel" || "$OS_NAME" == "centos" ]]; then
+    if [[ "$OS_VERSION" == "7" || "$OS_VERSION" == "8" ]]; then
+        PIP_PACKAGE="python2-pip"
+    else
+        echo "OS version $OS_NAME $OS_VERSION is not supported!"
+        exit 1
+    fi
 fi
 
 ###--------------###
@@ -49,13 +51,13 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
+sudo yum install -y --skip-broken git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
 
 ###--------------------###
 ### Install Yq via pip ###
 ###--------------------###
 
-sudo pip install yq
+sudo pip2 install yq
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
