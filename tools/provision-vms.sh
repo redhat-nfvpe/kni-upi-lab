@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "$PROJECT_DIR/common.sh"
+source "common.sh"
 source "$PROJECT_DIR/tools/vbmc-funcs.sh"
 
 CLUSTER_NAME="kni-upi-lab"
