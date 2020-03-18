@@ -1,12 +1,12 @@
 #!/bin/bash
 
-source "common.sh"
+source "$PROJECT_DIR/common.sh"
 source "$PROJECT_DIR/tools/vbmc-funcs.sh"
 
 CLUSTER_NAME="kni-upi-lab"
 
-NUM_MASTERS=${1:-1}
-NUM_WORKERS=${2:-1}
+NUM_MASTERS=$(yq -r '.controlPlane.replicas' $PROJECT_DIR/cluster/install-config.yaml)
+NUM_WORKERS=$(yq -r '.compute[0].replicas' $PROJECT_DIR/cluster/install-config.yaml)
 
 MASTER_PROV_MAC_PREFIX="52:54:00:82:68:4"
 MASTER_BM_MAC_PREFIX="52:54:00:82:69:4"
@@ -108,17 +108,7 @@ PLATFORM_HOSTS=$(echo $PLATFORM_HOSTS | sed 's/.$//')
 TJQ=$(yq -y ".platform.hosts = [$PLATFORM_HOSTS]" < $PROJECT_DIR/cluster/install-config.yaml) 
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
 
-COMPUTE="{\"name\": \"worker\", \"replicas\": $NUM_WORKERS}"
-
-TJQ=$(yq -y ".compute = [$COMPUTE]" < $PROJECT_DIR/cluster/install-config.yaml) 
-[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
-
-CONTROL_PLANE="{\"hyperthreading\": \"Enabled\", \"name\": \"master\", \"platform\": {}, \"replicas\": $NUM_MASTERS}"
-
-TJQ=$(yq -y ".controlPlane = $CONTROL_PLANE" < $PROJECT_DIR/cluster/install-config.yaml) 
-[[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
-
-echo "$(realpath $PROJECT_DIR/cluster/install-config.yaml) updated with virtualization data!"
+echo "$PROJECT_DIR/cluster/install-config.yaml updated with virtualization data!"
 
 #
 # Update cluster/site-config.yaml
@@ -138,7 +128,7 @@ TJQ=$(yq -y ".provisioningInfrastructure.virtualMasters = true" < $PROJECT_DIR/c
 TJQ=$(yq -y ".provisioningInfrastructure.virtualWorkers = true" < $PROJECT_DIR/cluster/site-config.yaml) 
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
 
-echo "$(realpath $PROJECT_DIR/cluster/site-config.yaml) updated with virtualization data!"
+echo "$PROJECT_DIR/cluster/site-config.yaml updated with virtualization data!"
 
 #
 # Start the VM boot helper script
