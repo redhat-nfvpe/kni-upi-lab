@@ -23,9 +23,9 @@ resource "local_file" "vm_bootstrap" {
 resource "null_resource" "vm_bootstrap" {
     provisioner "local-exec" {
         command = <<EOT
-rm -f ${local.bootstrap_img} || true
-qemu-img create -f qcow2 ${local.bootstrap_img} ${local.bootstrap_img_size}
-chown qemu:qemu ${local.bootstrap_img}
+sudo rm -f ${local.bootstrap_img} || true
+sudo qemu-img create -f qcow2 ${local.bootstrap_img} ${local.bootstrap_img_size}
+sudo chown qemu:qemu ${local.bootstrap_img}
 virsh create /tmp/${var.cluster_id}-bootstrap-vm.xml
 EOT
     }

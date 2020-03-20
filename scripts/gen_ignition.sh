@@ -28,6 +28,7 @@ gen_nm_disable_auto_config() {
 
     read -r -d '' content <<EOF
 [main]
+plugins=ifcfg-rh
 # Do not do automatic (DHCP/SLAAC) configuration on ethernet devices
 # with no other matching connections.
 no-auto-default=*
@@ -72,11 +73,13 @@ gen_ifcfg_manifest() {
     local role="$1"
     local interface="$2"
     local defroute="$3"
+    local bootproto="$4"
+    local onboot="$5"
 
     template_cfg="$TEMPLATES_DIR/ifcfg-interface.tpl"
 
     # Generate the file contents
-    export interface defroute
+    export interface defroute onboot bootproto
     content=$(envsubst <"${template_cfg}")
 
     path="/etc/sysconfig/network-scripts/ifcfg-$interface"
@@ -144,18 +147,19 @@ gen_ignition() {
     gen_nm_disable_auto_config "master" || exit 1
     gen_nm_disable_auto_config "worker" || exit 1
 
-    gen_ifcfg_manifest "master" "$MASTER_BM_INTF" "yes" || exit 1
-    gen_ifcfg_manifest "master" "$MASTER_PROV_INTF" "no" || exit 1
-    gen_ifcfg_manifest "worker" "$WORKER_BM_INTF" "yes" || exit 1
-    gen_ifcfg_manifest "worker" "$WORKER_PROV_INTF" "no" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_BM_INTF" "yes" "dhcp" "yes" || exit 1
+    gen_ifcfg_manifest "master" "$MASTER_PROV_INTF" "no" "dhcp" "yes" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_BM_INTF" "yes" "dhcp" "yes" || exit 1
+    gen_ifcfg_manifest "worker" "$WORKER_PROV_INTF" "no" "dhcp" "yes" || exit 1
 
+#    gen_ifcfg_manifest "worker" "eno3" "no" "none" "no" || exit 1
+    
     patch_manifest "$out_dir" "$standalone"
 
     if ! "$REQUIREMENTS_DIR/openshift-install" --log-level warn --dir "$out_dir" create ignition-configs >/dev/null; then
         printf "%s create ignition-configs failed!\n" "$REQUIREMENTS_DIR/openshift-install"
         exit 1
     fi
-
     #
     # apply patches to ignition
     #
@@ -170,6 +174,16 @@ gen_ignition() {
             mv "$out_dir/$ign.bak" "$out_dir/$ign"
         done
     fi
+    
+    for file in "$BUILD_DIR"/openshift-patches/*; do
+	  if [[ $file =~ (worker|master) ]]; then
+             node_type=${BASH_REMATCH[1]}
+	     data=$(yq . $file | jq '.spec.config.storage.files[0]')
+	     jq --argjson ign_data "$data" '.storage.files += [ $ign_data ]' <"$out_dir/$node_type.ign" >"$out_dir/$node_type.ign.bak"
+	     mv "$out_dir/$node_type.ign.bak" "$out_dir/$node_type.ign"
+	     echo "$file" 
+	  fi 
+    done
 
     if [ ! -f "${CLUSTER_FINAL_VALS[bootstrap_ign_file]}" ] || [ ! -f "${CLUSTER_FINAL_VALS[master_ign_file]}" ]; then
         printf "terraform cluster vars expects ignition files in the following places...\n"
