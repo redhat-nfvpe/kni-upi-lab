@@ -45,12 +45,20 @@ for i in $(seq 0 $((NUM_MASTERS - 1))); do
 
         ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
 
-        if [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; then
+        RETRIES=0
+
+        while [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; do
+            if [[ $RETRIES -ge 2 ]]; then
+                echo "FAIL: Unable to start $name vBMC!"
+                exit 1
+            fi
+
             echo "IPMI failure detected -- trying to start $name vBMC again..."
             vbmc start "$name" > /dev/null 2>&1
             sleep 1
             ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$MASTER_VBMC_PORT_START$i" power off)
-        fi
+            RETRIES=$((RETRIES+1))
+        done
 
         echo "$name vBMC started and IPMI command succeeded!"
     fi
@@ -78,12 +86,20 @@ for i in $(seq 0 $((NUM_WORKERS - 1))); do
 
         ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
 
-        if [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; then
+        RETRIES=0
+
+        while [[ "$ipmi_output" != "Chassis Power Control: Down/Off" ]]; do
+            if [[ $RETRIES -ge 2 ]]; then
+                echo "FAIL: Unable to start $name vBMC!"
+                exit 1
+            fi
+
             echo "IPMI failure detected -- trying to start $name vBMC again..."
             vbmc start "$name" > /dev/null 2>&1
             sleep 1
             ipmi_output=$(ipmitool -I lanplus -U ADMIN -P ADMIN -H 127.0.0.1 -p "$WORKER_VBMC_PORT_START$i" power off)
-        fi
+            RETRIES=$((RETRIES+1))
+        done
 
         echo "$name vBMC started and IPMI command succeeded!"
     fi

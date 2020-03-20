@@ -257,7 +257,9 @@ printf "\nConfiguring iptables to allow for external traffic...\n\n"
 if [[ "$VIRTUALIZED_INSTALL" =~ True|true|yes ]]; then
     printf "\nProvisioning virtualized nodes...\n\n"
 
-    ./tools/provision-vms.sh
+    (
+        ./tools/provision-vms.sh
+    ) || exit 1
 
     # Need to redo site-config parsing because provision-vms script injects data
 
