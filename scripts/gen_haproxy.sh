@@ -13,11 +13,11 @@ usage() {
     cat <<-EOM
     Generate an haproxy config file
 
-    The env var PROJECT_DIR must be defined as the location of the 
+    The env var PROJECT_DIR must be defined as the location of the
     upi project base directory.
 
     Usage:
-        $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir] 
+        $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir]
             Generate config files for the baremetal interface
 
     Options
@@ -211,10 +211,11 @@ build_haproxy() {
     ofile=$(gen_build "$out_dir")
     printf "Generated %s...\n" "$ofile"
     printf "Building haproxy container...\n"
-    if ! image_id=$(cd "$PROJECT_DIR"/haproxy && sudo podman build . 2>/dev/null | rev | cut -d ' ' -f 1 | rev | tail -1); then
+    if ! build_output=$(cd "$PROJECT_DIR"/haproxy && sudo podman build .); then
         printf "Error while building haproxy container...\n"
         return 1
     fi
+    image_id=$(echo $build_output | rev | cut -d ' ' -f 1 | rev | tail -1)
     printf "Tagging image %s with %s ...\n" "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"
     if ! sudo podman tag "$image_id" "$HAPROXY_IMAGE_NAME:$HAPROXY_IMAGE_TAG"; then
         printf "Failed to tag image_id %s!" "$image_id"
