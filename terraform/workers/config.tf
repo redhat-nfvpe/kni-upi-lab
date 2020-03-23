@@ -13,6 +13,11 @@ variable "nameserver" {
   default = ""
 }
 
+variable "virtual_workers" {
+  type = "string"
+  default = "false"
+}
+
 # ================MATCHBOX=====================
 
 variable "matchbox_rpc_endpoint" {
@@ -50,3 +55,4 @@ variable "worker_nodes" {
 variable "worker_ign_file" {
   type = "string"
 }
+

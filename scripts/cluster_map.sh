@@ -77,6 +77,7 @@ declare -A CLUSTER_MAP=(
     [master_provisioning_interface]="==$MASTER_PROV_INTF"
     [master_baremetal_interface]="==$MASTER_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
+    [virtual_masters]="==$VIRTUAL_MASTERS"
 )
 export CLUSTER_MAP
 
@@ -93,6 +94,7 @@ declare -A WORKER_MAP=(
     [worker_count]="%install-config.compute.0.replicas"
     [worker_provisioning_interface]="==$WORKER_PROV_INTF"
     [worker_baremetal_interface]="==$WORKER_BM_INTF"
+    [virtual_workers]="==$VIRTUAL_WORKERS"
 )
 export WORKER_MAP
 

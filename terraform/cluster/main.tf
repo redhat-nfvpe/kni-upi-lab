@@ -48,6 +48,7 @@ module "masters" {
   pxe_initrd              = "${local.pxe_initrd}"
   matchbox_http_endpoint  = "${var.matchbox_http_endpoint}"
   ignition_config_content = "${file(var.master_ign_file)}"
+  virtual_masters         = "${var.virtual_masters}"
 
   cluster_id = "${var.cluster_id}"
 
