@@ -45,7 +45,8 @@ From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshif
 
 1. Install a Centos7/RHEL provisioning host
 2. Install git
-3. For a disconnected installation of the cluster, please see [Disconnected Install](DISCONNECTED.md)
+3. For a fully-virtualized install, please see [Virtualized Install](tools/)
+4. For a disconnected installation of the cluster, please see [Disconnected Install](DISCONNECTED.md)
 
 #### Populate *cluster/site-config.yaml*
 
