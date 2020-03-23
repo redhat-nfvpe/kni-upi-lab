@@ -230,16 +230,6 @@ ifup "$BM_BRIDGE"
 ifdown "$BM_INTF"
 ifup "$BM_INTF"
 
-###----------------------------------------------------------------###
-### Configure local registry to allow for disconnected deployments ###
-###----------------------------------------------------------------###
-
-if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
-(
-    ./scripts/gen_local_registry.sh
-) || exit 1
-fi
-
 ###--------------------------------------------------###
 ### Configure iptables to allow for external traffic ###
 ###--------------------------------------------------###
@@ -271,6 +261,16 @@ if [[ "$VIRTUALIZED_INSTALL" =~ True|true|yes ]]; then
 
     parse_site_config "./cluster/site-config.yaml" "./cluster" || exit 1
     map_site_config "true" || exit 1
+fi
+
+###----------------------------------------------------------------###
+### Configure local registry to allow for disconnected deployments ###
+###----------------------------------------------------------------###
+
+if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
+(
+    ./scripts/gen_local_registry.sh
+) || exit 1
 fi
 
 ###----------------###
