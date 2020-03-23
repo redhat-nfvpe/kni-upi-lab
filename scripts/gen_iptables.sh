@@ -60,3 +60,7 @@ REJECT_RULE2=$(iptables -S | grep "FORWARD -j REJECT --reject-with icmp-host-pro
 if [[ -n "$REJECT_RULE2" ]]; then
     sudo iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 fi
+
+# enable ipv4 forwarding
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -p
