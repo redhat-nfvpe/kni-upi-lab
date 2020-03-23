@@ -230,16 +230,6 @@ ifup "$BM_BRIDGE"
 ifdown "$BM_INTF"
 ifup "$BM_INTF"
 
-###--------------------------------------------------###
-### Configure iptables to allow for external traffic ###
-###--------------------------------------------------###
-
-printf "\nConfiguring iptables to allow for external traffic...\n\n"
-
-(
-    ./scripts/gen_iptables.sh
-) || exit 1
-
 ###-------------------------------------###
 ### Virtualized lab processing (if any) ###
 ###-------------------------------------###
@@ -272,6 +262,16 @@ if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
     ./scripts/gen_local_registry.sh
 ) || exit 1
 fi
+
+###--------------------------------------------------###
+### Configure iptables to allow for external traffic ###
+###--------------------------------------------------###
+
+printf "\nConfiguring iptables to allow for external traffic...\n\n"
+
+(
+    ./scripts/gen_iptables.sh
+) || exit 1
 
 ###----------------###
 ### Install Golang ###
