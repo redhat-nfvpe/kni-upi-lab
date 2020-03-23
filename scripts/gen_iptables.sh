@@ -62,5 +62,10 @@ if [[ -n "$REJECT_RULE2" ]]; then
 fi
 
 # enable ipv4 forwarding
-sudo sysctl -w net.ipv4.ip_forward=1
-sudo sysctl -p
+IP_FORWARD=$(sudo grep "net.ipv4.ip_forward = 1" /etc/sysctl.conf | grep -v "#")
+
+if [[ -z "$IP_FORWARD" ]]; then
+sudo tee -a /etc/sysctl.conf > /dev/null << EOF
+net.ipv4.ip_forward = 1
+EOF
+fi
