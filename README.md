@@ -48,6 +48,7 @@ From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshif
 3. For a fully-virtualized install, please see [Virtualized Install](tools/)
 4. For a disconnected installation of the cluster, please see [Disconnected Install](DISCONNECTED.md)
 
+
 #### Populate *cluster/site-config.yaml*
 
 The site-config.yaml file describes the infrastructure environment for the cluster.
