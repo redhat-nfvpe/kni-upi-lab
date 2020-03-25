@@ -16,7 +16,7 @@ declare -A RHCOS_METAL_IMAGES
 # 2/6/2020: 4.4/4.5 must be acquired from internal Red Hat CI registry, because it is not yet available 
 # from the official mirror
 if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.5" ]; then
-    BUILDS_JSON="$(curl -sS https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4/builds.json)"
+    BUILDS_JSON="$(curl -sS https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/builds.json)"
 
     if [[ -z "$OPENSHIFT_RHCOS_MINOR_REL" ]]; then
         # If a minor release wasn't set, get latest
@@ -25,7 +25,7 @@ if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" =
         OPENSHIFT_RHCOS_MINOR_REL="$LATEST"
     fi
 
-    RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-4.4/$OPENSHIFT_RHCOS_MINOR_REL/x86_64/"
+    RHCOS_IMAGES_BASE_URI="https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/$OPENSHIFT_RHCOS_MINOR_REL/x86_64/"
 
     META_JSON="$(curl -sS "$RHCOS_IMAGES_BASE_URI"meta.json)"
 
