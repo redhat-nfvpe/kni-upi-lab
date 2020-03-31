@@ -161,7 +161,7 @@ printf "\nConfiguring baremetal interface (%s) and bridge (%s)...\n\n" "$BM_INTF
 
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE" > /dev/null << EOF
 TYPE=Bridge
-NM_CONTROLLED=no
+NM_CONTROLLED=yes
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -187,7 +187,7 @@ fi
 
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" > /dev/null << EOF
 TYPE=Ethernet
-NM_CONTROLLED=no
+NM_CONTROLLED=yes
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -205,7 +205,7 @@ if [[ $PROVIDE_DNS =~ true ]]; then
 DEVICE=$BM_BRIDGE:1
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=yes
 BOOTPROTO=none
 IPADDR=$CLUSTER_DNS
 PREFIX=24
@@ -217,7 +217,7 @@ if [[ $PROVIDE_GW =~ true ]]; then
 DEVICE=$BM_BRIDGE:2
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=yes
 BOOTPROTO=none
 IPADDR=$CLUSTER_DEFAULT_GW
 PREFIX=24

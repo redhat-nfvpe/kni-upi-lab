@@ -12,7 +12,7 @@ usage() {
 
     Usage:
         $(basename "$0") [-h] [-m manfifest_dir] [-o out_dir] latest|all major_version
-            major_version - Major OpenShift version.  i.e. 4.1, 4.2, 4.3 or 4.4
+            major_version - Major OpenShift version.  i.e. 4.1, 4.2, 4.3, 4.4 or 4.5
 
             latest   - Retrieve and print information about the latest release
             db       - Generate db file for Coredns
@@ -34,7 +34,7 @@ get_latest_build_url() {
 
     major="$1"
 
-    if [[ ! $major =~ (4.1|4.2|4.3|4.4) ]]; then
+    if [[ ! $major =~ (4.1|4.2|4.3|4.4|4.5) ]]; then
         printf "Invalid major release given: %s\n" "$major"
 
         return 1
