@@ -30,3 +30,8 @@ variable "ignition_config_content" {
 variable "master_nodes" {
   type = list(map(string))
 }
+
+variable "virtual_masters" {
+  type = "string"
+  default = "false"
+}

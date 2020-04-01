@@ -22,7 +22,7 @@ spec:
       terminationGracePeriodSeconds: 1
       containers:
       - name: signer
-        image: registry.svc.ci.openshift.org/origin/4.2:cli
+        image: quay.io/openshift/origin-cli:latest
         command:
         - /bin/bash
         - -c

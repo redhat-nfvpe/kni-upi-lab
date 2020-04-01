@@ -50,24 +50,37 @@ else
 
     SHA256=$(curl -sS "$RHCOS_IMAGES_BASE_URI"sha256sum.txt)
 
-    BASE_FILENAME="rhcos-$OPENSHIFT_RHCOS_MINOR_REL-x86_64"
+    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
+    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
 
-    for i in "$BASE_FILENAME-installer-kernel" "$BASE_FILENAME-installer-initramfs.img" "$BASE_FILENAME-metal-bios.raw.gz" "$BASE_FILENAME-metal-uefi.raw.gz"; do
+    # Now handle metal images and map file names to sha256 values
+    FILENAME_LIST=("${RHCOS_BOOT_IMAGES["kernel"]}" "${RHCOS_BOOT_IMAGES["ramdisk"]}")
+    
+    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]; then
+        # 4.3 uses one unified metal image 
+
+        UNIFIED_METAL="$(echo "$SHA256" | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
+        
+        FILENAME_LIST+=("$UNIFIED_METAL")
+        
+        RHCOS_METAL_IMAGES["bios"]="$UNIFIED_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UNIFIED_METAL"
+    else
+        # 4.1/4.2 use separate bios and uefi metal images
+
+        BIOS_METAL="$(echo "$SHA256" | grep metal-bios | rev | cut -d ' ' -f 1 | rev)"
+        UEFI_METAL="$(echo "$SHA256" | grep metal-uefi | rev | cut -d ' ' -f 1 | rev)"
+
+        FILENAME_LIST+=("$BIOS_METAL")
+        FILENAME_LIST+=("$UEFI_METAL")
+
+        RHCOS_METAL_IMAGES["bios"]="$BIOS_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UEFI_METAL"
+    fi
+
+    for i in "${FILENAME_LIST[@]}"; do
         RHCOS_IMAGES["$i"]="$(echo "$SHA256" | grep "$i" | cut -d ' ' -f 1)"
     done
-
-    RHCOS_BOOT_IMAGES["ramdisk"]="$BASE_FILENAME-installer-initramfs.img"
-    RHCOS_BOOT_IMAGES["kernel"]="$BASE_FILENAME-installer-kernel"
-    RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal-bios.raw.gz"
-    RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal-uefi.raw.gz"
-
-    # Override bios/uefi image file names for 4.3, as they have been consolidated
-    # into one image
-    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.1" ] && [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.2" ]; then
-        RHCOS_IMAGES["$BASE_FILENAME-metal.raw.gz"]="$(echo "$SHA256" | grep "$BASE_FILENAME-metal.raw.gz" | cut -d ' ' -f 1)"
-        RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal.raw.gz"
-        RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal.raw.gz"
-    fi
 fi
 
 # TODO: remove debug
@@ -82,8 +95,9 @@ export OPENSHIFT_RHCOS_MINOR_REL
 export RHCOS_IMAGES_BASE_URI
 
 # TODO: remove debug
-# for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
-# for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
+#for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
+#for K in "${!RHCOS_BOOT_IMAGES[@]}"; do echo "$K" --- "${RHCOS_BOOT_IMAGES[$K]}"; done
+#for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
 
 export RHCOS_IMAGES
 export RHCOS_BOOT_IMAGES
@@ -118,11 +132,11 @@ if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
 fi
 
 if [[ -z $OCP_CLIENT_BINARY_URL ]]; then
-    OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep client-linux | cut -d '"' -f $FIELD_SELECTOR)"
+    OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep client-linux | cut -d '"' -f $FIELD_SELECTOR | tail -1)"
 fi
 
 if [[ -z $OCP_INSTALL_BINARY_URL ]]; then
-    OCP_INSTALL_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep install-linux | cut -d '"' -f $FIELD_SELECTOR)"
+    OCP_INSTALL_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep install-linux | cut -d '"' -f $FIELD_SELECTOR | tail -1)"
 fi
 
 # TODO: remove debug
@@ -131,3 +145,10 @@ fi
 
 export OCP_CLIENT_BINARY_URL
 export OCP_INSTALL_BINARY_URL
+
+if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ] || [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.5" ]; then
+	ENABLE_BOOTSTRAP_BOOT_INDEX="true"
+else
+	ENABLE_BOOTSTRAP_BOOT_INDEX="false"
+fi
+export ENABLE_BOOTSTRAP_BOOT_INDEX

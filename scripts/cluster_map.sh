@@ -70,12 +70,14 @@ declare -A CLUSTER_MAP=(
     [bootstrap_provisioning_interface]="==ens3"
     [bootstrap_baremetal_interface]="==ens4"
     [bootstrap_install_dev]="==vda"
+    [bootstrap_enable_boot_index]="==${ENABLE_BOOTSTRAP_BOOT_INDEX}"
     [nameserver]="==${BM_IP_NS}"
     [cluster_id]="%install-config.metadata.name"
     [cluster_domain]="%install-config.baseDomain"
     [master_provisioning_interface]="==$MASTER_PROV_INTF"
     [master_baremetal_interface]="==$MASTER_BM_INTF"
     [master_count]="%install-config.controlPlane.replicas"
+    [virtual_masters]="==$VIRTUAL_MASTERS"
 )
 export CLUSTER_MAP
 
@@ -92,6 +94,7 @@ declare -A WORKER_MAP=(
     [worker_count]="%install-config.compute.0.replicas"
     [worker_provisioning_interface]="==$WORKER_PROV_INTF"
     [worker_baremetal_interface]="==$WORKER_BM_INTF"
+    [virtual_workers]="==$VIRTUAL_WORKERS"
 )
 export WORKER_MAP
 

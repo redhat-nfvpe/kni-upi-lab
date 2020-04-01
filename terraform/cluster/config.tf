@@ -78,6 +78,15 @@ variable "bootstrap_install_dev" {
   type = "string"
 }
 
+variable "bootstrap_enable_boot_index" {
+  type = "string"
+}
+
+variable "virtual_masters" {
+  type = "string"
+  default = "false"
+}
+
 # ================MATCHBOX=====================
 
 variable "matchbox_rpc_endpoint" {

@@ -48,6 +48,7 @@ module "masters" {
   pxe_initrd              = "${local.pxe_initrd}"
   matchbox_http_endpoint  = "${var.matchbox_http_endpoint}"
   ignition_config_content = "${file(var.master_ign_file)}"
+  virtual_masters         = "${var.virtual_masters}"
 
   cluster_id = "${var.cluster_id}"
 
@@ -63,11 +64,12 @@ module "bootstrap" {
     (var.bootstrap_baremetal_interface != "" ? "ip=${var.bootstrap_baremetal_interface}:dhcp" : " "),
   ], local.kernel_args)}"
 
-  pxe_kernel             = "${local.pxe_kernel}"
-  pxe_initrd             = "${local.pxe_initrd}"
-  matchbox_http_endpoint = "${var.matchbox_http_endpoint}"
-  bootstrap_mac_address  = "${var.bootstrap_mac_address}"
-  ignition_config_content = "${file(var.bootstrap_ign_file)}"
+  pxe_kernel                   = "${local.pxe_kernel}"
+  pxe_initrd                   = "${local.pxe_initrd}"
+  matchbox_http_endpoint       = "${var.matchbox_http_endpoint}"
+  bootstrap_mac_address        = "${var.bootstrap_mac_address}"
+  ignition_config_content      = "${file(var.bootstrap_ign_file)}"
+  bootstrap_enable_boot_index  = "${var.bootstrap_enable_boot_index}"
 
   cluster_id          = "${var.cluster_id}"
   memory_gb           = "${var.bootstrap_memory_gb}"

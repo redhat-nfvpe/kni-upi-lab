@@ -155,6 +155,11 @@ EOF
         fi
         printf "\n"
         printf "%-40s A %s\n" "api" "$BM_INTF_IP"
+        if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
+	(
+            printf "%-40s A %s\n" "$HOSTNAME" "$BM_INTF_IP"
+	) || exit 1
+	fi
         printf "%-40s A %s\n" "api-int" "$BM_INTF_IP"
         printf "%-40s A %s\n" "$cluster_id-master-0" "$(get_master_bm_ip 0)"
 
