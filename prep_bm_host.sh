@@ -159,9 +159,16 @@ ifup "$PROV_INTF"
 
 printf "\nConfiguring baremetal interface (%s) and bridge (%s)...\n\n" "$BM_INTF" "$BM_BRIDGE"
 
+# if we are on centos/rhel 8, add NM_CONTROLLED=yes
+if [[ "${OS_VERSION}" == "8" ]]; then
+  NM="yes"
+else
+  NM="no"
+fi
+
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE" > /dev/null << EOF
 TYPE=Bridge
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -169,7 +176,7 @@ DEFROUTE=no
 IPV4_FAILURE_FATAL=no
 IPV6INIT=yes
 IPV6_AUTOCONF=yes
-IPV6_DEFROUTE=yes
+IPV6_DEFROUTE=no
 IPV6_FAILURE_FATAL=no
 IPV6_ADDR_GEN_MODE=stable-privacy
 NAME=$BM_BRIDGE
@@ -187,7 +194,7 @@ fi
 
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" > /dev/null << EOF
 TYPE=Ethernet
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -205,7 +212,7 @@ if [[ $PROVIDE_DNS =~ true ]]; then
 DEVICE=$BM_BRIDGE:1
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 BOOTPROTO=none
 IPADDR=$CLUSTER_DNS
 PREFIX=24
@@ -217,7 +224,7 @@ if [[ $PROVIDE_GW =~ true ]]; then
 DEVICE=$BM_BRIDGE:2
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 BOOTPROTO=none
 IPADDR=$CLUSTER_DEFAULT_GW
 PREFIX=24
