@@ -12,6 +12,7 @@ printf "\nChecking OS...\n\n"
 
 EPEL_PACKAGE="epel-release"
 PIP_PACKAGE="python-pip"
+PIP_COMMAND="pip"
 OS_NAME="$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)"
 OS_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
 
@@ -33,6 +34,11 @@ if [[ "$OS_NAME" == "rhel" ]]; then
 
     # Enable other needed RPMs
     sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
+else
+    if [[ "$OS_VERSION" == "8" ]]; then
+      PIP_PACKAGE="python2-pip"
+      PIP_COMMAND="pip2"
+    fi
 fi
 
 ###--------------###
@@ -49,13 +55,13 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE
+sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt $PIP_PACKAGE 
 
 ###--------------------###
 ### Install Yq via pip ###
 ###--------------------###
 
-sudo pip install yq
+sudo ${PIP_COMMAND} install yq
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###

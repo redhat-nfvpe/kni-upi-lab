@@ -171,8 +171,26 @@ fi
 
 printf "\nRemoving dependencies via yum...\n\n"
 
+OS_NAME="$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)"
+OS_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
+
+PIP_PACKAGE="python-pip"
+if [[ "$OS_NAME" == "rhel" ]]; then
+    if [[ "$OS_VERSION" == "7" || "$OS_VERSION" == "8" ]]; then
+        PIP_PACKAGE="python2-pip"
+    else
+        echo "RHEL version $OS_VERSION is not supported!"
+        exit 1
+    fi
+else
+    if [[ "$OS_VERSION" == "8" ]]; then
+      PIP_PACKAGE="python2-pip"
+    fi
+fi
+
+
 if [[ "$1" == "all" ]]; then
-    sudo yum remove -y podman unzip ipmitool dnsmasq bridge-utils epel-release python-pip jq
+    sudo yum remove -y podman unzip ipmitool dnsmasq bridge-utils epel-release ${PIP_PACKAGE} jq
 fi
 
 printf "\nDONE\n"
