@@ -112,8 +112,4 @@
 <label>system_u:system_r:svirt_t:s0:c689,c792</label>
 <imagelabel>system_u:object_r:svirt_image_t:s0:c689,c792</imagelabel>
 </seclabel>
-<seclabel type='dynamic' model='dac' relabel='yes'>
-<label>+107:+107</label>
-<imagelabel>+107:+107</imagelabel>
-</seclabel>
 </domain>
