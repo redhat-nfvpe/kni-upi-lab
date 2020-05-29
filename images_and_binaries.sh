@@ -50,27 +50,32 @@ else
 
     SHA256=$(curl -sS "$RHCOS_IMAGES_BASE_URI"sha256sum.txt)
 
-    BASE_FILENAME="rhcos-$OPENSHIFT_RHCOS_MINOR_REL-x86_64"
+    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
+    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
 
-    RHCOS_BOOT_IMAGES["ramdisk"]="$BASE_FILENAME-installer-initramfs.img"
-    RHCOS_BOOT_IMAGES["kernel"]="$BASE_FILENAME-installer-kernel"
-    RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal-bios.raw.gz"
-    RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal-uefi.raw.gz"
-
-    # Now map file names to sha256 values
-    FILENAME_LIST=("$BASE_FILENAME-installer-kernel" "$BASE_FILENAME-installer-initramfs.img")
+    # Now handle metal images and map file names to sha256 values
+    FILENAME_LIST=("${RHCOS_BOOT_IMAGES["kernel"]}" "${RHCOS_BOOT_IMAGES["ramdisk"]}")
     
-    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.1" ] && [ "$OPENSHIFT_RHCOS_MAJOR_REL" != "4.2" ]; then
-        # Override bios/uefi image file names for 4.3, as they have been consolidated
-        # into one image
+    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]; then
+        # 4.3 uses one unified metal image 
+
+        UNIFIED_METAL="$(echo "$SHA256" | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
         
-        FILENAME_LIST+=("$BASE_FILENAME-metal.raw.gz")
+        FILENAME_LIST+=("$UNIFIED_METAL")
         
-        RHCOS_METAL_IMAGES["bios"]="$BASE_FILENAME-metal.raw.gz"
-        RHCOS_METAL_IMAGES["uefi"]="$BASE_FILENAME-metal.raw.gz"
+        RHCOS_METAL_IMAGES["bios"]="$UNIFIED_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UNIFIED_METAL"
     else
-        FILENAME_LIST+=("$BASE_FILENAME-metal-bios.raw.gz")
-        FILENAME_LIST+=("$BASE_FILENAME-metal-uefi.raw.gz")
+        # 4.1/4.2 use separate bios and uefi metal images
+
+        BIOS_METAL="$(echo "$SHA256" | grep metal-bios | rev | cut -d ' ' -f 1 | rev)"
+        UEFI_METAL="$(echo "$SHA256" | grep metal-uefi | rev | cut -d ' ' -f 1 | rev)"
+
+        FILENAME_LIST+=("$BIOS_METAL")
+        FILENAME_LIST+=("$UEFI_METAL")
+
+        RHCOS_METAL_IMAGES["bios"]="$BIOS_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UEFI_METAL"
     fi
 
     for i in "${FILENAME_LIST[@]}"; do
@@ -90,8 +95,9 @@ export OPENSHIFT_RHCOS_MINOR_REL
 export RHCOS_IMAGES_BASE_URI
 
 # TODO: remove debug
-# for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
-# for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
+#for K in "${!RHCOS_IMAGES[@]}"; do echo "$K" --- "${RHCOS_IMAGES[$K]}"; done
+#for K in "${!RHCOS_BOOT_IMAGES[@]}"; do echo "$K" --- "${RHCOS_BOOT_IMAGES[$K]}"; done
+#for K in "${!RHCOS_METAL_IMAGES[@]}"; do echo "$K" --- "${RHCOS_METAL_IMAGES[$K]}"; done
 
 export RHCOS_IMAGES
 export RHCOS_BOOT_IMAGES

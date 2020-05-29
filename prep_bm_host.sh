@@ -12,6 +12,7 @@ printf "\nChecking OS...\n\n"
 
 EPEL_PACKAGE="epel-release"
 PIP_PACKAGE="python-pip"
+PIP_COMMAND="pip"
 OS_NAME="$(head -3 /etc/os-release | grep ID | cut -d '"' -f 2)"
 OS_VERSION="$(grep "VERSION_ID" /etc/os-release | cut -d '"' -f 2 | cut -d '.' -f 1)"
 
@@ -33,6 +34,11 @@ if [[ "$OS_NAME" == "rhel" ]]; then
 
     # Enable other needed RPMs
     sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms"  --enable "rhel-ha-for-rhel-*-server-rpms"
+else
+    if [[ "$OS_VERSION" == "8" ]]; then
+      PIP_PACKAGE="python2-pip"
+      PIP_COMMAND="pip2"
+    fi
 fi
 
 ###--------------###
@@ -55,7 +61,7 @@ sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils j
 ### Install Yq via pip ###
 ###--------------------###
 
-sudo pip install yq
+sudo ${PIP_COMMAND} install yq
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
@@ -159,9 +165,16 @@ ifup "$PROV_INTF"
 
 printf "\nConfiguring baremetal interface (%s) and bridge (%s)...\n\n" "$BM_INTF" "$BM_BRIDGE"
 
+# if we are on centos/rhel 8, add NM_CONTROLLED=yes
+if [[ "${OS_VERSION}" == "8" ]]; then
+  NM="yes"
+else
+  NM="no"
+fi
+
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_BRIDGE" > /dev/null << EOF
 TYPE=Bridge
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -169,7 +182,7 @@ DEFROUTE=no
 IPV4_FAILURE_FATAL=no
 IPV6INIT=yes
 IPV6_AUTOCONF=yes
-IPV6_DEFROUTE=yes
+IPV6_DEFROUTE=no
 IPV6_FAILURE_FATAL=no
 IPV6_ADDR_GEN_MODE=stable-privacy
 NAME=$BM_BRIDGE
@@ -187,7 +200,7 @@ fi
 
 sudo tee "/etc/sysconfig/network-scripts/ifcfg-$BM_INTF" > /dev/null << EOF
 TYPE=Ethernet
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 PROXY_METHOD=none
 BROWSER_ONLY=no
 BOOTPROTO=static
@@ -205,7 +218,7 @@ if [[ $PROVIDE_DNS =~ true ]]; then
 DEVICE=$BM_BRIDGE:1
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 BOOTPROTO=none
 IPADDR=$CLUSTER_DNS
 PREFIX=24
@@ -217,7 +230,7 @@ if [[ $PROVIDE_GW =~ true ]]; then
 DEVICE=$BM_BRIDGE:2
 Type=Ethernet
 ONBOOT=yes
-NM_CONTROLLED=no
+NM_CONTROLLED=$NM
 BOOTPROTO=none
 IPADDR=$CLUSTER_DEFAULT_GW
 PREFIX=24
@@ -229,26 +242,6 @@ ifup "$BM_BRIDGE"
 
 ifdown "$BM_INTF"
 ifup "$BM_INTF"
-
-###----------------------------------------------------------------###
-### Configure local registry to allow for disconnected deployments ###
-###----------------------------------------------------------------###
-
-if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
-(
-    ./scripts/gen_local_registry.sh
-) || exit 1
-fi
-
-###--------------------------------------------------###
-### Configure iptables to allow for external traffic ###
-###--------------------------------------------------###
-
-printf "\nConfiguring iptables to allow for external traffic...\n\n"
-
-(
-    ./scripts/gen_iptables.sh
-) || exit 1
 
 ###-------------------------------------###
 ### Virtualized lab processing (if any) ###
@@ -272,6 +265,26 @@ if [[ "$VIRTUALIZED_INSTALL" =~ True|true|yes ]]; then
     parse_site_config "./cluster/site-config.yaml" "./cluster" || exit 1
     map_site_config "true" || exit 1
 fi
+
+###----------------------------------------------------------------###
+### Configure local registry to allow for disconnected deployments ###
+###----------------------------------------------------------------###
+
+if [[ "$DISCONNECTED_INSTALL" =~ True|true|yes ]]; then
+(
+    ./scripts/gen_local_registry.sh
+) || exit 1
+fi
+
+###--------------------------------------------------###
+### Configure iptables to allow for external traffic ###
+###--------------------------------------------------###
+
+printf "\nConfiguring iptables to allow for external traffic...\n\n"
+
+(
+    ./scripts/gen_iptables.sh
+) || exit 1
 
 ###----------------###
 ### Install Golang ###

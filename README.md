@@ -1,7 +1,7 @@
 
 # KNI UPI Automation Framework
 
-The KNI UI AF provides a series of scripts that simply the deployment of an OCP 4.x cluster using the UPI method of installation.  KNI AF is designed to leverage a prescribed hardware / network setup in order to simplify the deployment process.
+The KNI UI AF provides a series of scripts that simplify the deployment of an OCP 4.x cluster using the UPI method of installation.  KNI AF is designed to leverage a prescribed hardware / network setup in order to simplify the deployment process.
 
 The prescribed infrastructure architecture is shown below.
 
@@ -46,6 +46,8 @@ From the [OpenShift Infrastructure Providers] (https://cloud.redhat.com/openshif
 1. Install a Centos7/RHEL provisioning host
 2. Install git
 3. For a fully-virtualized install, please see [Virtualized Install](tools/)
+4. For a disconnected installation of the cluster, please see [Disconnected Install](DISCONNECTED.md)
+
 
 #### Populate *cluster/site-config.yaml*
 
