@@ -68,6 +68,8 @@ sudo ${PIP_COMMAND} install yq virtualbmc configparser
 ###----------------------###
 printf "\nCreating vmbcd service...\n\n"
 
+VBMCD_BINARY=$(which vbmcd)
+
 sudo tee "/usr/lib/systemd/system/vbmcd.service" > /dev/null << EOF
 [Install]
 WantedBy = multi-user.target
@@ -75,7 +77,7 @@ WantedBy = multi-user.target
 BlockIOAccounting = True
 CPUAccounting = True
 ExecReload = /bin/kill -HUP $MAINPID
-ExecStart = /usr/local/bin/vbmcd --foreground
+ExecStart = $VBMCD_BINARY --foreground
 Group = root
 MemoryAccounting = True
 PrivateDevices = False
