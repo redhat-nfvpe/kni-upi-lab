@@ -55,13 +55,50 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install $PIP_PACKAGE
+sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install python-devel $PIP_PACKAGE
 
-###--------------------###
-### Install Yq via pip ###
-###--------------------###
+###----------------------###
+### Install pip packages ###
+###----------------------###
 
-sudo ${PIP_COMMAND} install yq
+sudo ${PIP_COMMAND} install yq virtualbmc configparser
+
+###----------------------###
+### Create vbmcd service ###
+###----------------------###
+printf "\nCreating vmbcd service...\n\n"
+
+sudo tee "/usr/lib/systemd/system/vbmcd.service" > /dev/null << EOF
+[Install]
+WantedBy = multi-user.target
+[Service]
+BlockIOAccounting = True
+CPUAccounting = True
+ExecReload = /bin/kill -HUP $MAINPID
+ExecStart = /usr/local/bin/vbmcd --foreground
+Group = root
+MemoryAccounting = True
+PrivateDevices = False
+PrivateNetwork = False
+PrivateTmp = False
+PrivateUsers = False
+Restart = on-failure
+RestartSec = 2
+Slice = vbmc.slice
+TasksAccounting = True
+TimeoutSec = 120
+Type = simple
+User = root
+[Unit]
+After = libvirtd.service
+After = syslog.target
+After = network.target
+Description = vbmc service
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable vbmcd
+sudo systemctl start vbmcd
 
 ###------------------------------------------------###
 ### Need interface input from user via environment ###
