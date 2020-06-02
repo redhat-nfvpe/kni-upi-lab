@@ -174,10 +174,10 @@ $(terraform-bin):
 ## = terraform-conf       - Generate the Terraform config files
 ## =
 terraform-conf: $(terraform_cluster) $(terraform_worker) $(terraform_cluster_upi) $(terraform_worker_upi)
-$(terraform_cluster): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
+$(terraform_cluster): common.sh $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh cluster
 
-$(terraform_worker): $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
+$(terraform_worker): common.sh $(upi_rt_git) $(manifests) ./scripts/gen_terraform.sh ./scripts/cluster_map.sh ./scripts/network_conf.sh $(ignition) $(common_scripts)
 	./scripts/gen_terraform.sh workers
 
 cluster/manifest_vals.sh: $(manifests)
