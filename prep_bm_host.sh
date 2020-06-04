@@ -55,13 +55,18 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install python-devel $PIP_PACKAGE
+sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install gcc python-devel $PIP_PACKAGE
 
 ###----------------------###
 ### Install pip packages ###
 ###----------------------###
 
-sudo ${PIP_COMMAND} install yq virtualbmc configparser
+if [[ "$OS_NAME" == "rhel" && "$OS_VERSION" == "7" ]]; then
+    # Need to upgrade pip to latest for RHEL 7
+    sudo pip install --upgrade pip
+fi
+
+sudo ${PIP_COMMAND} install yq virtualbmc configparser unicodecsv
 
 ###----------------------###
 ### Create vbmcd service ###
