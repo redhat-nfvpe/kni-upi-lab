@@ -150,6 +150,7 @@ gen_terraform_cluster() {
         exit 1
     fi
     CLUSTER_FINAL_VALS["pxe_initrd_url"]="assets/$initrd"
+    CLUSTER_FINAL_VALS["pxe_initrd_name"]="$initrd"
 
     if ! kernel=$(get_asset_kernel); then
         printf "Could not find kernel image file in assets!\n"

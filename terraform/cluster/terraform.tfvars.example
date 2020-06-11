@@ -52,6 +52,10 @@ matchbox_trusted_ca_cert = "/path/to/local/matchbox/scripts/tls/ca.crt"
 // This can be a fully-qualified URL or URL relative to matchbox_http_endpoint to use Matchbox assets (https://github.com/coreos/matchbox/blob/master/Documentation/matchbox.md#assets).
 pxe_initrd_url = "assets/rhcos-4.2.0-x86_64-installer-initramfs.img"
 
+// Name of the initrd file
+//
+pxe_initrd_name="rhcos-4.2.0-x86_64-installer-initramfs.img"
+
 // URL to the kernel image that should be used to PXE machines.
 //
 // This can be a fully-qualified URL or URL relative to matchbox_http_endpoint to use Matchbox assets (https://github.com/coreos/matchbox/blob/master/Documentation/matchbox.md#assets).

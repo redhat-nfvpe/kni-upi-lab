@@ -125,4 +125,7 @@ variable "pxe_initrd_url" {
   type = "string"
 }
 
+variable "pxe_initrd_name" {
+  type = "string"
+}
 
