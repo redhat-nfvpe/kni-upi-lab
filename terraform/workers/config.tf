@@ -56,3 +56,6 @@ variable "worker_ign_file" {
   type = "string"
 }
 
+variable "pxe_initrd_name" {
+  type = "string"
+}

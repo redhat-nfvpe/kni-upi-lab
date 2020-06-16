@@ -56,6 +56,7 @@ declare -A CLUSTER_MAP=(
     [matchbox_http_endpoint]="==$PROV_IP_MATCHBOX_HTTP_URL"
     [matchbox_rpc_endpoint]="==$PROV_IP_MATCHBOX_RPC"
 # The following three need to be set after manifest processing
+    [pxe_initrd_name]="==patch"
     [pxe_initrd_url]="==patch"
     [pxe_kernel_url]="==patch"
     [pxe_os_image_url]="==patch"

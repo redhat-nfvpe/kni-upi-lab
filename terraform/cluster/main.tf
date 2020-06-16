@@ -2,6 +2,7 @@
 
 locals {
   kernel_args = [
+    "initrd=${var.pxe_initrd_name}",
     "console=tty0",
     "console=ttyS0,115200n8",
     "console=ttyS1,115200n8",
