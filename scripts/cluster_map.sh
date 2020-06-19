@@ -96,6 +96,7 @@ declare -A WORKER_MAP=(
     [worker_provisioning_interface]="==$WORKER_PROV_INTF"
     [worker_baremetal_interface]="==$WORKER_BM_INTF"
     [virtual_workers]="==$VIRTUAL_WORKERS"
+    [pxe_initrd_name]="==patch"
 )
 export WORKER_MAP
 
