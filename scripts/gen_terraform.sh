@@ -347,6 +347,13 @@ gen_terraform_workers() {
     local out_dir="$1"
 
     local ofile="$out_dir/workers/terraform.tfvars"
+    
+    if ! initrd=$(get_asset_initramfs); then
+        printf "Could not find initrd image file in assets!\n"
+        exit 1
+    fi
+
+    WORKERS_FINAL_VALS["pxe_initrd_name"]="$initrd"
 
     mapfile -t sorted < <(printf '%s\n' "${!WORKER_MAP[@]}" | sort)
 
