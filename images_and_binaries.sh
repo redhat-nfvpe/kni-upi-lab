@@ -13,9 +13,47 @@ declare -A RHCOS_BOOT_IMAGES
 # Map of boot type to raw metal image
 declare -A RHCOS_METAL_IMAGES
 
-# 2/6/2020: 4.4 must be acquired from internal Red Hat CI registry, because it is not yet available 
-# from the official mirror
-if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
+# Download from the official mirror site
+if [ "$OPENSHIFT_RHCOS_REL" == "GA" ]; then
+
+    OPENSHIFT_RHCOS_MINOR_REL="$(curl -sS https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/ | grep rhcos-$OPENSHIFT_RHCOS_MAJOR_REL | head -1 | cut -d '-' -f 2)"
+
+    RHCOS_IMAGES_BASE_URI="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/"
+
+    SHA256=$(curl -sS "$RHCOS_IMAGES_BASE_URI"sha256sum.txt)
+
+    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
+    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
+
+    # Now handle metal images and map file names to sha256 values
+    FILENAME_LIST=("${RHCOS_BOOT_IMAGES["kernel"]}" "${RHCOS_BOOT_IMAGES["ramdisk"]}")
+    
+    if [[ (  $OPENSHIFT_RHCOS_MAJOR_REL =~ (4.1|4.2)) ]]; then
+        # 4.1/4.2 use separate bios and uefi metal images
+        BIOS_METAL="$(echo "$SHA256" | grep metal-bios | rev | cut -d ' ' -f 1 | rev)"
+        UEFI_METAL="$(echo "$SHA256" | grep metal-uefi | rev | cut -d ' ' -f 1 | rev)"
+
+        FILENAME_LIST+=("$BIOS_METAL")
+        FILENAME_LIST+=("$UEFI_METAL")
+
+        RHCOS_METAL_IMAGES["bios"]="$BIOS_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UEFI_METAL"
+    else
+        # 4.3+ uses one unified metal image 
+        UNIFIED_METAL="$(echo "$SHA256" | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
+        
+        FILENAME_LIST+=("$UNIFIED_METAL")
+        
+        RHCOS_METAL_IMAGES["bios"]="$UNIFIED_METAL"
+        RHCOS_METAL_IMAGES["uefi"]="$UNIFIED_METAL"
+
+    fi
+
+    for i in "${FILENAME_LIST[@]}"; do
+        RHCOS_IMAGES["$i"]="$(echo "$SHA256" | grep "$i" | cut -d ' ' -f 1)"
+    done
+else
+    # Download from the internal CI registry
     BUILDS_JSON="$(curl -sS https://releases-art-rhcos.svc.ci.openshift.org/art/storage/releases/rhcos-$OPENSHIFT_RHCOS_MAJOR_REL/builds.json)"
 
     if [[ -z "$OPENSHIFT_RHCOS_MINOR_REL" ]]; then
@@ -41,47 +79,7 @@ if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
     RHCOS_IMAGES["$FILENAME"]="$(echo "$META_JSON" | jq -r '.images.metal.sha256')"
     RHCOS_METAL_IMAGES["bios"]="$FILENAME"
     RHCOS_METAL_IMAGES["uefi"]="$FILENAME"
-else
-    # 2/6/2020: All versions before 4.4 are available from the official mirror
-
-    OPENSHIFT_RHCOS_MINOR_REL="$(curl -sS https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/ | grep rhcos-$OPENSHIFT_RHCOS_MAJOR_REL | head -1 | cut -d '-' -f 2)"
-
-    RHCOS_IMAGES_BASE_URI="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/$OPENSHIFT_RHCOS_MAJOR_REL/latest/"
-
-    SHA256=$(curl -sS "$RHCOS_IMAGES_BASE_URI"sha256sum.txt)
-
-    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
-    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
-
-    # Now handle metal images and map file names to sha256 values
-    FILENAME_LIST=("${RHCOS_BOOT_IMAGES["kernel"]}" "${RHCOS_BOOT_IMAGES["ramdisk"]}")
-    
-    if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.3" ]; then
-        # 4.3 uses one unified metal image 
-
-        UNIFIED_METAL="$(echo "$SHA256" | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
-        
-        FILENAME_LIST+=("$UNIFIED_METAL")
-        
-        RHCOS_METAL_IMAGES["bios"]="$UNIFIED_METAL"
-        RHCOS_METAL_IMAGES["uefi"]="$UNIFIED_METAL"
-    else
-        # 4.1/4.2 use separate bios and uefi metal images
-
-        BIOS_METAL="$(echo "$SHA256" | grep metal-bios | rev | cut -d ' ' -f 1 | rev)"
-        UEFI_METAL="$(echo "$SHA256" | grep metal-uefi | rev | cut -d ' ' -f 1 | rev)"
-
-        FILENAME_LIST+=("$BIOS_METAL")
-        FILENAME_LIST+=("$UEFI_METAL")
-
-        RHCOS_METAL_IMAGES["bios"]="$BIOS_METAL"
-        RHCOS_METAL_IMAGES["uefi"]="$UEFI_METAL"
-    fi
-
-    for i in "${FILENAME_LIST[@]}"; do
-        RHCOS_IMAGES["$i"]="$(echo "$SHA256" | grep "$i" | cut -d ' ' -f 1)"
-    done
-fi
+fi  
 
 # TODO: remove debug
 # echo "OPENSHIFT_RHCOS_MAJOR_REL: $OPENSHIFT_RHCOS_MAJOR_REL"
@@ -107,13 +105,13 @@ export RHCOS_METAL_IMAGES
 # TODO: Is there a uniform base URL to use here like there is for images?
 
 # 4.4 is a special case, and requires getting the latest version ID from an index page
-LATEST_4_4="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.4\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
+#LATEST_4_4="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.4\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
 
 declare -A OCP_BINARIES=(
     [4.1]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.1/"
     [4.2]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.2/"
     [4.3]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.3/"
-    [4.4]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST_4_4"
+    [4.4]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.4/"
 )
 
 # TODO: remove debug
@@ -126,10 +124,10 @@ OCP_INSTALL_BINARY_URL=""
 
 FIELD_SELECTOR=8
 
-if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
-    # HACK: 4.4 has a different HTML structure than the rest
-    FIELD_SELECTOR=2
-fi
+# if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
+#     # HACK: 4.4 has a different HTML structure than the rest
+#     FIELD_SELECTOR=2
+# fi
 
 if [[ -z $OCP_CLIENT_BINARY_URL ]]; then
     OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep client-linux | cut -d '"' -f $FIELD_SELECTOR | tail -1)"
