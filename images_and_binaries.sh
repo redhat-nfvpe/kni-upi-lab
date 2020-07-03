@@ -104,15 +104,28 @@ export RHCOS_METAL_IMAGES
 # OCP binaries
 # TODO: Is there a uniform base URL to use here like there is for images?
 
-# 4.4 is a special case, and requires getting the latest version ID from an index page
-#LATEST_4_4="$(curl -sS https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/4\.4\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
+VER1="$(echo "$OPENSHIFT_RHCOS_MAJOR_REL" | cut -d. -f2 )"
+VER="$(echo "$OPENSHIFT_RHCOS_MAJOR_REL" | cut -d. -f1 )"
 
-declare -A OCP_BINARIES=(
-    [4.1]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.1/"
-    [4.2]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.2/"
-    [4.3]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.3/"
-    [4.4]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.4/"
-)
+if [ "$OPENSHIFT_RHCOS_REL" == "CI" ];then
+
+    LATEST="$(curl -s https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/$VER\.$VER1\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
+
+    declare -A OCP_BINARIES=(
+        ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST"
+    )
+
+    FIELD_SELECTOR=2
+
+else
+
+    declare -A OCP_BINARIES=(
+        ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-$VER.$VER1"
+    )
+
+    FIELD_SELECTOR=8
+fi
+
 
 # TODO: remove debug
 #for K in "${!OCP_BINARIES[@]}"; do echo "$K" --- "${OCP_BINARIES[$K]}"; done
@@ -122,12 +135,8 @@ export OCP_BINARIES
 OCP_CLIENT_BINARY_URL=""
 OCP_INSTALL_BINARY_URL=""
 
-FIELD_SELECTOR=8
 
-# if [ "$OPENSHIFT_RHCOS_MAJOR_REL" == "4.4" ]; then
-#     # HACK: 4.4 has a different HTML structure than the rest
-#     FIELD_SELECTOR=2
-# fi
+
 
 if [[ -z $OCP_CLIENT_BINARY_URL ]]; then
     OCP_CLIENT_BINARY_URL="${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}$(curl -sS "${OCP_BINARIES["$OPENSHIFT_RHCOS_MAJOR_REL"]}" | grep client-linux | cut -d '"' -f $FIELD_SELECTOR | tail -1)"
