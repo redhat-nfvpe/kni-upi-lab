@@ -107,25 +107,21 @@ export RHCOS_METAL_IMAGES
 VER1="$(echo "$OPENSHIFT_RHCOS_MAJOR_REL" | cut -d. -f2 )"
 VER="$(echo "$OPENSHIFT_RHCOS_MAJOR_REL" | cut -d. -f1 )"
 
+declare -A OCP_BINARIES
 if [ "$OPENSHIFT_RHCOS_REL" == "CI" ];then
 
     LATEST="$(curl -s https://openshift-release-artifacts.svc.ci.openshift.org/ | awk "/$VER\.$VER1\./ && !(/s390x/ || /ppc64le/)" | tail -1 | cut -d '"' -f 2)"
 
-    declare -A OCP_BINARIES=(
-        ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST"
-    )
+    OCP_BINARIES=( ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://openshift-release-artifacts.svc.ci.openshift.org/$LATEST" )
 
     FIELD_SELECTOR=2
 
 else
-
-    declare -A OCP_BINARIES=(
-        ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-$VER.$VER1"
-    )
+    
+    OCP_BINARIES=( ["$OPENSHIFT_RHCOS_MAJOR_REL"]="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-$VER.$VER1" )
 
     FIELD_SELECTOR=8
 fi
-
 
 # TODO: remove debug
 #for K in "${!OCP_BINARIES[@]}"; do echo "$K" --- "${OCP_BINARIES[$K]}"; done
@@ -134,8 +130,6 @@ export OCP_BINARIES
 
 OCP_CLIENT_BINARY_URL=""
 OCP_INSTALL_BINARY_URL=""
-
-
 
 
 if [[ -z $OCP_CLIENT_BINARY_URL ]]; then
