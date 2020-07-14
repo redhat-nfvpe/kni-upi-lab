@@ -13,53 +13,52 @@ source "$PROJECT_DIR/scripts/parse_site_config.sh"
 parse_site_config "$PROJECT_DIR/cluster/site-config.yaml" "./cluster" || exit 1
 map_site_config "true" || exit 1
 
+ins_del_rule()
+{
+    operation=$1
+    table=$2
+    rule=$3
+   
+    if [ "$operation" == "INSERT" ]; then
+        if ! sudo iptables -t "$table" -C $rule > /dev/null 2>&1; then
+            sudo iptables -t "$table" -I $rule
+        fi
+    elif [ "$operation" == "DELETE" ]; then
+        sudo iptables -t "$table" -D $rule
+    else
+        echo "${FUNCNAME[0]}: Invalid operation: $operation"
+        exit 1
+    fi
+}
+
 # allow DNS/DHCP traffic to dnsmasq and coredns
-sudo systemctl start firewalld
-sudo firewall-cmd --add-interface="$BM_BRIDGE" --zone=public --permanent
-sudo firewall-cmd --add-interface="$PROV_BRIDGE" --zone=public --permanent
-sudo firewall-cmd --zone=public --permanent --add-service=ssh
-sudo firewall-cmd --add-service=http --zone=public --permanent
-sudo firewall-cmd --add-service=https --zone=public --permanent
-sudo firewall-cmd --zone=public --permanent --add-port=67/udp
-sudo firewall-cmd --zone=public --permanent --add-port=53/udp
-sudo firewall-cmd --zone=public --permanent --add-port=67/tcp
-sudo firewall-cmd --zone=public --permanent --add-port=53/tcp
-sudo firewall-cmd --zone=public --permanent --add-port=6443/tcp
-sudo firewall-cmd --zone=public --permanent --add-port=67/udp
-sudo firewall-cmd --zone=public --permanent --add-port=69/udp
-sudo firewall-cmd --zone=public --permanent --add-port=8080/tcp
-sudo firewall-cmd --zone=public --permanent --add-port=22623/tcp
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 67 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p udp -m udp --dport 53 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 67 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 53 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -i $BM_BRIDGE -p tcp -m tcp --dport 6443 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p udp -i $PROV_BRIDGE --dport 67 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p udp -i $PROV_BRIDGE --dport 69 -j ACCEPT"
+ins_del_rule "INSERT" "filter" "INPUT -p tcp -i $PROV_BRIDGE --dport 8080 -j ACCEPT"
 
-#Networking requirements for user-provisioned infrastructure
-sudo firewall-cmd --zone-public --permanent --add-port=9000-9999/tcp
-sudo firewall-cmd --zone-public --permanent --add-port=10250-10259/tcp
-sudo firewall-cmd --zone-public --permanent --add-port=10256/tcp
-sudo firewall-cmd --zone-public --permanent --add-port=9000-9999/udp
-sudo firewall-cmd --zone-public --permanent --add-port=6081/udp
-sudo firewall-cmd --zone-public --permanent --add-port=4689/udp
-sudo firewall-cmd --zone-public --permanent --add-port=30000-32767/tcp
-sudo firewall-cmd --zone-public --permanent --add-port=30000-32767/udp
-
-sudo firewall-cmd --zone=public --add-masquerade --permanent
-sudo firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o "$EXT_INTF" -j MASQUERADE
-sudo firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "$PROV_BRIDGE" -o "$EXT_INTF" -j ACCEPT 
-sudo firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "$EXT_INF" -o "$PROV_BRIDGE" -m state --state RELATED,ESTABLISHED -j ACCEPT
-sudo firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "$BM_BRIDGE" -o "$EXT_INTF" -j ACCEPT 
-sudo firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i "$EXT_INTF" -o "$BM_BRIDGE" -m state --state RELATED,ESTABLISHED -j ACCEPT
-sudo systemctl stop firewalld
-sudo systemctl start firewalld
+# enable routing from provisioning and cluster network to external
+ins_del_rule "INSERT" "nat" "POSTROUTING -o $EXT_INTF -j MASQUERADE"
+ins_del_rule "INSERT" "filter" "FORWARD -i $PROV_BRIDGE -o $EXT_INTF -j ACCEPT"
+ins_del_rule "INSERT" "filter" "FORWARD -o $PROV_BRIDGE -i $EXT_INTF -m state --state RELATED,ESTABLISHED -j ACCEPT"
+ins_del_rule "INSERT" "filter" "FORWARD -i $BM_BRIDGE -o $EXT_INTF -j ACCEPT"
+ins_del_rule "INSERT" "filter" "FORWARD -o $BM_BRIDGE -i $EXT_INTF -m state --state RELATED,ESTABLISHED -j ACCEPT"
 
 # remove certain problematic REJECT rules
+REJECT_RULE=$(iptables -S | grep "INPUT -j REJECT --reject-with icmp-host-prohibited")
 
-FILTER_INPUT_REJECT="$(sudo nft -a list chain inet firewalld filter_INPUT | grep "reject with icmpx type admin-prohibited" | cut -d '#' -f 2 | cut -d ' ' -f 3)"
-FILTER_FORWARD_REJECT="$(sudo nft -a list chain inet firewalld filter_FORWARD | grep "reject with icmpx type admin-prohibited" | cut -d '#' -f 2 | cut -d ' ' -f 3)"
-
-if [[ -n "$FILTER_INPUT_REJECT" ]]; then
-    sudo nft delete rule inet firewalld filter_INPUT handle "$FILTER_INPUT_REJECT" > /dev/null
+if [[ -n "$REJECT_RULE" ]]; then
+    sudo iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 fi
 
-if [[ -n "$FILTER_FORWARD_REJECT" ]]; then
-    sudo nft delete rule inet firewalld filter_FORWARD handle "$FILTER_FORWARD_REJECT" > /dev/null
+REJECT_RULE2=$(iptables -S | grep "FORWARD -j REJECT --reject-with icmp-host-prohibited")
+
+if [[ -n "$REJECT_RULE2" ]]; then
+    sudo iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 fi
 
 # enable ipv4 forwarding
