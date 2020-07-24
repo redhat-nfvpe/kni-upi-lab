@@ -243,7 +243,7 @@ EOF
             IFS=' ' read -r -a workers <<<"${HOSTS_FINAL_VALS[worker_hosts]}"
             for worker in "${workers[@]}"; do
                 index=${worker##*-}
-                printf "%-7s             IN PTR %s\n" "$(get_bm_ip_offset "$(get_worker_bm_ip "$index")")" "$cluster_id-worker-$worker.$cluster_domain."
+                printf "%-7s             IN PTR %s\n" "$(get_bm_ip_offset "$(get_worker_bm_ip "$index")")" "$cluster_id-$worker.$cluster_domain."
             done
         fi
     } >>"$cfg_file"
