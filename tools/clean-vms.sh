@@ -7,10 +7,8 @@ CLUSTER_NAME="kni-upi-lab"
 
 LIBVIRT_STORAGE_POOL="default"
 
-# Kill vm-boot-helper (if any)
-for i in $(ps ax | grep "vm-boot-helper.sh" | grep -v grep | awk {'print $1'}); do
-    sudo kill -9 $i 2>/dev/null
-done
+# Disable vm-boot-helper 
+sudo systemctl disable vmboot
 
 for i in $(sudo virsh list --all | grep $CLUSTER_NAME | awk '{print $2}'); do
     delete_vbmc "$i"
