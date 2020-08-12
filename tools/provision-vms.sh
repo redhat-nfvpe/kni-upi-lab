@@ -29,16 +29,16 @@ for i in $(seq 0 $((NUM_MASTERS - 1))); do
     sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$MASTER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$MASTER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=destroy,on_lockfailure=poweroff --boot hd,network
 
     vm_ready=false
-    for k in {1..10}; do 
-        if [[ -n "$(virsh list | grep $name | grep running)" ]]; then 
+    for k in {1..10}; do
+        if [[ -n "$(virsh list | grep $name | grep running)" ]]; then
             vm_ready=true
-            break; 
-        else 
-            echo "wait $k"; 
-            sleep 1; 
-        fi;  
+            break;
+        else
+            echo "wait $k";
+            sleep 1;
+        fi;
     done
-    if [ $vm_ready = true ]; then 
+    if [ $vm_ready = true ]; then
         create_vbmc "$name" "$MASTER_VBMC_PORT_START$i"
 
         sleep 2
@@ -70,16 +70,16 @@ for i in $(seq 0 $((NUM_WORKERS - 1))); do
     sudo virt-install --ram 16384 --vcpus 4 --os-variant rhel7 --cpu host-passthrough --disk size=40,pool=$LIBVIRT_STORAGE_POOL,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network=bridge:provisioning,mac="$WORKER_PROV_MAC_PREFIX$i" --network=bridge:baremetal,mac="$WORKER_BM_MAC_PREFIX$i" --name "$name" --os-type=linux --events on_reboot=destroy,on_lockfailure=poweroff --boot hd,network
 
     vm_ready=false
-    for k in {1..10}; do 
-        if [[ -n "$(virsh list | grep $name | grep running)" ]]; then 
+    for k in {1..10}; do
+        if [[ -n "$(virsh list | grep $name | grep running)" ]]; then
             vm_ready=true
-            break; 
-        else 
-            echo "wait $k"; 
-            sleep 1; 
-        fi;  
+            break;
+        else
+            echo "wait $k";
+            sleep 1;
+        fi;
     done
-    if [ $vm_ready = true ]; then 
+    if [ $vm_ready = true ]; then
         create_vbmc "$name" "$WORKER_VBMC_PORT_START$i"
 
         sleep 2
@@ -121,7 +121,7 @@ done
 
 PLATFORM_HOSTS=$(echo $PLATFORM_HOSTS | sed 's/.$//')
 
-TJQ=$(yq -y ".platform.hosts = [$PLATFORM_HOSTS]" < $PROJECT_DIR/cluster/install-config.yaml) 
+TJQ=$(yq -y ".platform.hosts = [$PLATFORM_HOSTS]" < $PROJECT_DIR/cluster/install-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/install-config.yaml
 
 echo "$PROJECT_DIR/cluster/install-config.yaml updated with virtualization data!"
@@ -130,24 +130,41 @@ echo "$PROJECT_DIR/cluster/install-config.yaml updated with virtualization data!
 # Update cluster/site-config.yaml
 #
 
-TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
-TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.masterSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
-TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerBootInterface="ens3"' < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
-TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y '.provisioningInfrastructure.hosts.workerSdnInterface="ens4"' < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
 
-TJQ=$(yq -y ".provisioningInfrastructure.virtualMasters = true" < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y ".provisioningInfrastructure.virtualMasters = true" < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
-TJQ=$(yq -y ".provisioningInfrastructure.virtualWorkers = true" < $PROJECT_DIR/cluster/site-config.yaml) 
+TJQ=$(yq -y ".provisioningInfrastructure.virtualWorkers = true" < $PROJECT_DIR/cluster/site-config.yaml)
 [[ $? == 0 ]] && echo "${TJQ}" >| $PROJECT_DIR/cluster/site-config.yaml
 
 echo "$PROJECT_DIR/cluster/site-config.yaml updated with virtualization data!"
 
 #
-# Start the VM boot helper script
+# Start VM boot service
 #
 
-$PROJECT_DIR/tools/vm-boot-helper.sh &
+printf "\nCreating VM boot service...\n\n"
+
+pwd=`pwd`
+
+sudo tee "/etc/systemd/system/vmboot.service" > /dev/null << EOF
+[Unit]
+Description=VM boot helper
+
+[Service]
+ExecStart=/bin/bash $pwd/vm-boot-helper.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl start vmboot
+sudo systemctl enable vmboot
