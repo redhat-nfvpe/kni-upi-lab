@@ -22,8 +22,8 @@ if [ "$OPENSHIFT_RHCOS_REL" == "GA" ]; then
 
     SHA256=$(curl -sS "$RHCOS_IMAGES_BASE_URI"sha256sum.txt)
 
-    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
-    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
+    RHCOS_BOOT_IMAGES["ramdisk"]="$(echo "$SHA256" | grep $OPENSHIFT_RHCOS_MAJOR_REL | grep installer-initramfs | rev | cut -d ' ' -f 1 | rev)"
+    RHCOS_BOOT_IMAGES["kernel"]="$(echo "$SHA256" | grep $OPENSHIFT_RHCOS_MAJOR_REL | grep installer-kernel | rev | cut -d ' ' -f 1 | rev)"
 
     # Now handle metal images and map file names to sha256 values
     FILENAME_LIST=("${RHCOS_BOOT_IMAGES["kernel"]}" "${RHCOS_BOOT_IMAGES["ramdisk"]}")
@@ -40,7 +40,7 @@ if [ "$OPENSHIFT_RHCOS_REL" == "GA" ]; then
         RHCOS_METAL_IMAGES["uefi"]="$UEFI_METAL"
     else
         # 4.3+ uses one unified metal image 
-        UNIFIED_METAL="$(echo "$SHA256" | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
+        UNIFIED_METAL="$(echo "$SHA256" | grep $OPENSHIFT_RHCOS_MAJOR_REL | grep x86_64-metal | rev | cut -d ' ' -f 1 | rev)"
         
         FILENAME_LIST+=("$UNIFIED_METAL")
         
