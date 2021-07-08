@@ -55,7 +55,7 @@ sudo yum install -y $EPEL_PACKAGE
 
 printf "\nInstalling dependencies via yum...\n\n"
 
-sudo yum install -y git podman httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install gcc python-devel $PIP_PACKAGE
+sudo yum install -y git podman firewalld httpd-tools unzip ipmitool dnsmasq bridge-utils jq nmap libvirt virt-install gcc python-devel $PIP_PACKAGE
 
 ###----------------------###
 ### Install pip packages ###
